@@ -1,0 +1,59 @@
+libdrm (2.0-0ubuntu2) UNRELEASED; urgency=low
+
+  * First upload to Debian
+
+ -- David Nusinow <dnusinow@debian.org>  Mon, 19 Dec 2005 22:16:52 -0500
+
+libdrm (2.0-0ubuntu1) dapper; urgency=low
+
+  * New upstream release.
+  * Change binary package from libdrm1 to libdrm2, following soversion bump.
+
+ -- Daniel Stone <daniel.stone@ubuntu.com>  Mon, 12 Dec 2005 13:05:22 +1100
+
+libdrm (1.0.5-0ubuntu1) dapper; urgency=low
+
+  * New upstream version.
+
+ -- Daniel Stone <daniel.stone@ubuntu.com>  Wed,  2 Nov 2005 01:56:07 +1100
+
+libdrm (1.0.3-3) unstable; urgency=low
+
+  * Yay for understandable bug reports! *gmprf*
+  * debian/control:libdrm1 =~ s/development/runtime/ (closes: bug#325515)
+
+ -- Marcelo E. Magallon <mmagallo@debian.org>  Fri, 16 Sep 2005 09:46:05 -0600
+
+libdrm (1.0.3-2) unstable; urgency=low
+
+  * libdrm.pc.in: add -ldrm to Libs
+
+ -- Marcelo E. Magallon <mmagallo@debian.org>  Thu, 08 Sep 2005 20:49:01 -0600
+
+libdrm (1.0.3-1) unstable; urgency=low
+
+  * New upstream
+
+ -- Marcelo E. Magallon <mmagallo@debian.org>  Sun, 28 Aug 2005 11:12:07 -0600
+
+libdrm (1.0.2-3) unstable; urgency=low
+
+  * debian/control: it's "Direct Rendering Infraestructure".  I was rather
+    sure it stand for interface... thanks Michel.  (closes: bug#324514)
+  * debian/control: forgot to actually write this in the file.  Build-Depends
+    on libx11-dev.  Thanks Kurt (closes: bug#324560)
+
+ -- Marcelo E. Magallon <mmagallo@debian.org>  Sun, 28 Aug 2005 11:01:41 -0600
+
+libdrm (1.0.2-2) unstable; urgency=low
+
+  * Forgot to fix the other broken bit :-P
+
+ -- Marcelo E. Magallon <mmagallo@debian.org>  Fri, 19 Aug 2005 22:01:32 -0600
+
+libdrm (1.0.2-1) unstable; urgency=low
+
+  * Initial release. Closes: #324074
+
+ -- Marcelo E. Magallon <mmagallo@debian.org>  Fri, 19 Aug 2005 21:11:18 -0600
+
