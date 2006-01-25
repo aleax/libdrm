@@ -1,8 +1,8 @@
-libdrm (2.0-0ubuntu2) UNRELEASED; urgency=low
+libdrm (2.0-1) experimental; urgency=low
 
   * First upload to Debian
 
- -- David Nusinow <dnusinow@debian.org>  Thu, 29 Dec 2005 20:47:00 -0500
+ -- David Nusinow <dnusinow@debian.org>  Thu,  5 Jan 2006 22:45:27 -0500
 
 libdrm (2.0-0ubuntu1) dapper; urgency=low
 
