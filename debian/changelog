@@ -1,3 +1,15 @@
+libdrm (2.2.0-1) unstable; urgency=low
+
+  * New upstream release.
+  * Set the Debian X Strike Force as the new maintainer.
+  * Add myself to uploaders.
+  * Bump Standards-Version to 3.7.2, no changes required.
+  * Bump debhelper compatibility to 5 and adjust build-dependency.
+  * Don't try to install pkgconfig files from usr/share/pkgconfig because
+    there is nothing in that directory.
+
+ -- Thierry Reding <thierry@gilfi.de>  Sat, 18 Nov 2006 19:50:26 +0100
+
 libdrm (2.0.2-0.1) unstable; urgency=low
 
   * Non-maintainer upload.
