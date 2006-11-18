@@ -1,3 +1,12 @@
+libdrm (2.0.2-0.1) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * New upstream release (closes: #377166).
+    - Includes a fix for FTBFS on GNU/kFreeBSD (closes: #332994).
+  * Manually force static build.
+
+ -- Andres Salomon <dilinger@debian.org>  Sat, 23 Sep 2006 06:32:23 +0000
+
 libdrm (2.0.1-1) unstable; urgency=high
 
   * New upstream release
