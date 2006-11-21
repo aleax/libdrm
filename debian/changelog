@@ -1,10 +1,10 @@
-libdrm (2.3.0-1) unstable; urgency=low
+libdrm (2.3.0-1) experimental; urgency=low
 
   * New upstream release.
 
- -- Thierry Reding <thierry@gilfi.de>  Sat, 18 Nov 2006 20:01:28 +0100
+ -- Thierry Reding <thierry@gilfi.de>  Tue, 21 Nov 2006 15:19:07 +0100
 
-libdrm (2.2.0-1) unstable; urgency=low
+libdrm (2.2.0-1) experimental; urgency=low
 
   * New upstream release.
   * Set the Debian X Strike Force as the new maintainer.
