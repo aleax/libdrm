@@ -12,8 +12,9 @@ libdrm (2.3.0-1) experimental; urgency=low
   * Add build-dep on dpkg-dev >= 1.13.19 to make sure that the binary:Version
     substvar is available.
   * libdrm2-dbg depends on libdrm2 (= ${binary:Version}).
+  * Don't install libdrm.la, and use dh_install --list-missing.
 
- -- Julien Cristau <julien.cristau@ens-lyon.org>  Thu,  4 Jan 2007 18:42:56 +0100
+ -- Julien Cristau <julien.cristau@ens-lyon.org>  Thu,  4 Jan 2007 18:56:08 +0100
 
 libdrm (2.2.0-0.1) experimental; urgency=low
 
