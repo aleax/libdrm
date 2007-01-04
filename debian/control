@@ -1,7 +1,7 @@
 Source: libdrm
 Priority: optional
 Maintainer: Debian X Strike Force <debian-x@lists.debian.org>
-Uploaders: Thierry Reding <thierry@gilfi.de>
+Uploaders: Thierry Reding <thierry@gilfi.de>, Julien Cristau <julien.cristau@ens-lyon.org>
 Build-Depends: debhelper (>= 5.0.0), autotools-dev, libx11-dev
 Standards-Version: 3.7.2
 Section: libs
