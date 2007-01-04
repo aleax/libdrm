@@ -33,7 +33,7 @@ Description: Userspace interface to kernel DRM services -- runtime
  This package provides the runtime environment for libdrm.
 
 Package: libdrm2-dbg
-Section: libs
+Section: libdevel
 Priority: extra
 Architecture: any
 Depends: libdrm2 (= ${binary:Version})
