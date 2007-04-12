@@ -1,3 +1,11 @@
+libdrm (2.3.0-2) unstable; urgency=low
+
+  * Update my email address in debian/control.
+  * Add XS-Vcs-Git and XS-Vcs-Browser in debian/control.
+  * Upload to unstable.
+
+ -- Julien Cristau <jcristau@debian.org>  Thu, 12 Apr 2007 19:06:57 +0200
+
 libdrm (2.3.0-1) experimental; urgency=low
 
   [ Thierry Reding ]

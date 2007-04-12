@@ -1,10 +1,12 @@
 Source: libdrm
 Priority: optional
 Maintainer: Debian X Strike Force <debian-x@lists.debian.org>
-Uploaders: Thierry Reding <thierry@gilfi.de>, Julien Cristau <julien.cristau@ens-lyon.org>
+Uploaders: Thierry Reding <thierry@gilfi.de>, Julien Cristau <jcristau@debian.org>
 Build-Depends: debhelper (>= 5.0.0), autotools-dev, libx11-dev, dpkg-dev (>= 1.13.19)
 Standards-Version: 3.7.2
 Section: libs
+XS-Vcs-Git: git://git.debian.org/git/pkg-xorg/lib/libdrm
+XS-Vcs-Browser: http://git.debian.org/?p=pkg-xorg/lib/libdrm.git
 
 Package: libdrm-dev
 Section: libdevel
