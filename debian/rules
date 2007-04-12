@@ -26,7 +26,7 @@ endif
 
 config.status: configure
 	dh_testdir
-	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info
+	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --enable-static=yes
 
 build: build-stamp
 build-stamp:  config.status
@@ -65,9 +65,9 @@ binary-arch: build install
 	dh_installchangelogs
 	dh_installdocs
 	dh_installexamples
-	dh_install --sourcedir=debian/tmp
-#	dh_installman
+	dh_install --sourcedir=debian/tmp -Xlibdrm.la --list-missing
 	dh_link
+	dh_strip -plibdrm2 --dbg-package=libdrm2-dbg
 	dh_strip
 	dh_compress
 	dh_fixperms

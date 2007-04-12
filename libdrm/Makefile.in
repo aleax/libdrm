@@ -198,11 +198,11 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 libdrm_la_LTLIBRARIES = libdrm.la
 libdrm_ladir = $(libdir)
-libdrm_la_LDFLAGS = -version-number 2:0:0 -no-undefined
+libdrm_la_LDFLAGS = -version-number 2:3:0 -no-undefined
 AM_CFLAGS = -I$(top_srcdir)/shared-core
 libdrm_la_SOURCES = xf86drm.c xf86drmHash.c xf86drmRandom.c xf86drmSL.c
 libdrmincludedir = ${includedir}
-libdrminclude_HEADERS = xf86drm.h
+libdrminclude_HEADERS = xf86drm.h xf86mm.h
 EXTRA_DIST = ChangeLog TODO
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -218,9 +218,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  libdrm/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  libdrm/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  libdrm/Makefile
+	  $(AUTOMAKE) --foreign  libdrm/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

@@ -1,7 +1,3 @@
-2006-03-30  Adam Jackson  <ajax@freedesktop.org>
-
-	Bump to 2.0.1 for drm hash fix and new headers.
-
 2006-03-14  Adam Jackson  <ajax@freedesktop.org>
 
 	* xf86drmHash.c:

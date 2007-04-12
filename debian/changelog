@@ -1,3 +1,41 @@
+libdrm (2.3.0-1) experimental; urgency=low
+
+  [ Thierry Reding ]
+  * New upstream release.
+  * Set the Debian X Strike Force as maintainer.
+  * Add myself to uploaders.
+  * Add a debugging symbol package for libdrm2.
+
+  [ Julien Cristau ]
+  * Bump shlibs to libdrm2 >= 2.3.0.
+  * Add myself to uploaders.
+  * Add build-dep on dpkg-dev >= 1.13.19 to make sure that the binary:Version
+    substvar is available.
+  * libdrm2-dbg depends on libdrm2 (= ${binary:Version}).
+  * Don't install libdrm.la, and use dh_install --list-missing.
+
+ -- Julien Cristau <julien.cristau@ens-lyon.org>  Thu,  4 Jan 2007 18:56:08 +0100
+
+libdrm (2.2.0-0.1) experimental; urgency=low
+
+  * Non-maintainer upload.
+  * New upstream release.
+  * Bump Standards-Version to 3.7.2, no changes required.
+  * Bump debhelper compatibility to 5 and adjust build-dependency.
+  * Don't try to install pkgconfig files from usr/share/pkgconfig because
+    there is nothing in that directory.
+
+ -- Thierry Reding <thierry@gilfi.de>  Sat, 18 Nov 2006 19:50:26 +0100
+
+libdrm (2.0.2-0.1) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * New upstream release (closes: #377166).
+    - Includes a fix for FTBFS on GNU/kFreeBSD (closes: #332994).
+  * Manually force static build.
+
+ -- Andres Salomon <dilinger@debian.org>  Sat, 23 Sep 2006 06:32:23 +0000
+
 libdrm (2.0.1-1) unstable; urgency=high
 
   * New upstream release
