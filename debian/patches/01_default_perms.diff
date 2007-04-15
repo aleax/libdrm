@@ -1,0 +1,13 @@
+Index: libdrm/libdrm/xf86drm.h
+===================================================================
+--- libdrm.orig/libdrm/xf86drm.h	2007-04-15 12:37:15.000000000 -0400
++++ libdrm/libdrm/xf86drm.h	2007-04-15 12:39:16.000000000 -0400
+@@ -46,7 +46,7 @@
+ /* Default /dev/dri directory permissions 0755 */
+ #define DRM_DEV_DIRMODE	 	\
+ 	(S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
+-#define DRM_DEV_MODE	 (S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP)
++#define DRM_DEV_MODE	 (S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
+ 
+ #define DRM_DIR_NAME  "/dev/dri"
+ #define DRM_DEV_NAME  "%s/card%d"

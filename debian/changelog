@@ -1,3 +1,13 @@
+libdrm (2.3.0-2) experimental; urgency=low
+
+  * Add myself to uploaders
+  * Patch libdrm to default to device permission 666 so we don't have to do it
+    in xorg.conf. The only way libdrm can do anything is through the server
+    anyway. This can still be overridden by a user's xorg.conf. This change
+    also requires adding quilt to the build-depends
+
+ -- David Nusinow <dnusinow@debian.org>  Sun, 15 Apr 2007 13:08:50 -0400
+
 libdrm (2.3.0-1) experimental; urgency=low
 
   [ Thierry Reding ]
