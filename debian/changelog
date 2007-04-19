@@ -1,3 +1,10 @@
+libdrm (2.3.0-4) experimental; urgency=low
+
+  * Add NEWS.Debian explaining the change in the last upload to interested
+    administrators. 
+
+ -- David Nusinow <dnusinow@debian.org>  Wed, 18 Apr 2007 22:44:21 -0400
+
 libdrm (2.3.0-3) experimental; urgency=low
 
   * Add myself to uploaders
