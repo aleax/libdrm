@@ -1,9 +1,13 @@
-libdrm (2.3.0-4) experimental; urgency=low
+libdrm (2.3.0-4) unstable; urgency=low
 
+  [ David Nusinow ]
   * Add NEWS.Debian explaining the change in the last upload to interested
-    administrators. 
+    administrators.
 
- -- David Nusinow <dnusinow@debian.org>  Wed, 18 Apr 2007 22:44:21 -0400
+  [ Julien Cristau ]
+  * Upload to unstable.
+
+ -- Julien Cristau <jcristau@debian.org>  Fri, 20 Apr 2007 05:06:34 +0200
 
 libdrm (2.3.0-3) experimental; urgency=low
 
