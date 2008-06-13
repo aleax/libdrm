@@ -1,9 +1,13 @@
-libdrm (2.3.0-5) UNRELEASED; urgency=low
+libdrm (2.3.1~git20080613-1) UNRELEASED; urgency=low
 
+  [ Brice Goglin ]
   * Update upstream URL in debian/copyright.
   * Bump Standards-Version to 3.7.3 (no changes).
   * Drop the XS- prefix from Vcs-Git and Vcs-Browser fields in debian/control.
   * Install the upstream ChangeLog.
+
+  [ Julien Cristau ]
+  * New upstream snapshot (needed for mesa 7.1 and newer xserver).
 
  -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Fri, 13 Jun 2008 11:50:19 +0200
 
