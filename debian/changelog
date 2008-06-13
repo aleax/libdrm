@@ -3,8 +3,9 @@ libdrm (2.3.0-5) UNRELEASED; urgency=low
   * Update upstream URL in debian/copyright.
   * Bump Standards-Version to 3.7.3 (no changes).
   * Drop the XS- prefix from Vcs-Git and Vcs-Browser fields in debian/control.
+  * Install the upstream ChangeLog.
 
- -- Brice Goglin <bgoglin@debian.org>  Fri, 13 Jun 2008 11:11:12 +0200
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Fri, 13 Jun 2008 11:50:19 +0200
 
 libdrm (2.3.0-4) unstable; urgency=low
 
