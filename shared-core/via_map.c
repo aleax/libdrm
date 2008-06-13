@@ -25,13 +25,14 @@
 #include "via_drm.h"
 #include "via_drv.h"
 
-static int via_do_init_map(drm_device_t * dev, drm_via_init_t * init)
+static int via_do_init_map(struct drm_device * dev, drm_via_init_t * init)
 {
 	drm_via_private_t *dev_priv = dev->dev_private;
+	int ret = 0;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("\n");
 
-	DRM_GETSAREA();
+	dev_priv->sarea = drm_getsarea(dev);
 	if (!dev_priv->sarea) {
 		DRM_ERROR("could not find sarea!\n");
 		dev->dev_private = (void *)dev_priv;
@@ -64,11 +65,22 @@ static int via_do_init_map(drm_device_t * dev, drm_via_init_t * init)
 #ifdef VIA_HAVE_DMABLIT
 	via_init_dmablit( dev );
 #endif
+#ifdef VIA_HAVE_FENCE
+	dev_priv->emit_0_sequence = 0;
+	dev_priv->have_idlelock = 0;
+	spin_lock_init(&dev_priv->fence_lock);
+#endif /* VIA_HAVE_FENCE */
 	dev->dev_private = (void *)dev_priv;
-	return 0;
+#ifdef VIA_HAVE_BUFFER
+	ret = drm_bo_driver_init(dev);
+	if (ret)
+		DRM_ERROR("Could not initialize buffer object driver.\n");
+#endif
+	return ret;
+
 }
 
-int via_do_cleanup_map(drm_device_t * dev)
+int via_do_cleanup_map(struct drm_device * dev)
 {
 	via_dma_cleanup(dev);
 
@@ -76,19 +88,15 @@ int via_do_cleanup_map(drm_device_t * dev)
 }
 
 
-int via_map_init(DRM_IOCTL_ARGS)
+int via_map_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	DRM_DEVICE;
-	drm_via_init_t init;
+	drm_via_init_t *init = data;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("\n");
 
-	DRM_COPY_FROM_USER_IOCTL(init, (drm_via_init_t __user *) data,
-				 sizeof(init));
-
-	switch (init.func) {
+	switch (init->func) {
 	case VIA_INIT_MAP:
-		return via_do_init_map(dev, &init);
+		return via_do_init_map(dev, init);
 	case VIA_CLEANUP_MAP:
 		return via_do_cleanup_map(dev);
 	}
@@ -96,19 +104,18 @@ int via_map_init(DRM_IOCTL_ARGS)
 	return -EINVAL;
 }
 
-int via_driver_load(drm_device_t *dev, unsigned long chipset)
+int via_driver_load(struct drm_device *dev, unsigned long chipset)
 {
 	drm_via_private_t *dev_priv;
 	int ret = 0;
 
 	dev_priv = drm_calloc(1, sizeof(drm_via_private_t), DRM_MEM_DRIVER);
 	if (dev_priv == NULL)
-		return DRM_ERR(ENOMEM);
+		return -ENOMEM;
 
 	dev->dev_private = (void *)dev_priv;
 
-	if (chipset == VIA_PRO_GROUP_A)
-		dev_priv->pro_group_a = 1;
+	dev_priv->chipset = chipset;
 
 #ifdef VIA_HAVE_CORE_MM
 	ret = drm_sman_init(&dev_priv->sman, 2, 12, 8);
@@ -119,7 +126,7 @@ int via_driver_load(drm_device_t *dev, unsigned long chipset)
 	return ret;
 }
 
-int via_driver_unload(drm_device_t *dev)
+int via_driver_unload(struct drm_device *dev)
 {
 	drm_via_private_t *dev_priv = dev->dev_private;
 
@@ -130,4 +137,3 @@ int via_driver_unload(drm_device_t *dev)
 
 	return 0;
 }
-

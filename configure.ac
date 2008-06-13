@@ -19,7 +19,7 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 AC_PREREQ(2.57)
-AC_INIT([libdrm], 2.3.0, [dri-devel@lists.sourceforge.net], libdrm)
+AC_INIT([libdrm], 2.3.1, [dri-devel@lists.sourceforge.net], libdrm)
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_INIT_AUTOMAKE([dist-bzip2])
 
@@ -35,4 +35,9 @@ AC_SYS_LARGEFILE
 pkgconfigdir=${libdir}/pkgconfig
 AC_SUBST(pkgconfigdir)
 
-AC_OUTPUT([Makefile libdrm/Makefile shared-core/Makefile libdrm.pc])
+AC_OUTPUT([
+	Makefile
+	libdrm/Makefile
+	shared-core/Makefile
+	tests/Makefile
+	libdrm.pc])
