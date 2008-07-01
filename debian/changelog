@@ -1,4 +1,4 @@
-libdrm (2.3.1~git20080613-1) UNRELEASED; urgency=low
+libdrm (2.3.1-1) UNRELEASED; urgency=low
 
   [ Brice Goglin ]
   * Update upstream URL in debian/copyright.
@@ -7,7 +7,7 @@ libdrm (2.3.1~git20080613-1) UNRELEASED; urgency=low
   * Install the upstream ChangeLog.
 
   [ Julien Cristau ]
-  * New upstream snapshot (needed for mesa 7.1 and newer xserver).
+  * New upstream release (needed for mesa 7.1 and newer xserver).
 
  -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Fri, 13 Jun 2008 11:50:19 +0200
 

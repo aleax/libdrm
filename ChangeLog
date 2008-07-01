@@ -1,3 +1,10 @@
+commit 409d6818eba8a2e2938e0f9281c9318928ba5a35
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Jun 3 12:42:49 2008 +1000
+
+    drm: sg alloc should write back the handle to userspace
+    (cherry picked from commit d5ae19ebcf2dc6402872e0575b5786b6e8117b6f)
+
 commit f892b4adf4021e82a7d4f2eb06256d6f4200ed15
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Wed May 28 15:31:18 2008 +1000
