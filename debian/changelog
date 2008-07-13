@@ -10,6 +10,8 @@ libdrm (2.3.1-1) UNRELEASED; urgency=low
   * New upstream release (needed for mesa 7.1 and newer xserver).
   * Note: this release removes the memory manager (TTM) interface used by the
     i915tex dri driver.
+  * debian/rules: don't call configure with --host if we're not
+    cross-building, and fix some rules dependencies.
 
   [ Timo Aaltonen ]
   * Bump the shlibs to 2.3.1.
