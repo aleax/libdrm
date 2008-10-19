@@ -1,3 +1,11 @@
+libdrm (2.3.1-2) unstable; urgency=high
+
+  * Remove from the source package a bunch of files that are only used by the
+    kernel drm component.  This gets rid of the mga, r128 and radeon
+    microcode, and thus closes: #502675.  Thanks, Ben Hutchings!
+
+ -- Julien Cristau <jcristau@debian.org>  Sun, 19 Oct 2008 14:26:37 +0200
+
 libdrm (2.3.1-1) unstable; urgency=low
 
   [ Brice Goglin ]
