@@ -1,5 +1,6 @@
 libdrm (2.4.1-1) UNRELEASED; urgency=low
 
+  [ Timo Aaltonen ]
   * New upstream release. (closes: #505740)
   * debian/rules:
     -Run autoreconf at build time, build-depend on automake and libtool.
@@ -13,6 +14,7 @@ libdrm (2.4.1-1) UNRELEASED; urgency=low
     Thanks, Frank Lichtenheld!
   * Don't mention *.la in libdrm-dev.install.
   * Make libdrm-dev depend on libdrm-intel1.
+  * On Linux, let udev create the device files.
 
  -- Timo Aaltonen <tepsipakki@ubuntu.com>  Thu, 27 Nov 2008 09:33:05 +0200
 
