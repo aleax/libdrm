@@ -1,29 +1,2624 @@
-commit 409d6818eba8a2e2938e0f9281c9318928ba5a35
+commit 00847dabe0fa5ccf796658f486e8f6f7a77e043b
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Oct 30 11:36:46 2008 -0700
+
+    libdrm 2.4.1.
+
+commit 4b9826408f65976a1a13387beda748b65e03ec52
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Oct 30 09:33:07 2008 -0700
+
+    intel: Rename dri_ and intel_ symbols to drm_intel_.
+    
+    I wanted to avoid doing this, as it's a bunch of churn, but there was a
+    conflict between the dri_ symbols in libdrm and the symbols that were in
+    Mesa in 7.2, which broke Mesa 7.2 AIGLX when the 2D driver had loaded new
+    libdrm symbols.  The new naming was recommended by cworth for giving the
+    code a unique prefix identifying where the code lives.
+    
+    Additionally, take the opportunity to fix up two API mistakes: emit_reloc's
+    arguments were in a nonsensical order, and set_tiling lacked the stride
+    argument that the kernel will want to use soon.  API compatibility with
+    released code is maintained using #defines.
+
+commit 0e867312323fa51af324228b98bff4f49a813481
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Oct 21 00:10:54 2008 -0700
+
+    intel: Add dri_bufmgr_check_aperture support for bufmgr_gem.
+    
+    This relies on a new kernel ioctl to get the available aperture size.
+    
+    In order to provide reasonable performance from dri_bufmgr_check_aperture, we
+    now require that once a buffer has been used as the target of a relocation,
+    it gets no further relocations added to it.  This cuts the cost of
+    check_aperture from 10% to 1% in the 3D driver with no code changes, but
+    slightly complicates our plans for the 2D driver.
+
+commit e47ab7a5081e178bad385ce2e75b01474ea7aa4c
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Tue Oct 28 12:00:08 2008 +1100
+
+    nv50: symlink nv50_grctx.h to linux-core...
+
+commit 48b73904b485d679df879522719e4451fdb96ab6
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Tue Oct 28 11:38:30 2008 +1100
+
+    nv50: move context-related tables a separate header file
+    
+    This turns the various nvXX_graph_init_ctxvals() methods into tables,
+    and speeds up compliation of nv50_graph.c quite a bit.  This has bothered
+    me for a while, but others are complaining now so it's time to fix it :)
+
+commit 89ef1b5483bb234278fe40e193643fc9777f50d4
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Mon Oct 27 21:21:15 2008 +0200
+
+    drm: missing init_mm symbol, compatibility fix
+    
+    The drm_compat.c version of kmap_atomic_prot_pfn() uses the macro
+    pgd_offset_k(), which references the symbol init_mm.
+    Starting in 2.6.25, init_mm is no longer exported by default.
+    
+    The only user of kmap_atomic_prot_pfn() is i915, so this should
+    not hurt anyone, and it allows people to load drm.ko.
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit 145d2d610b90b6129bbbebd1e1f8c71f9147cbde
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Oct 27 14:39:05 2008 -0400
+
+    i915: Since FreeBSD doesn't have gem support yet, don't advertise it.
+    
+    This allows us to not crash X when using newer Intel ddx drivers.
+
+commit e1372f67274baa44419e000f5d3d6b2e81be2b51
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Oct 27 13:18:07 2008 -0400
+
+    radeon: fix error in busmaster enable logic
+    
+    - logic was wrong.  rs400/rs480 should clear the RADEON_BUS_MASTER_DIS bit
+    - should fix kernel bug 11798
+
+commit 848f00d77381d8b442c096476302796f8fe122fa
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Oct 27 12:59:39 2008 -0400
+
+    radeon: fix some fallout from the busmaster disable cleanup
+    
+    rs400 is just like rs480.  I mixed up the internal
+    chipset names for rs600 and rs400.
+
+commit 1d930fc75b99a89fc77d35d8f95f2877cfd5d7f0
+Author: Matthias Hopf <mhopf@suse.de>
+Date:   Sat Oct 25 12:11:44 2008 -0400
+
+    drm/i915: fix ioremap of a user address for non-root (CVE-2008-3831)
+    
+    Olaf Kirch noticed that the i915_set_status_page() function of the i915
+    kernel driver calls ioremap with an address offset that is supplied by
+    userspace via ioctl. The function zeroes the mapped memory via memset
+    and tells the hardware about the address. Turns out that access to that
+    ioctl is not restricted to root so users could probably exploit that to
+    do nasty things. We haven't tried to write actual exploit code though.
+    
+    It only affects the Intel G33 series and newer.
+
+commit b7d54b1dba8eba24da1b9cdd2116a26b98365b81
+Author: Xiang, Haihao <haihao.xiang@intel.com>
+Date:   Fri Oct 24 16:35:00 2008 +0800
+
+    intel: Also total child_size of the target_bos. Partial fix #17964.
+
+commit 8256c347cc80db0371b40b34ee8a163908d50079
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Thu Oct 23 15:46:32 2008 -0400
+
+    [FreeBSD] We should use dev2unit() rather than minor()
+
+commit 7dbeb18777a4dc1e7eb3c6bc4da3e72456afc8fc
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Thu Oct 23 15:42:49 2008 -0400
+
+    [FreeBSD] This check isn't correct and causes at least mga to lockup.
+
+commit a59ea02ff839fa0801763a90beb8b232b933c746
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu Oct 16 21:15:01 2008 -0700
+
+    intel: ioctl is not defined to return -errno
+    
+    Don't count on ioctl returning -errno; use errno directly.
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+
+commit 769197c8f16eaf3c0a476a4459e535afd4a939cb
+Author: Xiang, Haihao <haihao.xiang@intel.com>
+Date:   Thu Oct 16 10:37:30 2008 +0800
+
+    intel: avoid deadlock in intel_bufmgr_fake.
+
+commit 458e2d5bc5f949d00cfcc9a3f9ce89f0c9f5628c
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Oct 14 13:33:38 2008 -0700
+
+    intel: Fix compile warning.
+
+commit 993383873c215ab11975d98b93f131a4e3ea7ce6
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Oct 14 13:18:11 2008 -0700
+
+    intel: Add interface for getting tiling mode of a bo.
+
+commit d9c2f65dd8e50736a33e97a55c257ef6843e1ce7
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Tue Oct 14 01:25:57 2008 +0200
+
+    link libdrm_intel properly
+    
+    libdrm_intel needs symbols from libdrm, so link against it.
+
+commit 3e03d781f7c41a88d5d5f895be9c443bf3592ef0
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Oct 13 13:41:10 2008 -0700
+
+    intel: Avoid pthread mutex recursion in bufmgr_fake.
+    
+    Bug #18035. Fixes deadlock in glean texCube testcase.
+
+commit c6109df93bc062d3ec2ff2808babe826532d11b3
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Mon Oct 13 07:16:33 2008 +1000
+
+    libdrm: don't depend or link to libdrm_intel
+
+commit f5327aca0cbb1b602e4f954b8f361f2e1daaf20d
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Fri Oct 10 18:23:11 2008 -0400
+
+    [FreeBSD] Plug memory leak in drm_rmdraw() and drm_drawable_free_all()
+
+commit cdd3e9fc562bd57e0272e4c4d1c0707776bd01a1
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Fri Oct 10 13:06:22 2008 -0400
+
+    [FreeBSD] Rework all of the memory allocations
+    
+    Allocate memory from different pools.  This allows the OS to track memory
+    allocations for us, much like the linux memory debugging.  This will ease
+    tracking down memory leaks since the OS can track the number of allocations
+    from each pool and help to point us in the right direction.  Also replace
+    drm_alloc and friends with static __inline__ versions while we are here.
+
+commit 1150a42d4398b14c5db2f34a5beba613528df147
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Thu Oct 9 22:13:26 2008 -0400
+
+    [FreeBSD] Fix linux list compat list_for_each_safe()
+    
+    linux_for_each_safe would not handle lists with a single entry.
+
+commit a8f73c214dc2accee12d84b85d37fb498ab3adad
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Thu Oct 9 22:11:55 2008 -0400
+
+    i915: Cleanup interrupt handling
+
+commit 94c88c151cecae48ce1f4f01acddfaaad4b437f3
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu Oct 9 14:30:56 2008 -0700
+
+    Manage fences in user-mode bufmgr_fake to clean buffers
+    
+    When using bufmgr_fake without DRM, the X server idles the ring whenever it
+    wants to wait for something to complete (brutal, but effective). In this
+    case, bufmgr_fake must treat the pending fence as having passed. However, it
+    wasn't recording the fences as it emitted them, nor cleaning buffers as they
+    passed.
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 3169d9639bd002b43e4064cea32e0d262076c1e0
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Jun 12 23:22:26 2008 -0700
+
+    intel: Protect bufmgr objects with a pthread mutex.
+    
+    We want to be able to use the bufmgr from multiple threads for GL, and thus
+    we need to protect the internal structures.
+    
+    The pthread-stubs package is used so that programs not linked against
+    pthreads get weak symbols to stubs and don't eat most of the cost.
+
+commit 604759d4a78efcef0abdb40bfc215526cdcf1122
+Author: Xiang, Haihao <haihao.xiang@intel.com>
+Date:   Thu Oct 9 11:57:13 2008 +0800
+
+    intel: fix for write_domain and static BOs.
+    
+    http://bugs.freedesktop.org/show_bug.cgi?id=17705
+
+commit 728d8e226f1bc12f50f710cc96bbb2a25f72ada3
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Oct 6 12:12:49 2008 -0400
+
+    radeon: add comment to clarify bus mastering on PCIE chips
+
+commit 6f9dfa098fed73895f4ad32f9274ffaa163d3efb
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Oct 6 12:01:11 2008 -0400
+
+    radeon: fix duplicate define in my last commit
+    
+    That's what I get for committing at 3 AM.
+
+commit 8e5f5ed189fa28e08e45274c15f8ed41f627bc8b
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Tue Oct 7 04:47:54 2008 +1000
+
+    radeon: PCIE cards don't appear to have explicit bus master
+
+commit d0aff120521db3fa170ae55cc16a4935e813816d
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Wed Sep 17 03:00:02 2008 +1000
+
+    drm: add create gpu tree script
+
+commit 4b98f6d74ffb119174237d30356ed3e2724b27da
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Oct 6 03:08:27 2008 -0400
+
+    radeon: fix bus master enabled bits on newer asics
+
+commit 5a36cce3499c48fe1bf137b26b2a5e8a383d0332
+Author: Mihail Zenkov <mihail.zenkov@gmail.com>
+Date:   Mon Oct 6 00:49:15 2008 -0400
+
+    radeon: fix missing bit from rs740 patch
+    
+    See bug 17908
+
+commit ce40261012d39e1096442ef48c45b305c8d69dbd
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Sat Oct 4 20:43:21 2008 -0400
+
+    radeon: Add support for HD2100 IGP (RS740)
+
+commit 60cf3a4db4ab8ee81aca104624e89caf5587419b
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Fri Oct 3 14:11:20 2008 -0400
+
+    [FreeBSD] Don't explicitly bzero driver softc.
+    
+    This is already handled for us.
+    
+    Suggested by John Baldwin
+
+commit 9c0ce38df3d9026785155d06fc62bdd7acaf8bf0
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Fri Oct 3 14:05:45 2008 -0400
+
+    [FreeBSD] Use M_WAITOK when allocating driver memory.
+    
+    We don't explicitly check for error here and M_WAITOK will just put the
+    process to sleep waiting on resources to become available.
+    
+    Suggested by John Baldwin
+
+commit 4c92abfa8d0b9f2ab14e6b915bdffd47fd2e2474
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Fri Oct 3 13:56:50 2008 -0400
+
+    [FreeBSD] Do a bit of optimization on drm_order()
+
+commit 81952c7dd18d8fc4617fe4cb761fdf830de5244f
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Sat Sep 20 18:34:57 2008 -0400
+
+    Use devfs_get_cdevpriv in mmap as well.
+    
+    d_mmap gets called twice and we are only able to associate the file_priv
+    during the first call.  The second call will return EBADF and we need to
+    assume that the call was succesful.  d_mmap will not tolerate having an
+    error returned for the second call.
+
+commit 073cb5ee1d12a7f1a18b7d732f346c16eb740f49
+Author: Xiang, Haihao <haihao.xiang@intel.com>
+Date:   Sat Sep 27 11:01:24 2008 +0800
+
+    intel: Copy data from card memory back to backing store when mapping.
+    
+    Fixes http://bugs.freedesktop.org/show_bug.cgi?id=17705
+
+commit 2db8e0c8ef8c7a66460fceda129533b364f6418c
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Sep 23 17:06:01 2008 -0700
+
+    intel: Allow up to 15 seconds chewing on one buffer before acknowledging -EBUSY.
+    
+    The gltestperf demo in some cases took over seven seconds to make it through
+    one batchbuffer on a GM965.
+    
+    Bug #17004.
+
+commit 0dccf017ab629d69fce91e18b013882ecb45f55d
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Sep 23 10:48:39 2008 -0700
+
+    intel: Replace wraparound test logic in bufmgr_fake.  Again.
+    
+    I'd swapped the operands, so if we weren't in lockstep with the hardware we
+    said the sequence was always passed.  Additionally, a race was available that
+    we might have failed at recovering from.  Instead, I've replaced the logic
+    with new stuff that should be more robust and not rely on all the parties in
+    userland following the same IRQ_EMIT() == 1 protocol.  Also, in a radical
+    departure from past efforts, include a long comment describing the failure
+    modes and how we're working around them.
+    
+    Thanks to haihao for catching the original issue.
+
+commit 1b3abe62b5751d0514d57aa850e584dca7dfc23e
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Sep 23 10:47:21 2008 -0700
+
+    intel: Do strerror on errno, not on the -1 return value from ioctl.
+
+commit 3949f3c9eaad9547fe046ca4d469fa7cc8f12304
+Author: Xiang, Haihao <haihao.xiang@intel.com>
+Date:   Mon Sep 22 10:16:19 2008 +0800
+
+    intel: Fix driver-supplied argument to exec function (fd.o bug #17653).
+
+commit 8ca06eb492f861dbf049a2e104e4e2a5ba814c13
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Wed Sep 17 23:10:15 2008 -0400
+
+    [FreeBSD] Convert to using cdevpriv for file_priv tracking
+
+commit ee6bcabc506e4d506fb65447c405f8514ab1f4e1
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Wed Sep 17 22:18:03 2008 +1000
+
+    nv50: add initial context for chipset 0xaa
+    
+    This just doesn't look right..
+
+commit d55e8090fa9d0f3bb67eeb8cc61c0ed6345d41b4
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Wed Sep 17 22:03:38 2008 +1000
+
+    nv50: add initial context to match ctxprog for chipset 0x50
+
+commit 4d2f1257fab84bf66bd1154a1c829317584fd5f7
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Wed Sep 17 15:13:27 2008 +1000
+
+    nv50: add ctxprog for chipset 0x50
+
+commit 301be1dc9be8a83f5092417573967f35766227bc
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Wed Sep 17 15:02:54 2008 +1000
+
+    nv50: add ctxprog for chipset 0xaa
+
+commit f152482bdecaa16db36b20b445a480445d18048c
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Wed Sep 17 14:49:04 2008 +1000
+
+    nv50: add support for chipset 0x92
+
+commit 973c634eaa54ee4085a72102c690bc643cb2d7a8
+Author: vehemens <vehemens@verizon.net>
+Date:   Mon Sep 8 22:06:09 2008 -0700
+
+    Remove incomplete and obsolete free/net/open code.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit b54d15d8fd252df5f0914ab245431e66b9a4e8ab
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Sep 10 20:04:42 2008 -0700
+
+    Add missing \ to libdrm_la_SOURCES
+    
+    Reported by jcristau.
+
+commit 368b392e6dcd19cb75675c0c18d02f70257af1df
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Sep 10 13:54:34 2008 -0700
+
+    intel: don't forget to include config.h in bufmgr code.
+    
+    Thanks to airlied for catching this.
+
+commit f9d98beefc9e7b8d06a29f5b69a19f10fd3c435f
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Sep 8 08:51:40 2008 -0700
+
+    intel: move drm calls to exec buffers to libdrm_intel.
+    
+    This avoids duplicating the effort in 3 places.  Also, added emit/wait fence
+    callbacks back in bufmgr_fake since we need it for non-drm 2d.  Sigh.
+
+commit 869d8bebedddf2075c59d6bffea8ee640cb80353
+Author: Eric Anholt <eric@anholt.net>
+Date:   Sat Sep 6 03:07:41 2008 +0100
+
+    intel: Move IRQ emit/wait from callbacks into the bufmgr.
+    
+    In the process, work around the glaring bugs of the kernel irq wait function.
+
+commit 738e36acbce24df0ccadb499c5cf62ccb74f56df
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Sep 5 10:35:32 2008 +0100
+
+    Move intel libdrm stuff to libdrm_intel.so
+    
+    dri_bufmgr.h is replaced by intel_bufmgr.h, and several functions are renamed,
+    though the structures and many functions remain dri_bufmgr_* and dri_bo_*
+
+commit 09cf0f0213652609d09154ce2859c03cf97ab11e
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Sep 3 23:05:16 2008 +0100
+
+    drm: Add tests for GEM_FLINK ioctl.
+
+commit 828ae3f6b88b5a69a56b2961307e40ed95edea29
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Sep 8 16:40:52 2008 -0400
+
+    [FreeBSD] We need to call drm_detach before we free dev->driver.
+    
+    The driver is in control of the show, so when you try and unload a module
+    the driver detach routine is called first.  It is what drives the whole
+    unload process and so lots of panics occur if dev->driver is already
+    free.
+
+commit 2880c86eb246aceeb5c750e27259a7b6d8897328
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Sun Sep 7 12:44:02 2008 -0400
+
+    [FreeBSD] Implement drm_ioremap_wc() to set a range of mem to write-combining
+
+commit 740f09bffde20d9207497bd107d50941ca21278a
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Sat Sep 6 21:08:33 2008 -0400
+
+    [FreeBSD] IGP gart needs to be un-cached.
+    
+    Airlied inadvertently discovered that the IGP gart needs to be un-cached
+    for radeon rs485 and rs690 to work.  Initial tests by placing a wbinvd()
+    after allocating the gart were successful.  This is an attempt at a more
+    appropriate method of achieving success.
+
+commit be5fad45ee4e81997784f258fcdfaf0a303dd666
+Author: vehemens <vehemens@verizon.net>
+Date:   Sat Sep 6 18:02:31 2008 -0700
+
+    Free temp_pagelist on error. Free in reverse order. Noticed by open.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit 9ad5a6d0d73ba58ec7c2f66d0c5355185f2f68c6
+Author: vehemens <vehemens@verizon.net>
+Date:   Sat Sep 6 15:33:47 2008 -0700
+
+    Pass lock data like linux and open.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit b8a9cebddc7063bc0dae889dac43359c0cb9bfa5
+Author: vehemens <vehemens@verizon.net>
+Date:   Sat Sep 6 14:19:32 2008 -0700
+
+    Move order to end like linux.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit 0808cf923d4a851b100d9b7022cb82f5e1f52e28
+Author: vehemens <vehemens@verizon.net>
+Date:   Sat Sep 6 14:16:51 2008 -0700
+
+    Style white space cleanup part 2.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit 6f2479c67432f764bfc4e248689f1737c1935237
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Sat Sep 6 18:37:06 2008 -0400
+
+    [FreeBSD] Ensure that drm_pci_alloc is never called while locks are held.
+
+commit 31709aa2be54877c45ca382bf370b41dbaf5c2ec
+Author: vehemens <vehemens@verizon.net>
+Date:   Tue Sep 2 13:56:35 2008 -0700
+
+    Reorder lock functions like linux.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit 76dd74c64ef9b92025e76dd256e0641ff6fce0f4
+Author: vehemens <vehemens@verizon.net>
+Date:   Tue Sep 2 04:57:36 2008 -0700
+
+    Style white space cleanup.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit ed6dd03818f2fa4dd0f2ba34dee58b09c7ff253e
+Author: vehemens <vehemens@verizon.net>
+Date:   Tue Sep 2 02:43:19 2008 -0700
+
+    Need M_NOWAIT for malloc.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit 3f915f68e8f68fe0fc3d0e1eb8a18a16f8f397da
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Fri Sep 5 11:52:53 2008 -0400
+
+    i915: fix i915_ring_validate()
+
+commit ce84511f4d647d5ce9fd52b838ee944e23050954
+Author: Stephane Marchesin <marchesin@icps.u-strasbg.fr>
+Date:   Fri Sep 5 00:17:52 2008 +0200
+
+    nouveau: 8200 cards are 0xA0 family.
+
+commit 99f8cce3eae79c9cf5e9897ef1af8eac24b38c09
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Sep 2 10:07:14 2008 +1000
+
+    drm: fix sysfs error path.
+    
+    Pointed out by Roel Kluin on dri-devel.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit cd7d71f19cf2a16521c9da1815421c6a5f12a58e
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Sun Aug 31 07:27:26 2008 +1000
+
+    radeon: make writeback work after suspend/resume.
+    
+    While re-writing this for modesetting, I find we disable writeback on
+    resume.
+
+commit 2b278047153df729caf9e516a432b2e76398cd3a
+Author: vehemens <vehemens@verizon.net>
+Date:   Wed Aug 27 19:11:04 2008 -0700
+
+    [FreeBSD] Use driver features macros and flags
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit 2649103bf9c4eb471a10800f4a3161dca6249086
+Author: vehemens <vehemens@verizon.net>
+Date:   Fri Aug 29 13:18:54 2008 -0400
+
+    [FreeBSD] Convert drm_driver to a pointer like linux.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit 71f0a3e389efb6c92a84299d05beb2a1bfa53469
+Author: vehemens <vehemens@verizon.net>
+Date:   Fri Aug 29 12:47:00 2008 -0400
+
+    [FreeBSD] Replace typedefs on bsd.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit b92f5577670f99ded76e201a71aaa23cce8f7577
+Author: vehemens <vehemens@verizon.net>
+Date:   Fri Aug 29 12:40:30 2008 -0400
+
+    [FreeBSD] Catch up to vblank rework for via.
+    
+    (No, we don't build via right now.)
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit 043ad591b55ee8d4ac3ff65038705219d1893b12
+Author: vehemens <vehemens@verizon.net>
+Date:   Fri Aug 29 12:37:29 2008 -0400
+
+    [FreeBSD] Correct debug message
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit c7f7b6d7e2f46753381de51e4b0b00211a1a6b5f
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Fri Aug 29 12:29:50 2008 -0400
+
+    [FreeBSD] Fix a couple of locking problems.
+
+commit f8a14b1f9556919617208a8eb88ff88d6c77f08d
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Fri Aug 29 12:23:35 2008 -0400
+
+    [FreeBSD] Increase debugging output for vblank code.
+    
+    Doing my part to make DRM_DEBUG more chatty...
+
+commit b460aeec3ea817540e43c8215f2cdf432c957289
+Author: Tomas Carnecky <tom@dbservice.com>
+Date:   Fri Aug 29 00:43:19 2008 +0200
+
+    Fix drm_realloc when you're reallocing into something smaller.
+
+commit bffbb497e2502b0aa6fd24804251d6a21d8fa034
+Author: Stephane Marchesin <marchesin@icps.u-strasbg.fr>
+Date:   Wed Aug 27 02:27:10 2008 +0200
+
+    Change git-describe into git describe.
+
+commit 0239594fc318c2b55bbfbea27f23218f6d7a4b34
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Tue Aug 26 14:28:08 2008 -0400
+
+    [intel_bufmgr_gem] Remember global name when creating buffer from name.
+
+commit c8fd8d3a0d37dc09165ac77c7d38938ef9942011
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Sun Aug 24 15:53:17 2008 -0400
+
+    i915: Fix i915 build on FreeBSD
+    
+    ifdef out all the gem stuff for now.  Also, the msi stuff isn't portable
+    the way it is... I'll try and fix that up sometime soon.
+
+commit bfea578352aaaed08555e86c9951b3932f39d122
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Fri Aug 22 21:45:41 2008 -0400
+
+    [FreeBSD] Add drm_drawable_free_all()
+
+commit 0687c0a4ec78730f752cee04a5b0862f47dbf026
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Fri Aug 22 21:34:25 2008 -0400
+
+    [FreeBSD] Fix long standing memory leak in drm_remove_magic.
+    
+    We shuffled all the links around to disconnect the entry, but
+    never free it.  We would incorrectly free the last entry in the
+    hash chain if nothing matched.
+
+commit d0acbe4553d27df3fdc217c956c609c54ebb51e6
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Fri Aug 22 21:32:37 2008 -0400
+
+    i915: Convert vblank on disabled pipe DRM_ERROR to DRM_DEBUG.
+
+commit 739b01dde43c40398d9b0d177e9d330e06cdc2ae
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Wed Aug 20 17:20:31 2008 -0400
+
+    i915: Clear sarea_priv during lastclose.
+    
+    sarea_priv needs to be NULL before i915_initialized is called to
+    properly reset it.  The stale value produces a panic any time something
+    opens/closes drm without calling initialize.  i.e. version checking
+
+commit 1f3c4dd938a1710d762bac37dfb1b17c90af4732
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Wed Aug 20 17:15:46 2008 -0400
+
+    i915: Free dev->dev_private on unload.
+
+commit 3e9541230d7b7c32ecb36c1edc5124b6991222be
+Author: vehemens <vehemens@verizon.net>
+Date:   Wed Aug 13 17:19:35 2008 -0400
+
+    [FreeBSD] Move vblank bits into their own structure.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit e6010778a8edf96dbfb4bc1f7cf0ce5706eee733
+Author: vehemens <vehemens@verizon.net>
+Date:   Wed Aug 13 17:17:05 2008 -0400
+
+    [FreeBSD] Fix lock leak.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit 16c1a87580af89be02e7e6c1898f18b36829e007
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Wed Aug 13 17:05:59 2008 -0400
+
+    i915: Move spinlock init / destroy to load / unload time.
+    
+    This resolves the panic on FreeBSD during VT switch, without attempting
+    any of the more lofty goals for the time being.
+
+commit 9101a0205c897fea28e6a3d875111a83ad7f7732
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Sun Aug 24 16:54:43 2008 +1000
+
+    libdrm: add udev support.
+    
+    This patch allows you to --enable-udev, and will avoid having libdrm
+    make device nodes. If you are using udev, you should really --enable-udev
+    your libdrm.
+
+commit 0da66c27fa2aabdbaf4c003ba3712a61253d7ffe
+Author: root <root@gdp.(none)>
+Date:   Tue May 6 23:04:55 2008 +0100
+
+    nouveau: fifo and graphics engine suspend and resume for nv04-nv4x
+    
+    Corresponding DDX patch at http://people.freedesktop.org/~stuart/nv0x-nv4x_suspend/
+
+commit 41b83a99583486ad4f8760a6537d34783769bfc3
+Author: Coleman Kane <cokane@cokane.org>
+Date:   Mon Aug 18 17:08:21 2008 -0400
+
+    Change prototype of drmIoctl to unsigned long request.
+    
+    This resolves and issue on amd64 FreeBSD and it looks like the
+    linux ioctl syscall should be unsigned long as well.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit a5381cac55e54a535acf752970886b659948563c
+Author: Maarten Maathuis <madman2003@gmail.com>
+Date:   Sun Aug 17 00:41:50 2008 +0200
+
+    nouveau: make it compile under 2.6.27
+
+commit ba840fca19077d352277519c5fa032e3b107ae27
+Author: Maarten Maathuis <madman2003@gmail.com>
+Date:   Thu Aug 14 19:35:55 2008 +0200
+
+    linux: on_each_cpu has 3 args on 2.6.27
+
+commit af12ef4f6b4ca111d9a2ef45263ad89610498724
+Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
+Date:   Wed Aug 13 10:04:21 2008 +0200
+
+    Don't call the vblank tasklet with irqs disabled.
+    If a specific tasklet shares data with irq context,
+    it needs to take a private irq-blocking spinlock within
+    the tasklet itself.
+
+commit b0e68829462aad00ce68be998da6313bca754e9a
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Tue Aug 12 22:22:15 2008 -0400
+
+    [intel_bufmgr_gem] Fix flink buffer name caching (#17085, #17092).
+    
+    Store the global name in global_name, don't overwrite the gem_handle.
+
+commit 966c783e96b3f8ae0271db3dd6862177c659ab13
+Author: Matthieu Herrb <matthieu.herrb@laas.fr>
+Date:   Mon Aug 11 10:44:39 2008 -0700
+
+    libdrm: Allow build outside of source tree.
+
+commit 08faab27e5fbf12e53dc9d4bf38eda8da1a55007
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Aug 11 10:58:41 2008 +1000
+
+    drm_vm: fix for build on 2.6.22
+    
+    thanks to malc0 for pointing it out
+
+commit 280d415957c0af099c44aaecb69a06c68c86aebb
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Aug 11 10:47:00 2008 +1000
+
+    drm: add OS_HAS_GEM option.
+    
+    To build i915 driver pass OS_HAS_GEM=1 to make for now
+
+commit 12e6a114cf9ebd0e1d8ccdbf9a7aef7c67e24b58
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Sat Aug 9 17:19:16 2008 +1000
+
+    drm: TRUE/true
+
+commit f7a99407153eaba5724b6f1f2cadab62c6a50a26
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Aug 8 15:55:34 2008 -0700
+
+    Drop TTM interfaces from the userland library.
+
+commit 9e9d9b1741965f6529153bc2bcbe2dd8ba96ef3f
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Aug 8 14:08:43 2008 -0700
+
+    Fix compile warning from check_aperture change.
+
+commit e1b8e79796b172c356af98eb49107c8abbebfe5a
+Merge: 0c47151... 46e9274...
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Aug 8 14:05:01 2008 -0700
+
+    Merge branch 'drm-gem'
+    
+    Conflicts:
+    
+    	shared-core/i915_dma.c
+    
+    This brings in kernel support and userland interface for intel GEM.
+
+commit 46e9274e8538e5b0517f611dca99dde611f4e95d
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Aug 8 13:13:46 2008 -0700
+
+    Replace the check_aperture API with one we can make thread-safe.
+    
+    While the bufmgr isn't thread-safe at the moment, we need it to be for shared
+    objects between contexts.
+
+commit 0c47151a571827905c34649208e22f8ec0175d62
+Author: Stuart Bennett <sb476@cam.ac.uk>
+Date:   Fri Aug 8 16:20:52 2008 +0100
+
+    nouveau: wait for pgraph idle after loading or saving a context
+    
+    the nvidia driver does this, and it stops the error message appearing on nv40
+
+commit 5968e061db90451b19c3948bbd91c6d5ac9af941
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu Aug 7 15:26:30 2008 -0700
+
+    Make flink save the kernel-assigned name and return it instead of creating another name
+
+commit ac20e14d2361160cf199dc31c3fe1ffbacdf5bb7
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Aug 4 23:33:03 2008 -0700
+
+    Switch from shmem_getpage to read_mapping_page
+
+commit dc0546c87ffc6701802d6141810c24954274e1ac
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue Aug 5 16:06:40 2008 -0700
+
+    [gem-intel] Retiring flush requests should clear flushed write_domains
+    
+    When i915_gem_retire_request has a flush which matches an object write
+    domain, clear the write domain. This will move the object to the inactive
+    list rather than the flushing list, avoiding trouble with objects left stuck
+    on the flushing list.
+
+commit ceb3d5e3834452f9d54f974b8066f90168467443
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue Aug 5 14:44:53 2008 -0700
+
+    [gem-intel] Don't clear write_domain until flush completes
+    
+    In i915_gem_object_wait_rendering, if the object write domain is being
+    written by the GPU, the appropriate flushing commands are written to the
+    device and an additional request queued to mark that flush. Finally, the
+    function blocks on that new request.
+    
+    The bug was that the write_domain in the object was cleared before the
+    function blocked.
+    
+    If the wait is interrupted by a signal, the flushing commands may still be
+    pending. With the current write_domain information lost, the restarted
+    syscall will drop right through the write_domain test as that value was
+    lost, and so the function will not block at all. Oops.
+    
+    Fixed by simply moving the write_domain clear until after the wait_request
+    succeeds. Note that the restarted system call will generate an additional
+    flush sequence and request, but that should be 'harmless', aside from a
+    slight performance impact.
+    
+    Someday we'll track flushing more accurately and clear write_domains more
+    efficiently, but for now, this should suffice.
+    
+    This bug was discovered in the 2d gem development by running x11perf
+    -copypixwin500 and noticing that the window got cleared accidentally.
+
+commit 8e41ce17b4ab72f526cc6e9acd75c3fa81a60433
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Aug 4 00:34:08 2008 -0700
+
+    Expose pin/unpin/set_tiling/flink APIs
+
+commit 4585787bd1a1d782b9e7c06095f98d09165b8c23
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Fri Aug 1 07:43:58 2008 +1000
+
+    Revert "i915: Move all of the irq install/uninstall to load time."
+    
+    This reverts commit 965a72202b439068e62ac341990f51953457b202.
+    
+    Please re-do over properly
+
+commit 10d5b037b85706037df89bf0275436797e4eb559
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Jul 31 13:12:36 2008 +1000
+
+    drm: add fault handler support so as to be more like possible upstream
+
+commit ccbaad52f79162a77d98d0dde00681b1dbf14165
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jul 30 14:10:36 2008 -0700
+
+    intel-gem: Replace version bump signalling GEM with I915_PARAM_HAS_GEM.
+
+commit 689548b5270a0049cfaf844013ef61ad4c9eaeea
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jul 30 11:29:32 2008 -0700
+
+    intel-gem: Remove dead field from reverted changes.
+
+commit 33c8e03787308c2b86a4f724ba7ce4dc43918b6a
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jul 30 11:22:48 2008 -0700
+
+    Revert "Rename drm_mm.c and its fuctions to drm_memrange."
+    
+    This reverts commit 3ad8db2071d30c198403e605f2726fc5c3e46bfd.
+    
+    We ended up not needing that namespace, and I'd rather not have the churn
+    for producing diffs.
+
+commit 95c02743c96ca9e959f68a6e942206bdfadae53a
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Jul 30 16:52:13 2008 +1000
+
+    i915: more version checks
+
+commit 02b09d271c60d13fbb738c7053429a3b816397db
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Jul 30 16:26:51 2008 +1000
+
+    i915: add version checks for opregion on old kernels
+
+commit 8fc72aef70cdec71e3dbce548046974aecc15325
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Jul 29 20:26:38 2008 -0700
+
+    intel-gem: actually add i915_gem_debug.c.
+
+commit 0f78e30e0a189b76df3558f53ff2a92b841cd7ab
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Jul 29 11:10:47 2008 -0700
+
+    intel-gem: Check return value of pci_read_base.
+
+commit 90b90c65dc78648ddded5eff7628749182c73295
+Author: Nicolai Haehnle <nhaehnle@gmail.com>
+Date:   Tue Jul 29 19:56:51 2008 +0200
+
+    r300: Fix cliprect emit
+    
+    This makes our handling of cliprects sane. drm_clip_rect always has exclusive
+    bottom-right corners, but the hardware expects inclusive bottom-right corners,
+    so we adjust this here.
+    
+    This complements Michel Daenzer's commit 57aea290e1e0a26d1e74df6cff777eb9f038f1f8
+    to Mesa. See also http://bugs.freedesktop.org/show_bug.cgi?id=16123 .
+
+commit 0e49e49c9f8fdbe77740c1bdcc0cb4102d26bf7a
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jul 28 23:14:11 2008 -0700
+
+    intel: Fix typo in unused register definition name.
+
+commit e68b57c17da422f61b34c8221c8f4655c676b925
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jul 28 16:33:50 2008 -0700
+
+    intel-gem: checkpatch.pl on drm_proc.c new contents.
+
+commit 1d2bb68d28fe39746299ee8ddb664a62de839b0c
+Merge: 487c42b... 514c05c...
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jul 28 15:17:21 2008 -0700
+
+    Merge commit 'origin/master' into drm-gem
+    
+    Conflicts:
+    
+    	linux-core/Makefile.kernel
+    	shared-core/i915_dma.c
+    	shared-core/i915_drv.h
+    	shared-core/i915_irq.c
+
+commit 6b903f5edfbba19980a5518df9a89643378516d4
+Author: Stuart Bennett <sb476@cam.ac.uk>
+Date:   Tue Jul 29 02:32:13 2008 +0100
+
+    nouveau: fix nv04 fifo context save to save reg contents, not reg offset
+    
+    clearly the function had never been used :)
+
+commit 591f6bcba35e482280299eef91d57b23a69106d1
+Author: Stuart Bennett <sb476@cam.ac.uk>
+Date:   Tue Jul 29 02:26:34 2008 +0100
+
+    nouveau: fix bad rename from 5a072f32c8f941d1ef301811881e8c89c8d8a5f1
+
+commit 487c42bd42d93304278abce03b36c935bdc83284
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jul 28 11:45:22 2008 -0700
+
+    intel-gem: Another checkpatch.pl pass.
+
+commit 1bdf35fe19c1aa02b301375b3cae7ad29adacef8
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jul 28 11:24:00 2008 -0700
+
+    intel-gem: Fix regression tests.
+    
+    Main fix is an oops that was triggered by the gtt pwrite path when we don't
+    have the gtt initialized.  Also, settle on -EBADF for "bad object handle",
+    and -EINVAL for "reading/writing beyond object boundary".
+
+commit f85fd1b42dc2d77266007c02144d4f4f524e4157
+Author: Eric Anholt <eric@anholt.net>
+Date:   Sat Jul 26 19:28:14 2008 -0700
+
+    intel-gem: Speed up tiled readpixels by tracking which pages have been flushed.
+    
+    This is around 3x or so speedup, since we would read wide rows at a time, and
+    clflush each tile 8 times as a result.  We'll want code related to this anyway
+    when we do fault-based per-page clflushing for sw fallbacks.
+
+commit 04ae66db1c517264cddc786be962fdd393c9c8ac
+Author: Eric Anholt <eric@anholt.net>
+Date:   Sat Jul 26 19:51:58 2008 -0700
+
+    intel-gem: Move debug-only functions to a separate file.
+
+commit 514c05cebe31a62f827a76f348d35596bef97811
+Author: Stefan Becker <stefan.becker@nokia.com>
+Date:   Sat Jul 26 16:49:14 2008 +0200
+
+    radeon: Add suspend/resume hooks for saving/clearing/restoring interrupts.
+    
+    Fixes http://bugs.freedesktop.org/show_bug.cgi?id=16799 .
+
+commit c3d463840c902a28221f1514bfb69fb7905a05c2
+Author: Nicolai Haehnle <nhaehnle@gmail.com>
+Date:   Sat Jul 26 11:39:10 2008 +0200
+
+    r300_cmdbuf: Always emit INDX_BUFFER immediately after DRAW_INDEX
+    
+    DRAW_INDEX writes a vertex count to VAP_VF_CNTL. Docs say that behaviour
+    is undefined (i.e. lockups happen) when this write is not followed by the
+    right number of vertex indices.
+    
+    Thus we used to do the wrong thing when drawing across many cliprects was
+    necessary, because we emitted a sequence
+     DRAW_INDEX, DRAW_INDEX, INDX_BUFFER, INDX_BUFFER
+    instead of
+     DRAW_INDEX, INDX_BUFFER, DRAW_INDEX, INDX_BUFFER
+    The latter is what we're doing now and which ought to be correct.
+
+commit 7a3d6624c47d87bdd46f5394b8cc5130c7a4ed0d
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Fri Jul 25 13:46:28 2008 -0400
+
+    [FreeBSD] Duh, we need to actually define the drm_modeset_ctl...
+
+commit 50db5aefa18283282400fd4a5090b686b5870206
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Jul 25 13:30:08 2008 +1000
+
+    drm: don't set the signal blocker on the master process.
+    
+    this lets us debug the X server through xkb startup.
+    
+    Not sure what the correct answer is, probably X needs to drop
+    the lock when execing stuff, with input hotplug it can get
+    xkb stuff at any time I believe.
+
+commit 2580a065d81be645a14af1e91b8441f7e72fcbe4
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Thu Jul 24 00:21:00 2008 -0400
+
+    [FreeBSD] Catch up to linux on vblank-rework
+
+commit 965a72202b439068e62ac341990f51953457b202
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Wed Jul 23 19:55:06 2008 -0400
+
+    i915: Move all of the irq install/uninstall to load time.
+    
+    This resolves a panic on FreeBSD which was caused by trying
+    to re-initialize the swap lock.  It's just much easier to
+    initialize all of the locks at load time.  It should also
+    ensure that the vblank structures are available earlier.
+
+commit 6d258ddf7715412e2fb6fae35ea28d49c57ee130
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jul 23 11:49:25 2008 -0700
+
+    intel-gem: Fix pread math and logic errors.
+    
+    Fixes an oops in fbotexture from walking off the end of the page list.
+
+commit 439d7106832f2e9742deb900d96f1d3bc07162b1
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jul 23 10:07:16 2008 -0700
+
+    intel-gem: Add a quick hack to reduce clflushing on pread.
+    
+    This increases overhead for the large-readpixels case due to the repeated
+    page cache accessing, but greatly reduces overhead for the small-readpixels
+    case.
+
+commit bddb952578d58c4dcfafe969c045a39d27666b56
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jul 23 08:36:54 2008 -0700
+
+    intel-gem: Don't do the GTT-pwrite shortcut on tiled buffers.
+    
+    These will be covered by the fence, while pread/pwrite are supposed to be
+    CPU-perspective writes, with manual detiling done by the client.
+
+commit a5d8f35f0fa651fbe8ca2897875ba188ca7dcda5
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jul 21 14:33:55 2008 -0700
+
+    intel-gem: Move /proc debugging to a separate file.
+
+commit 589f9681734770dce966bcded7d3d4bd78f4bea5
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Tue Jul 22 18:47:27 2008 +1000
+
+    radeon: fix typo with a better typo
+
+commit c669489813c089b5aa176367e696396b071a4bee
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Tue Jul 22 18:10:03 2008 +1000
+
+    radeon: fix type DST vs Z cache flush
+
+commit f57f01f02843747d423f2e1c2936f0b987c5b067
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Jul 21 18:04:02 2008 -0400
+
+    [FreeBSD] Improve upper_32_bits define.
+    
+    Thanks to airlied.
+
+commit e31d27857ffc1b01ca49e70b5ba6f7425414d7c8
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jul 21 14:21:16 2008 -0700
+
+    intel-gem: Remove recently added pci_read_base prototype.
+    
+    This is in pci.h in the fixed patch to the kernel.
+
+commit 67d15215660407b07265c37d60ea5cac8930cef9
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Jul 1 12:31:37 2008 -0700
+
+    intel-gem: Set up HWS when it needs a vaddr during GEM init.
+    
+    This requires an updated 2D driver to not try to set it up as well.
+
+commit b5cddbcc1536d70dfa9fec833732b2a715d82e65
+Author: Michel Dänzer <michel@tungstengraphics.com>
+Date:   Mon Jul 21 13:43:12 2008 +0200
+
+    Remove accidental leftover tests.
+    
+    Thanks to Nicolai Haehnle for pointing this out on IRC.
+
+commit 4be367b84b5a6691c28d9419039ea8113ebabc92
+Author: Michel Dänzer <michel@tungstengraphics.com>
+Date:   Mon Jul 21 11:48:04 2008 +0200
+
+    Reinstate dev->vblank_enabled[].
+    
+    I incorrectly thought it was obsolete.
+
+commit f529a510d200c87919084fda1e053545c25ebeab
+Author: Michel Dänzer <michel@tungstengraphics.com>
+Date:   Mon Jul 21 08:16:59 2008 +0200
+
+    Drop workaround for driver vblank counter going backwards.
+    
+    The driver code that caused this is no longer necessary and has been dropped.
+
+commit e4feaf506db0bc8ad15dbb5154e093478c3dd56a
+Author: Michel Dänzer <michel@tungstengraphics.com>
+Date:   Mon Jul 21 08:16:59 2008 +0200
+
+    radeon: Post-vblank-rework-rework cleanups.
+    
+    Thanks to the reworked vblank-rework, we can just use the hardware frame
+    counter directly, and make the RADEON_PARAM_VBLANK_CRTC getparam just return
+    what was set by the corresponding setparam.
+
+commit 205aff6a5cc7b037f53b6bbcd3fa5b2d42f43f5b
+Author: Michel Dänzer <michel@tungstengraphics.com>
+Date:   Mon Jul 21 08:16:55 2008 +0200
+
+    vblank-rework rework cleanups.
+    
+    Remove some dead/obsolete code and make drm_update_vblank_count() static.
+
+commit 014935b680d12856a01c0b2fe6077a38d69d14d3
+Author: Michel Dänzer <michel@tungstengraphics.com>
+Date:   Mon Jul 21 08:13:45 2008 +0200
+
+    Remove obsolete dev->vblank_suspend[crtc] tests.
+    
+    Caused drm_update_vblank_count() not to do its thing when called from
+    drm_modeset_ctl() -> drm_vblank_get().
+    
+    The vblank functionality no longer needs to be suspended during a modeset, so
+    rename the field to vblank_inmodeset.
+
+commit 04893aa99abfbed8eb6d7067a974fa1f31193c87
+Author: Jesse Barnes <jbarnes@nietzche.virtuousgeek.org>
+Date:   Sat Jul 19 13:18:02 2008 -0400
+
+    i915: convert to using drm_vblank_get/put around vblank counter usage
+    
+    All interrupt off vblank count updates are done in drm_vblank_get/put
+    now, so convert users of the vblank counter over to that interface.
+
+commit 6ac1f8a760e1e757569a5f6f420df91cf203b02d
+Author: Jesse Barnes <jbarnes@nietzche.virtuousgeek.org>
+Date:   Sat Jul 19 13:15:23 2008 -0400
+
+    Update vblank code to new API
+    
+    In my last push I forgot to convert users of drm_update_vblank_count
+    over to drm_vblank_get/put, since that's where any interrupt off->on
+    update accounting is done now.  Since the modeset ioctl did something
+    similar (an open coded update of the counter) convert it over to using
+    get/put too, which saves us from having to deal with every combination
+    of interrupt off & on between calls.
+
+commit 4d83a751b421ec3f3e0c572070c3bc295b9adbcc
+Author: Ian Romanick <ian.d.romanick@intel.com>
+Date:   Fri Jul 18 12:42:43 2008 -0700
+
+    drm-gem: Fix build
+    
+    On some distros missing prototypes cause kernel builds to fail.  These
+    are hack to make the code build.
+
+commit f5c2f00e2f99732311c9a35a91b6adc93047c51b
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Jul 17 16:56:42 2008 -0700
+
+    intel-gem: Leave 8xx tiling on until we find any issues.
+
+commit 7cfdba2b30e40efc688f1704bd4f4141dc6f9a6c
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Jul 18 14:30:57 2008 +1000
+
+    radeon: remove microcode version
+
+commit ed7e1709158ca42736650379ee2aba64a827c51e
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Jun 19 11:38:43 2008 +1000
+
+    drm/radeon: fixup 0 vs NULL
+
+commit 480c317a6ae634d777931eee54fadd2a50a2f650
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Thu Jul 17 14:01:04 2008 -0400
+
+    [FreeBSD] drm_irq.c updates for vblank fixes.
+
+commit a9427cf31861542ff4f4d3db498e5f2ada7da4c1
+Author: Jesse Barnes <jbarnes@nietzche.virtuousgeek.org>
+Date:   Thu Jul 17 13:51:24 2008 -0400
+
+    i915: remove old broken vblank code
+    
+    Remove the unused (and broken) "in vblank" code now that the core has
+    been fixed to use a counter while interrupts are enabled.  Also make the
+    vblank pipe get/set ioctls into dumb stub functions, since with the new
+    code we can no longer let userspace control whether vblank interrupts
+    are enabled, or the core code will misbehave.
+
+commit 2204f926abe4da87a38955c4ecf9adb73b646666
+Author: Jesse Barnes <jbarnes@nietzche.virtuousgeek.org>
+Date:   Thu Jul 17 13:48:14 2008 -0400
+
+    Avoid incorrect vblank wakeups
+    
+    The current code uses the hw vblank counter exclusively, which can lead
+    to wakeups during the active period rather than during the vblank period
+    if the hw counter counts displayed frames rather than vblank periods.
+    
+    This change coverts the code over to using the counter while interrupts
+    are enabled, fixing that issue.  It also includes a couple of related
+    changes:  one to not enable the new enable/disable behavior until the
+    modeset ioctl is called (to preserve old client behavior) and another to
+    account for lost events due to mode setting with the new counter scheme.
+    
+    BSD will require similar changes to its drm_irq.c code, but they should
+    be straightforward.
+
+commit b0e4619a396f2db8c594cd0a26fd2f0ab9358095
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Wed Jul 16 23:39:25 2008 -0400
+
+    FreeBSD: Fix radeon build
+
+commit 74cf1f91be7f4139601624af0343e3d411190dec
+Author: Owain Gordon Ainsworth <oga@openbsd.org>
+Date:   Mon Jul 7 17:23:48 2008 +0100
+
+    BSD: change drm_locked_task*() to use the same scheme as linux.
+    
+    The current code can sleep in an interrupt handler, that is bad. So
+    instead if we can't grab the lock, flag it and run the tasklet on
+    unlock.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit 96580f660e5509dcf6c34de5630e3d36b156bcd5
+Author: Robert Noland <rnoland@wombat.2hip.net>
+Date:   Mon Jun 9 08:54:53 2008 -0400
+
+    [FreeBSD] We aren't allowed to hold locks over bus_dma_tag_create or bus_dmamem_alloc.
+
+commit dfd441cf964f20e4a761cb8490d7cd82cf32e7b9
+Author: Hong Liu <hong.liu@intel.com>
+Date:   Tue Jul 15 10:14:17 2008 -0700
+
+    This is a modified version of Hong's patch from last month, with a few
+    modifications to make it work correctly on my test hardware (altered the
+    backlight write function, made it enable the legacy backlight controller
+    interrupts on mobile hardware, sorted the interrupt function so we don't
+    get an excessive number of vblank interrupts). This lets the backlight
+    keys on my T61 work properly, though there's a 750msec or so delay
+    between the request and the brightness actually changing - this sounds
+    awfully like the hardware spinning waiting for a status flag to become
+    ready, but as far as I can tell they're all set correctly. If anyone can
+    figure out what's wrong here, it'd be nice to know.
+    
+    Some of the functions are still stubs and just tell the hardware that
+    the request was successful. These can be filled in as kernel modesetting
+    gets integrated. I think it's worth getting this in anyway, since it's
+    required for backlight control to work properly on some new platforms.
+    
+    Signed-off-by: Matthew Garrett <mjg@redhat.com>
+
+commit 764573f3b8bec90f20c3bdd58c4b55490fbbdaf4
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Tue Jul 15 20:27:14 2008 +1000
+
+    drm: fix missing symbol export
+
+commit abdd523c759a5e19e733e3b544c2f1bcaa7a0b9a
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Tue Jul 15 16:18:22 2008 +1000
+
+    drm: add fix for PAT on radeon with 2.6.26
+
+commit 76c8e19a29d635d2c62937a381ab33014cfe6cea
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Tue Jul 15 16:18:04 2008 +1000
+
+    drm/pcigart: fix warning
+
+commit 78f1fc9cbcb383d42d903a8b9febdcf3c438ea7c
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jul 14 09:16:45 2008 -0700
+
+    intel-gem: Disable tiling if we get junk from the MCHBAR read.
+    
+    One of our systems has been returning 0xffffffff from all MCHBAR reads, which
+    means we'll need to figure out why, or add an alternate detection method.
+
+commit a0474be4e78d678eb615b37aad355effb955ee19
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Jul 11 14:47:33 2008 -0700
+
+    intel-gem: Add two new ioctls for managing tiling on objects.
+    
+    Various chips have exciting interactions between the CPU and the GPU's
+    different ways of accessing interleaved memory, so we need some kernel
+    assistance in determining how it works.
+    
+    Only fully tested on GM965 so far.
+
+commit eac0933be75b226e0b623d8dcbf343c391eb88a2
+Author: martin capitanio <martin@capitanio.org>
+Date:   Tue Jul 8 17:58:10 2008 +1000
+
+    xgi: use true/false instead of TRUE/FALSE
+
+commit c7ed2c67916ee8058301c53b9d4690d81728fb95
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Wed Jun 25 04:39:32 2008 +1000
+
+    nouveau: interface changes for nv5x 3d
+
+commit 1f9a5307acfe2ef0d104f7036d2d93504dc7673f
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Jun 26 09:35:14 2008 -0700
+
+    [intel-gem] typo fix in DRM_ERROR
+
+commit 401f77a2ef1d55feaccc13cdae1e5379f4cfec7e
+Author: Zhenyu Wang <zhenyu.z.wang@intel.com>
+Date:   Thu Jul 3 00:49:19 2008 +0800
+
+    i915: official name for GM45 chipset
+    
+    Signed-off-by: Zhenyu Wang <zhenyu.z.wang@intel.com>
+
+commit 301d984ea80cb250460d6701c4373cf0af8bf59e
+Author: Jesse Barnes <jbarnes@hobbes.(none)>
+Date:   Tue Jul 1 16:10:01 2008 -0700
+
+    i915: only use tiled blits on 965+
+    
+    When scheduled swaps occur, we need to blit between front & back buffers.  I
+    the buffers are tiled, we need to set the appropriate XY_SRC_COPY tile bit,
+    only on 965 chips, since it will cause corruption on pre-965 (e.g. 945).
+    
+    Bug reported by and fix tested by Tomas Janousek <tomi@nomi.cz>.
+    
+    Signed-off-by: Jesse Barnes <jbarnes@virtuousgeek.org>
+
+commit 94dcc83ad2e8f848a3cac6cdc6f123e676e91cf8
+Author: Jesse Barnes <jbarnes@hobbes.(none)>
+Date:   Tue Jul 1 16:09:02 2008 -0700
+
+    Revert "i915: only use tiled blits on 965+"
+    
+    This reverts commit 727d4f1d1667e43b3558bd5f6ed6dc2cd9c29401, somehow git
+    deleted the symlink and replaced it with the file.
+
+commit 727d4f1d1667e43b3558bd5f6ed6dc2cd9c29401
+Author: Jesse Barnes <jbarnes@hobbes.(none)>
+Date:   Tue Jul 1 12:25:16 2008 -0700
+
+    i915: only use tiled blits on 965+
+    
+    When scheduled swaps occur, we need to blit between front & back buffers.  If
+    the buffers are tiled, we need to set the appropriate XY_SRC_COPY tile bit, but
+    only on 965 chips, since it will cause corruption on pre-965 (e.g. 945).
+    
+    Bug reported by and fix tested by Tomas Janousek <tomi@nomi.cz>.
+    
+    Signed-off-by: Jesse Barnes <jbarnes@virtuousgeek.org>
+
+commit e935925cd733fffef44b3e3210a875b57b3812e9
+Author: Jie Luo <clotho67@gmail.com>
+Date:   Tue Jun 24 10:38:31 2008 -0700
+
+    i915: enable bus mastering on i915 at resume time
+    
+    On 9xx chips, bus mastering needs to be enabled at resume time for much of the
+    chip to function.  With this patch, vblank interrupts will work as expected
+    on resume, along with other chip functions.   Fixes kernel bugzilla #10844.
+    
+    Signed-off-by: Jie Luo <clotho67@gmail.com>
+    Signed-off-by: Jesse Barnes <jbarnes@virtuousgeek.org>
+
+commit 5d27fd94afaaf434c3a92af0075420b550055bfb
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Wed Jun 25 16:45:41 2008 +1000
+
+    nv50: when destroying a channel make sure it's not still current on PFIFO
+    
+    We won't get a PFIFO context switch when the same channel ID is recreated if
+    the hw still thinks the channel is already active, which causes fun issues.
+    
+    Should allow X to be stopped and started without tearing down the entire
+    card state in lastclose().
+
+commit d250a55fc6a726a8bfaf4f871eeb09c895a9ba51
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue Jun 24 13:39:25 2008 -0700
+
+    [intel] Get vblank pipe from irq_mask_reg instead of hardware enable reg
+    
+    With the interrupt enable/disable using only the mask register, it was wrong
+    to use the enable register to detect which pipes had vblank detection
+    turned on. Also, as we keep a local copy of the mask register around, and
+    MSI machines smack the hardware during the interrupt handler, it is more
+    efficient and more correct to use the local copy.
+
+commit e36da6a133328a4cf9c98d9347c87dc3c3a12d16
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue Jun 24 13:08:04 2008 -0700
+
+    [intel] Create functions to enable/disable interrupts
+    
+    This shares common code sequences for managing the interrupt register bits
+
+commit d726eb2e5e192f22e41e399d9133edcd7202f0c5
+Author: Jesse Barnes <jbarnes@hobbes.(none)>
+Date:   Tue Jun 24 12:57:21 2008 -0700
+
+    i915: remove unused variable
+    
+    Leftover dev_priv from the move of the suspend/resume code into shared-core.
+
+commit 893cd01a1d6bed9740e9bfccde07f41ee401f898
+Author: Jesse Barnes <jbarnes@hobbes.(none)>
+Date:   Tue Jun 24 12:50:29 2008 -0700
+
+    i915: register definition & header file cleanup
+    
+    It would be nice if one day the DRM driver was the canonical source for
+    register definitions and core macros.  To that end, this patch cleans things up
+    quite a bit, removing redundant definitions (some with different names
+    referring to the same register) and generally tidying up the header file.
+
+commit ce2effbe2dd205e67e294304b97ee7bf221137b1
+Merge: 2c6feb7... 01a33d7...
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue Jun 24 10:03:05 2008 -0700
+
+    Merge branch 'drm-gem' into drm-gem-965
+
+commit 2c6feb7a5a3fe60ed3961bc133ad5d6e63b8196a
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 23 22:03:33 2008 -0700
+
+    [intel-gem] Include drm_compat.h to get kmap_atomic_prot_pfn
+
+commit c0043155ad7199835d631e3daed5c641642c314e
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 23 22:03:06 2008 -0700
+
+    drm_compat: it's CONFIG_HIGHMEM, not CONFIG_HIMEM
+    
+    A mis-spelled config option (was it spelled that way in the past?)
+    eliminated kmap_atomic_prot_pfn from core DRM.
+
+commit 5540457fa5bf291e88efb23721b5ac71379c6a6e
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 23 11:21:30 2008 -0700
+
+    [intel-gem] Use I915_GEM_DOMAIN_GTT in dri_gem_bo_wait_rendering.
+    
+    I915_GEM_DOMAIN_CPU is very expensive to wait for -- it generally requires
+    clflushing the frame buffer.
+
+commit ed73651d47a5f95c3436207144b70811366e4edd
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 23 10:16:35 2008 -0700
+
+    [intel-gem] Recover resources from wedged hardware.
+    
+    Clean up queues, free objects. On the next entervt, unmark the hardware to
+    let the user try again (presumably after resetting the chip). Someday we'll
+    automatically recover...
+
+commit 71d975072cf57507385bdf8e0bf4af4c23b1fceb
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 23 00:53:53 2008 -0700
+
+    [intel-gem] pwrite through GTT
+    
+    Pin/copy_from_user/unpin through the GTT to eliminate clflush costs.
+    Benchmarks say this helps quite a bit.
+
+commit 01a33d742cee55a3df66a3d29c9c55b10cc9221d
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue Jun 24 09:46:51 2008 -0700
+
+    Was using irq_enable_reg in the use_mask_reg path
+
+commit 472981a4a952e551a581e5296a575a51d4f02e3d
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 23 22:03:33 2008 -0700
+
+    [intel-gem] Include drm_compat.h to get kmap_atomic_prot_pfn
+
+commit 020a59e46ca1d89c98a3e309b6e5571354115133
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 23 22:03:06 2008 -0700
+
+    drm_compat: it's CONFIG_HIGHMEM, not CONFIG_HIMEM
+    
+    A mis-spelled config option (was it spelled that way in the past?)
+    eliminated kmap_atomic_prot_pfn from core DRM.
+
+commit 52bf2e77b0ff77ab0c93fec374ccfeb9d214a464
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 23 11:21:30 2008 -0700
+
+    [intel-gem] Use I915_GEM_DOMAIN_GTT in dri_gem_bo_wait_rendering.
+    
+    I915_GEM_DOMAIN_CPU is very expensive to wait for -- it generally requires
+    clflushing the frame buffer.
+
+commit 27f61d0c9364bbf8bc88a4ffceb78b645aff6680
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 23 11:20:17 2008 -0700
+
+    [intel] leave interrupts disabled in ISR only on MSI again
+    
+    While debugging the 915, I tried this trick there and accidentally left it
+    set.
+
+commit 626e9ba494b46f6e8352c9e461227187f335e229
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 23 10:16:35 2008 -0700
+
+    [intel-gem] Recover resources from wedged hardware.
+    
+    Clean up queues, free objects. On the next entervt, unmark the hardware to
+    let the user try again (presumably after resetting the chip). Someday we'll
+    automatically recover...
+
+commit 1c2dd9826793579d5ef6f51fb9f5470c4af95548
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 23 10:07:47 2008 -0700
+
+    [intel] Switch to using IMR instead of IER
+
+commit 61caf797aeb88af42ea0d333ad3f6ba88468d37f
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 23 00:53:53 2008 -0700
+
+    [intel-gem] pwrite through GTT
+    
+    Pin/copy_from_user/unpin through the GTT to eliminate clflush costs.
+    Benchmarks say this helps quite a bit.
+
+commit a0ebcbe9d490c3e1fb8212d52e6783b7d9bd9a70
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 23 00:53:04 2008 -0700
+
+    [intel] allow the irq code to use either enable or mask registers
+    
+    still not sure which works best on which hardware; this will make it easier
+    to experiment.
+
+commit 01e8f0ea426970859bafba72e067590df1a64eb0
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Mon Jun 23 02:42:15 2008 +1000
+
+    nv50: oops, keep VRAM allocations aligned at 64KiB - that's our page size..
+
+commit 89cf2ee2e5b3930b36f2347f35933fc29bc42518
+Author: Ben Skeggs <skeggsb@nisroch.keine.ath.cx>
+Date:   Mon Jun 23 01:24:11 2008 +1000
+
+    nv50: use same dma object for fb/tt access
+    
+    We depend on the VM fully now for memory protection, separate DMA objects
+    for VRAM and GART are unneccesary.  However, until the next interface break
+    (soon) a client can't depend on the objects being the same and must still
+    call NV_OBJ_SET_DMA_* methods appropriately.
+
+commit b9ed0f995077f69ae806aae2e83085738ea5e651
+Author: Ben Skeggs <skeggsb@nisroch.keine.ath.cx>
+Date:   Mon Jun 23 01:00:42 2008 +1000
+
+    nouveau: allocate drm-use vram buffers from end of vram.
+    
+    This avoids seeing garbage from engine setup etc before X gets around
+    to pointing the CRTCs at a new scanout buffer.  Not actually a noticable
+    problem before G80 as PRAMIN is forced to the end of VRAM by the hardware
+    already.
+
+commit 11f2a2ed6f854e7b461a98408df54167e9b9566d
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Sun Jun 22 18:25:22 2008 +1000
+
+    agp: use true/false instead of TRUE/FALSE
+
+commit 207f701e1affa18b0d54e09f7bf8b6447cb16258
+Author: Alex Deucher <alex@botch2.com>
+Date:   Sat Jun 21 10:46:55 2008 -0400
+
+    RADEON: 0x1002 0x5657 is actually an RV410
+    
+    See bug 14289
+
+commit a369bf0e575697308690f532576caf652e42b4cb
+Author: Keith Packard <keithp@keithp.com>
+Date:   Sat Jun 21 00:33:07 2008 -0700
+
+    [intel] Use IMR instead of IER to pend interrupts during ISR
+    
+    Noting that the interrupt mask register was more reliable than the interrupt
+    enable register for managing interrupts in user_irq_on/user_irq_off, this
+    patch replaces the remaining IER frobbing with IMR instead.
+    
+    The test which exposes IER related failures is:
+    
+    $ glxgears & glxgears & glxgears
+    (reposition the glxgears windows away from the upper left corner)
+    $ while :; do x11perf -rect100 -reps 800 -repeat 1; sleep 1; done &
+    $ while :; do runoa; runet; done &
+
+commit 8be6ec491f7b9c633a426a34006ea4ff5a3f8392
+Author: Keith Packard <keithp@keithp.com>
+Date:   Sat Jun 21 00:13:18 2008 -0700
+
+    [intel-gem] Add /proc/dri/*/i915_gem_interrupt
+    
+    This tracks most of the interrupt-related status, including the
+    interrupt registers in the chip and the sequence number variables.
+
+commit 33114e4a1167ac79cb53043e77c16cc7fe40a640
+Author: Keith Packard <keithp@keithp.com>
+Date:   Sat Jun 21 00:12:21 2008 -0700
+
+    [intel] Count received interrupts
+    
+    Another patch adds this to a /proc/dri file for debugging and monitoring.
+
+commit f4bd566e0bead0904c38bb3a526eb9b35b215ff5
+Author: Keith Packard <keithp@keithp.com>
+Date:   Sat Jun 21 00:10:10 2008 -0700
+
+    [intel-gem] Remove unused variable.
+
+commit 54817317e9dd8a791418f97503fe574038dbe4b9
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 20 21:10:42 2008 -0700
+
+    [intel-gem] Use polling in i915_gem_idle instead of interrupts.
+    
+    While waiting for the hardware to idle on leavevt or lastclose, poll
+    for the sync sequence number instead of waiting for an interrupt. This
+    allows the code to bail if the hardware hangs for some reason. Also, this
+    avoids issues with signals as the exisiting wait function is interruptible.
+
+commit 71b1623e22c54d42837840a1d0479127a5049caf
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 20 21:07:46 2008 -0700
+
+    [intel-gem] Add intel-specific /proc entries to help monitor gem operation
+    
+    This adds gem_active, gem_flushing, gem_inactive, gem_request and gem_seqno
+    entries to monitor gem operation and help debug issues.
+
+commit 2bd9799e4cf0d778e46453422157143e36274062
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 20 16:40:14 2008 -0700
+
+    Add device-specific proc_init and proc_cleanup hooks
+    
+    This allows device drivers to add proc files
+
+commit 918420deefb978d4e572121b4273d717bdbfde8e
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 20 00:21:37 2008 -0700
+
+    [intel-gem] Use shmem_getpage instead of find_or_create_page
+    
+    find_or_create_page doesn't quite set up pages correctly; any newly created
+    pages aren't hooked into the shmem object quite right; user space mmaps of
+    those pages end up mapping pages full of zeros which then get written to the
+    real pages inappropriately. This patch requires that the kernel export
+    shmem_getpage.
+
+commit 52e5d24fae4af6f2f4a5304a516c8c5ab347a11b
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 20 00:19:42 2008 -0700
+
+    [intel-gem] Add DRM_IOCTL_I915_GEM_SW_FINISH to flag CPU writes
+    
+    When a software fallback has completed, usermode must notify the kernel so
+    that any scanout buffers can be synchronized. This ioctl should be called
+    whenever a fallback completes to flush CPU and chipset caches.
+
+commit 1915de2c56d71bbd04a7c085cbd35fbe8e33af9d
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Jun 20 15:35:47 2008 +1000
+
+    drm: only use kernel ioctl cmd when doing a core ioctl.
+    
+    Need to overhaul the mess that is driver ioctls
+
+commit 9d79944a93e8e164e2261cdeb10cbd49ff8f314d
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Jun 20 15:35:16 2008 +1000
+
+    r300: fix warning
+
+commit 8712f0a17bb135d4ad3eb85b30f47c561cf9c148
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Jun 20 12:03:41 2008 +1000
+
+    drm: fix the ioctl to not believe userspace.
+    
+    believing userspace causes oopses
+
+commit 00f549bd5f40d9ad6ec7164cd01646ed468b9a4a
+Author: Zhenyu Wang <zhenyu.z.wang@intel.com>
+Date:   Wed Jun 18 14:19:38 2008 +0800
+
+    i915: Add support for Intel 4 series chipsets
+    
+    Signed-off-by: Zhenyu Wang <zhenyu.z.wang@intel.com>
+
+commit e7424e4580159b0ac3e232674dff5c862e851dff
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jun 16 15:15:02 2008 -0700
+
+    [intel] Quirk away MSI support on 945G/GM.
+    
+    The PCI caps register reports MSI support even though it isn't really there.
+
+commit c847271179da382af52a6874e2edec586b88af75
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jun 16 13:09:31 2008 -0700
+
+    [linux] Use the device's irq for handler setup instead of stale dev->irq.
+    
+    This fixes registration when MSI is set up after the stub function fills in
+    dev->irq.  Otherwise /proc/interrupts would report attachment to the fasteoi
+    interrupt.  dev->irq is still exposed (and updated at IRQ setup)
+    for the drivers that use it for whatever reason.
+
+commit 59112c9e521d1543e8b76635ef223e7f29d35e6a
+Author: Jerome Glisse <glisse@freedesktop.org>
+Date:   Sun Jun 15 20:18:29 2008 +0200
+
+    radeon: *really* fix screen corruption thanks to Lukasz Krotowski
+
+commit 6f8cc957034a887a9cbd576c1af9922862f6a7a7
+Author: Jerome Glisse <glisse@freedesktop.org>
+Date:   Sun Jun 15 19:31:02 2008 +0200
+
+    radeon: actualy try to fix the corruption
+
+commit 9dd58d6568702358bfb3d6d1b6459092cf77ae91
+Author: Jerome Glisse <glisse@freedesktop.org>
+Date:   Sun Jun 15 18:49:47 2008 +0200
+
+    radeon: fix screen corruption introduced by last patch
+
+commit 3e48e144992fb11b31875989d45bc8a7c041cdef
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 19:49:47 2008 -0700
+
+    [intel-gem] Execute MI_FLUSH in leavevt_ioctl
+    
+    In leavevt_ioctl, queue an MI_FLUSH and then block waiting for it to
+    complete. This will empty the active and flushing lists. That leaves only
+    the inactive list to evict.
+
+commit 19c3418848ccdbb163cd16b354b14b0559813d6c
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 19:47:23 2008 -0700
+
+    [intel-gem] inactive list may contain objects in CPU write domain
+    
+    Pin/unpin need to know whether to remove/add objects from the inactive list,
+    inactive objects cannot be in any GPU write domain as those would be on the
+    flushing list instead. However, inactive objects may be in the CPU write
+    domain.
+
+commit 93c2871eccc1abde0d88ea439cf963c4895a26fc
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 19:43:40 2008 -0700
+
+    [intel-gem] BUG_ON active objects in gem_object_unbind
+    
+    Now that gem_object_unbind waits for rendering to complete, objects should
+    not be active when they are being pulled from the GTT. BUG_ON if this is
+    broken.
+
+commit 68856b619bc1a2e91e67764911c8af4e2466fad9
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 19:40:16 2008 -0700
+
+    [intel-gem] Debugging -- verify inactive list invariants
+    
+    Inactive list elements may not be pinned, active or have non-CPU write
+    domains.
+
+commit 732b1960742042eb33f49c2b3cdd2d36eadbc920
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 19:37:44 2008 -0700
+
+    [intel-gem] whitespace fixes
+
+commit a7139cb8511a9d31d9f79bcaae62020d30e09f90
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 19:35:22 2008 -0700
+
+    [intel-gem] show total GTT space in /proc/dri/*/gem_objects
+
+commit 73bc18cad8d1c6b4481a199cebf7f0a28d19c2bb
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 17:06:35 2008 -0700
+
+    [intel-gem] Wait for rendering to complete before unbinding.
+    
+    Moving to the CPU domain doesn't ensure that rendering is finished, the
+    buffer may still be in use as a texture or other data source.
+
+commit 8b9ab108ec1f2ba2b503f713769c4946849b3cb2
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 16:03:22 2008 -0700
+
+    [libdrm] Restart all ioctls on signal receipt
+    
+    Receiving a signal should be ignored by the library, so just restart any
+    ioctl which returns EINTR or EAGAIN.
+
+commit 217beb9c8de01417ac6219b54bd25046da6d4c7a
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 15:43:02 2008 -0700
+
+    [intel-gem] add gtt and pin counts to /proc/dri/*/gem_objects
+    
+    Not quite portable, but these are useful for intel. Some more general
+    mechanism could be done...
+
+commit 4086cdb6550a4e957fd436c77a6260204e026538
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 15:38:13 2008 -0700
+
+    [intel-gem] Left the last exec buffer pinned. oops.
+    
+    Loop end variable 'pinned' was set one too low.
+
+commit 29ffa0017d002f9e74de42817b962b6ca2e5f20a
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Fri Jun 13 17:41:20 2008 -0400
+
+    [FreeBSD] Fix another lock leak
+    
+    Reported by vehemens
+
+commit baf521369478eff2842b99feda16f9d145402d27
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 14:28:18 2008 -0700
+
+    [intel-gem] Pin objects during execbuffer
+    
+    Pinning the objects avoids accidentally evicting them while binding
+    other objects.
+
+commit ced9ebf64543b4d64a38feee3293040af953acc0
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 12:06:13 2008 -0700
+
+    [intel-gem] throttle based on frames rather than time. Reduces jitter.
+    
+    Record the last execbuffer sequence for each client.
+    Record that sequence in the throttle ioctl as the 'throttle sequence'.
+    Wait for the last throttle sequence in the throttle ioctl.
+
+commit 6b2cba1ecc5f9f289b5d91e229b7f7b0999bee5b
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 11:33:27 2008 -0700
+
+    [intel-gem] evict_something was failing when wait_request freed objects
+    
+    When i915_wait_request clears object from the active list, it may end up
+    freeing them and not moving them to the inactive list. This ends up
+    unbinding objects from the GTT without there ever being new objects visible
+    to i915_gem_evict_something on the inactive list. As the only success
+    condition required the presence of objects on the inactive list, this would
+    falsely assume that no GTT space had been made available, and end up
+    returning -ENOMEM to the application.
+
+commit 3762c9ea6754763694b1de4df3acd9dc37247f87
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 10:27:39 2008 -0700
+
+    [intel] Enable MSI for i915 IRQ
+
+commit 5957470ca3be6c0225985f74b1511401e02c014b
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue Jun 10 18:19:19 2008 -0700
+
+    [intel] Restructure irq to pend all work until after iir write.
+    
+    The interrupt identity register must be writen before any work occurs lest
+    we drop an interrupt on the floor. This patch just shuffles code around to
+    make sure that IIR is written as early as possible.
+
+commit 462af73149b9286a74b95b9cda5e4224ebe0dd87
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 13 09:19:30 2008 -0700
+
+    [intel-gem] Use a delayed_work instead of a timer + work_struct
+    
+    We want request retirement to occur about once a second when the request
+    queue is non-empty. This was done with a timer that queued a work_struct,
+    using a delayed_work instead makes a lot more sense.
+
+commit e5364914ac2b785f9d806c72fff8d2ae914cad61
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue Jun 10 18:11:15 2008 -0700
+
+    [intel-gem] Reorder i915_add_request to schedule work last
+    
+    i915_add_request was calling schedule_delayed_work before adding the request
+    to the list; it makes more sense to do that last.
+
+commit f378319b5627d84ca821c8e6a9f2fee612119477
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue Jun 10 17:53:32 2008 -0700
+
+    Use /bin/pwd instead of trusting shell built-in
+
+commit df4ef348c8a48cead807a42fcd315f7e422aa156
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Jun 13 10:47:33 2008 -0700
+
+    Fix i915_wait_irq in the presence of interrupt masking.
+    
+    In the short-circuit code for the breadcrumb already being new enough, we
+    need to update the sarea_priv copy of the breadcrumb just as if we had
+    waited.  Otherwise userland error checking will notice that we returned
+    too early based on its wrong information, and call wait_irq again (leading
+    to spinning until someone else comes along and updates the sarea_priv).
+    
+    This bug was hidden when we had interrupt masking disabled, such as in
+    master, since the interrupt handler would update sarea_priv.
+
+commit e558e1d7dacafa1e7f9681f1eaec072d663287de
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Jun 13 10:04:14 2008 -0700
+
+    [gem] Catch -EINTR from blocking ioctls and restart them.
+    
+    Thanks to Thomas Hellstrom for catching the issue, no thanks to the kernel
+    developer who authoritatively told me that they would get restarted on their
+    own.
+
+commit 0558d99c01c38e24e97b57ef55f66bb94a92e157
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Jun 13 09:53:36 2008 -0700
+
+    [gem] Remove the interrupt handler for retiring requests.
+    
+    This was insufficient once we started masking interrupts to only when someone
+    was waiting for them (and would thus retire requests themselves).  It was
+    replaced by the retire_timer.
+
+commit c892e26bdfcacfe7213085a08dd82e2cb7faa003
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Jun 13 09:49:05 2008 -0700
+
+    [gem] Don't require the lock in execbuf now that it's not needed for the ring.
+
+commit 00b406390649175bb432da5693bfbd3360ad21b3
+Author: Jerome Glisse <glisse@freedesktop.org>
+Date:   Fri Jun 13 10:02:41 2008 +0200
+
+    radeon: bump driver date to know if lockup fix is in
+
+commit 1aafbb83d97ccc78b78d5cbd311f1239a3dad11e
+Author: Jerome Glisse <glisse@freedesktop.org>
+Date:   Fri Jun 13 09:54:05 2008 +0200
+
+    radeon: r345xx fixe hard lockup
+    
+    This patch should fixe hard lockup and convert them in
+    softlockup (ie you can ssh the box but the gpu is busted
+    and we are waiting in loop for it to come back to reason).
+
+commit 5d99e79c3ee027a035d4ef0a920e3fc30bd053c1
+Author: Ian Romanick <idr@us.ibm.com>
+Date:   Thu Jun 12 15:36:48 2008 -0700
+
+    xgi: Bump kernel version
+    
+    This should have been bumped when the fence interface was changed the
+    other day.  Better late than never, I suppose.
+
+commit 100d6f3f83b559be000f69c04f9e5596cdc17c77
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Jun 12 13:22:40 2008 -0700
+
+    Bump libdrm version to 2.4.0.
+    
+    We need a version to depend on from the other components that require GEM and
+    the bufmgr code.  Some interfaces will be removed before the 2.4.0 release.
+
+commit cc74ac359053e95fd79d7011a2e18defcefb5c19
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Jun 12 10:56:37 2008 -0700
+
+    Don't clear USER_INTERRUPT if we're not handling it.
+    
+    This fixes a regression from commit d434b64f6a760d85295e32298a9a1f3624ee1b69
+    which could cause us to fail to wake up for user interrupts if we lost a race.
+
+commit b2606e325ac02782297def5ce27028c7fe2287c8
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jun 11 16:19:23 2008 -0700
+
+    [gem] Remove the drm_client_lock_take in set_domain.
+    
+    We no longer need to use it to protect against shared ringbuffer access.
+
+commit 57b4c4c32d3b474939775042bb8a17423def446d
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jun 11 15:58:33 2008 -0700
+
+    Move the renaming of mm.c symbols to #defines in the header.
+    
+    This reduces the diff from Mesa and reduces the illegibility of what I did.
+
+commit 846d792ac10c4b2738bb5ff59e56df168b9921ff
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jun 11 15:51:17 2008 -0700
+
+    [gem] Another round of cleanups from checkpatch.pl
+
+commit a07c82183abdcde9777a456d45b7ae741ddfd44c
+Author: Alex Deucher <alex@botchco.com>
+Date:   Wed Jun 11 18:25:47 2008 -0400
+
+    RADEON: use DSTCACHE_CTLSTAT rather than RB2D_DSTCACHE_CTLSTAT
+    
+    According to the hw guys, you should use DSTCACHE_CTLSTAT to flush
+    the 2D dst cache rather than RB2D_DSTCACHE_CTLSTAT.
+
+commit 2655005762b8915d5f44d1d1ee7e6c2eb34841d7
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jun 11 14:42:40 2008 -0700
+
+    [gem] Move potentially device-specific ioctls to the intel driver.
+    
+    This is the create (may want location flags), pread/pwrite/mmap
+    (performance tuning hints), and set_domain (will 32 bits be enough for
+    everyone?) ioctls.  Left in the generic set are just flink/open/close.
+    
+    The 2D driver must be updated for this change, and API but not ABI is broken
+    for 3D.  The driver version is bumped to mark this.
+
+commit 2a35d857b35c9d30d073e2372aa302cd999321ba
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jun 11 12:20:56 2008 -0700
+
+    Remove override of drm module list in preparation for merge.
+
+commit dac3bcb414a21a77847c96740a1578f3488c774f
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jun 11 11:28:20 2008 -0700
+
+    [gem] Remove carefully-sprinkled i915_kernel_lost_context().
+    
+    They are not unnecessary since the kernel's the only thing touching the ring.
+
+commit 62a3be962f1915d17813ecbfc9544232908b44e4
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Jun 10 23:10:33 2008 -0700
+
+    [intel] Fix BUG_ON trigger in irq masking if you did on/off with irqs disabled.
+
+commit 2150da5d1a57d25d0f4bc39bb6c883d410f586d1
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Jun 10 15:30:23 2008 -0700
+
+    [gem] Manage the ringbuffer from the kernel in the GEM case.
+    
+    This requires that the X Server use the execbuf interface for buffer
+    submission, as it no longer has direct access to the ring.  This is
+    therefore a flag day for the gem interface.
+    
+    This also adds enter/leavevt ioctls for use by the X Server.  These would
+    get stubbed out in a modesetting implementation, but are required while
+    in an environment where the device's state is only managed by the DRM while
+    X has the VT.
+
+commit b535567ee95b8407d7860a4d6350df8e8fbac15a
+Author: Ian Romanick <idr@us.ibm.com>
+Date:   Tue Jun 10 22:18:14 2008 -0700
+
+    xgixp: Remove dependency on TTM fences
+
+commit 4f3da2f200577fcfbf913985246b3a4d23c6a818
+Author: Ian Romanick <idr@us.ibm.com>
+Date:   Mon May 12 15:58:55 2008 -0700
+
+    xgi: Fix 64-bit kernel / 32-bit user issue.
+
+commit cdd0cb0ab372ac93adc73945627f4071f86f75c0
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Jun 10 16:27:50 2008 +1000
+
+    ati_pcigart: split out the page insert function
+
+commit 4b8aecbde8e62af5370d5401d49a8ab8d089fe8e
+Author: Alex Deucher <alex@botchco.com>
+Date:   Mon Jun 9 16:58:06 2008 -0400
+
+    RADEON: Add untested support for RS400 chips
+    
+    GART setup appears to work the same as RS480 chips.
+    Also RC4xx chips are actually RS400 based, not RS480 based.
+
+commit f6982b54c96bc871df94d01abad72a501e87aa65
+Author: Alex Deucher <alex@botchco.com>
+Date:   Mon Jun 9 16:28:35 2008 -0400
+
+    RADEON: switch IGP gart to use radeon_write_agp_base()
+
+commit 63eb58040deff42e8272f1a580f7fd947af1b488
+Author: Robert Noland <rnoland@wombat.2hip.net>
+Date:   Sun Jun 8 23:46:14 2008 -0400
+
+    Fix typo in i915_suspend
+    
+    Reported by vehemens
+
+commit 116870a908edd8da02381d23694b321e8878f92e
+Author: Robert Noland <rnoland@wombat.2hip.net>
+Date:   Tue Jun 3 21:15:54 2008 -0400
+
+    I915 suspend/resume for FreeBSD
+
+commit d43f3cb0974b635c1a31b839807e5a691c44b4c6
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Mon Jun 9 05:32:41 2008 +1000
+
+    r300/r500: add hier-z regs
+
+commit 3b6ca4bf3f334341a158a9917ef117c23f145597
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Wed Jun 4 15:04:41 2008 -0400
+
+    [FreeBSD] Rework ati_pcigart.c
+    
+    This is mostly just a diff reduction with the linux version.
+    I'm not convinced that it will make anything better.
+
+commit 96141bd33c0d6c4b95a2adb668538ffc1103cc18
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Thu Jun 5 12:46:39 2008 -0400
+
+    [FreeBSD] We need to request busmastering support.
+    
+    This seems to be the key to getting at least some radeon
+    cards working.  Most, if not all drivers need it enabled,
+    so just request it once the driver has attached.
+
+commit 6d6921719c7d475856199ddbe88bbe11fc882ba6
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Tue Jun 3 16:21:13 2008 -0400
+
+    [FreeBSD] Incorporate vblank fixes for bsd.
+
+commit ec3d9960219e49e1bd24a097e04c3da88e2fcc53
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Tue Jun 3 13:02:38 2008 -0400
+
+    [FreeBSD] Forgot to call mtx_destroy on all the locks at unload.
+
+commit 93c57ff4e5d9f62be0a353222fef564dd9e59e39
+Author: Robert Noland <rnoland@wombat.2hip.net>
+Date:   Mon Jun 2 19:35:00 2008 -0400
+
+    [FreeBSD] Remove the locks in the vblank_disable_fn
+    
+    They are recursive and causing panics with witness enabled.
+
+commit fc74c2e9d65dbd0c611e1610886df098c6e3273b
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Jun 2 13:12:59 2008 -0400
+
+    [FreeBSD] Go back to using vbl_lock and move init/destroy to load/unload.
+
+commit 500c81d194115fb3c4b97d742519689478eeb4e8
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Jun 6 17:13:16 2008 -0700
+
+    [gem] Don't forget to munmap in the non-bo-reuse object-freeing case.
+
+commit 6cd0ef06a6c2bdcede166d9a2d0434e58e4a01f2
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 6 13:26:03 2008 -0700
+
+    [intel] remove settable use_mi_batchbuffer_start
+    
+    The driver can know what hardware requires MI_BATCH_BUFFER vs
+    MI_BATCH_BUFFER_START; there's no reason to let user mode configure this.
+
+commit 9f46c6935d154743162c6239903a4a9e443907bc
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 6 12:59:52 2008 -0700
+
+    [intel-gem] Use timers to retire requests periodically.
+    
+    Without the user IRQ running constantly, there's no wakeup when the ring
+    empties to go retire requests and free buffers. Use a 1 second timer to make
+    that happen more often.
+
+commit a708106c77f74f146722fba35eae772fb554ee9a
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 6 12:58:41 2008 -0700
+
+    [intel] free the hardware status page at driver_unload
+    
+    This goes with the other hardware status page patch.
+
+commit 56a96841d01d112d7d4adfebb572016398551ba8
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri Jun 6 12:57:01 2008 -0700
+
+    [intel-gem] Add explicit throttle ioctl
+    
+    Instead of throttling and execbuffer time, have the application ask to
+    throttle explicitly. This allows the throttle to happen less often, and
+    without holding the DRM lock.
+
+commit 329e0862255e8ad27e2aa4e3755421a18ea1acc5
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu Jun 5 16:05:35 2008 -0700
+
+    [libdrm/intel] Eliminate extra dri_gem_bo_bucket_entry structure
+    
+    Place the buffer reuse links right into the dri_bo_gem object.
+
+commit 5a55b48a410bb25666177c0ea8e5711ea2e3c795
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu Jun 5 15:58:55 2008 -0700
+
+    [libdrm/intel] Remove unused intel_validate_entry structure
+
+commit a919ff5d5ec2fe716cbf5c593be7cc0705499107
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu Jun 5 15:58:09 2008 -0700
+
+    [libdrm/intel] Reuse entire dri_bo_gem structure
+    
+    The code was discarding the dri_bo_gem structure and saving only the kernel
+    handle. This lost the mmap address, causing pain when the next buffer user
+    wanted to map the buffer.
+
+commit 5f5badb26f761eec87b951ce1b7b3a51a5060c50
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu Jun 5 14:09:57 2008 -0700
+
+    [intel] Allocate hardware status page at driver load time
+    
+    I couldn't get the re-allocated HWS to work on my 965GM, so I just gave up
+    and made it persist across the lifetime of the driver instead.
+
+commit 84162ccb7dc0286336292ac7f8e80678bfc11804
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu Jun 5 13:49:21 2008 -0700
+
+    Ignore X server provided mmio address
+
+commit 118baeee1820102177f4f5bb48dd2a1e3d95d21e
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu Jun 5 13:47:41 2008 -0700
+
+    [intel-gem] Dump error status on wait_request failure
+
+commit 6905c7a29d2a3bc0e605a09b98ac02a4a50893d0
+Author: Dennis Kasprzyk <onestone@opencompositing.org>
+Date:   Thu Jun 5 17:08:44 2008 +0200
+
+    radeon: Restore software interrupt on resume.
+    
+    Fixes performance drop after suspend/resume on some systems.
+
+commit d198e9b091e919a90895e551e48fb30d36a849ef
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Jun 5 08:44:46 2008 -0700
+
+    Add a function to bufmgr_fake to evict all buffers in the GTT.
+    
+    This will be used by the X Server for VT switch.
+
+commit 0903de0c8f7d2566c1bd65600142a71572eec07e
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue Jun 3 21:49:51 2008 -0700
+
+    Drop struct_mutex while waiting in drm_client_lock_take
+    
+    struct_mutex cannot be held while blocking on DRM lock.
+
+commit 8a3b510405f9fc6c920c456e3481bddd296a2af7
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Jun 3 14:34:54 2008 -0700
+
+    Fix libdrm to actually include the new code instead of just building it.
+
+commit c4857429c716f35e1fa054d1990cae28055d96d7
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Jun 3 10:20:49 2008 -0700
+
+    Fix and hook up bufmgr code to the build.
+
+commit 6a9eb08a872ac0388aad2c901888888964f14559
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Jun 3 09:27:37 2008 -0700
+
+    Import bufmgr code to libdrm.  Not yet hooked up to the build.
+
+commit ba7263b8c2f8c14c647da725ecbc73fcd456d63c
+Author: Michel Dänzer <michel@tungstengraphics.com>
+Date:   Tue Jun 3 11:28:10 2008 +0200
+
+    vblank: Don't wait or update the counter while the CRTC is supposedly disabled.
+    
+    Without kernel modesetting, this requires cooperation of the userspace
+    modesetting driver. We may have to leave the vblank interrupt enabled otherwise
+    to avoid problems.
+
+commit 237172b7670611b36d92be3b92983674846f6564
+Author: Michel Dänzer <michel@tungstengraphics.com>
+Date:   Tue Jun 3 11:28:10 2008 +0200
+
+    vblank: Clean up compensation for spurious wraparounds of driver counter.
+    
+    Only compensate when the driver counter actually appears to have moved
+    backwards.
+    
+    The compensation deltas need to be incremental instead of absolute; drop the
+    vblank_offset field and just use atomic_sub().
+
+commit d1dcb2b32e0c51d7cbcaa2ba1e0544452cf8f47b
+Author: Michel Dänzer <michel@tungstengraphics.com>
+Date:   Tue Jun 3 11:28:09 2008 +0200
+
+    vblank: Special-case driver vblank counter going back by 1.
+    
+    Turns out the radeon driver is affected by the same problem that prompted i915
+    to revert to less useful counter flipping at the end of the vblank interval. In
+    the long term, we can hopefully implement more reliable methods to achieve
+    counter flipping at the beginning of vblank, but otherwise this should be an
+    acceptable workaround.
+
+commit 0144ebeb8a713b1420d35004075037cd4b0495a1
+Author: Michel Dänzer <michel@tungstengraphics.com>
+Date:   Tue Jun 3 11:28:09 2008 +0200
+
+    vblank: Don't return current sequence number and time if interrupted by signal.
+
+commit 6b520005c6714d8a8afa68b8a43065a40da298cc
+Author: Michel Dänzer <michel@tungstengraphics.com>
+Date:   Tue Jun 3 11:27:39 2008 +0200
+
+    Revert "don't copy back if an error was returned."
+    
+    This reverts commit 6671ad1917698b6174a1af314b63b3800d75248c.
+    
+    The vblank ioctl needs to update the userspace parameters when interrupted by
+    a signal, which was prevented by this. Let's see if this breaks other ioctls...
+
+commit d5ae19ebcf2dc6402872e0575b5786b6e8117b6f
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Tue Jun 3 12:42:49 2008 +1000
 
     drm: sg alloc should write back the handle to userspace
-    (cherry picked from commit d5ae19ebcf2dc6402872e0575b5786b6e8117b6f)
 
-commit f892b4adf4021e82a7d4f2eb06256d6f4200ed15
+commit f1e12d40af6ce9b6159c28529bcbdc877c565c82
 Author: Dave Airlie <airlied@redhat.com>
-Date:   Wed May 28 15:31:18 2008 +1000
+Date:   Tue Jun 3 12:40:54 2008 +1000
 
-    remove include
-
-commit c28c1cf756979cebb67ffd64bc29ba371f1a9c4b
-Author: Dave Airlie <airlied@redhat.com>
-Date:   Wed May 28 15:08:08 2008 +1000
-
-    libdrm: make a branch for libdrm which drops all the TTM apis.
+    drm/ati_pcigart: use proper page mapping function
     
-    This will be the next release of libdrm as 2.3.1, Mesa needs to deal with this for 7.1.
+    This should be pci_map_page not pci_map_single
+
+commit 867c2bb461e4bf7765fdbf502f625b739ceecb96
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 2 12:37:10 2008 -0700
+
+    [intel-gem] reloc_and_validate_object → object_bind_and_relocate
+    
+    Just renaming this function and related parameters to match terminology used
+    elsewhere in the driver.
+
+commit 1cb2940a252f970bad0f88a5f14b4d39ea53ef1f
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 2 10:59:15 2008 -0700
+
+    [intel-gem] Propagate set_domain errors.
+    
+    set_domain can block waiting for rendering to complete. If that process is
+    interrupted by a signal, it can return -EINTR. Catch this error in all
+    callers and correctly deal with the result.
+
+commit 416754f1cc5a55b1c6b2d2fa2f501b18462d62e6
+Author: Robert Noland <rnoland@wombat.2hip.net>
+Date:   Sun Jun 1 19:34:29 2008 -0400
+
+    [FreeBSD] Declare vblank_disable_fn callout MPSAFE.
+
+commit 4ce47fd328cd885d66abdd42db1f7c054bd44498
+Author: Robert Noland <rnoland@wombat.2hip.net>
+Date:   Sun Jun 1 16:17:31 2008 -0400
+
+    [FreeBSD] Get rid of vbl_lock and re-use irq_lock.
+
+commit ac4da869285173ad0ac947bdf41ffe10efe21c05
+Author: Robert Noland <rnoland@wombat.2hip.net>
+Date:   Sun Jun 1 12:56:34 2008 -0400
+
+    [FreeBSD] Add symlink for radeon_microcode.h
+
+commit 2186f9f6eff4b3b4f605d35a030c0910646865ab
+Author: Robert Noland <rnoland@wombat.2hip.net>
+Date:   Sun Jun 1 12:49:20 2008 -0400
+
+    [FreeBSD] Call drm_vblank_cleanup during irq uninstall
+    
+    I needed to re-arrange some functions for this.
+    Also needed to call DRM_SPINUNINIT on the vbl_lock during cleanup.
+
+commit a12cbf8aa5cf21d30bd2c798ff059cb1ba92b382
+Author: Alex Deucher <alex@botchco.com>
+Date:   Fri May 30 18:20:01 2008 -0400
+
+    RADEON: fix typo in last commit
+
+commit 461bfa3da6f85b85c21cd84f81bb4eefa5481418
+Merge: 50bce2b... 6e8a2cf...
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri May 30 14:42:08 2008 -0700
+
+    Merge commit 'origin/master' into drm-gem
+    
+    Conflicts:
+    
+    	linux-core/Makefile.kernel
+    	shared-core/i915_drv.h
+    	shared-core/nouveau_state.c
+
+commit 50bce2bc625deb439dd61f504496dddd0cd4f572
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri May 30 13:47:34 2008 -0700
+
+    [intel-gem] Only update obj->write_domain if we're actually changing it.
+    
+    The problem was revealed where on 965, the display list vertex buffer would see:
+    
+    create		      -> (CPU, CPU)
+    set_domain (CPU, CPU) -> (CPU, CPU)
+    set_comain (CPU, 0)   -> (CPU, 0) (no clflush occurred)
+    execbuf	   (GPU, 0)   -> (CPU+GPU, 0) (still no clflush)
+    
+    instead of:
+    
+    create		      -> (CPU, CPU)
+    set_domain (CPU, CPU) -> (CPU, CPU)
+    set_comain (CPU, 0)   -> (CPU, CPU)
+    execbuf	   (GPU, 0)   -> (CPU+GPU, 0) (clflushed)
+
+commit 4f92ed34270ae4afaa0ddba38d227c6e359bcc98
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri May 30 10:04:22 2008 -0700
+
+    [intel-gem] Add an option to check GTT versus CPU coherency at execbuf time.
+
+commit 6e8a2cff66ac0d6afaf9bb233bc81449c2014078
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Fri May 30 20:27:31 2008 +1000
+
+    r500: attempt to make AGP work by programming agp base in the MC correctly
+
+commit 3b1e4e6dc38029e697afb8e6ec81ebbed7adf442
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 29 12:53:13 2008 -0700
+
+    [intel-gem] Write the presumed_offset back out after updating it.
+    
+    Otherwise, 965 constant state buffers get re-relocated every exec.  Ouch.
+
+commit 19ff3366e4ed591741af4bcf49991823115bdb17
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue May 27 16:49:49 2008 -0700
+
+    [intel-gem] Clean up active/inactive/flushing list debugging.
 
 commit 5b86823fa36513f521412a38c240cb18f02dcc9a
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Wed May 28 11:12:57 2008 +1000
 
     radeon: split microcode out into a separate header file.
+
+commit e10502002f0ebb2b56b19384b2f2eae7a7a84512
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue May 27 17:50:39 2008 -0700
+
+    [intel-gem] Replace idlelock usage with real lock acquisition.
 
 commit 0c8a8db1b6c97dd0fad18bd72a1bc56e2a673a10
 Author: Dave Airlie <airlied@redhat.com>
@@ -89,6 +2684,128 @@ Date:   Tue May 27 14:12:51 2008 -0700
 
     [FreeBSD] Convert from drm_device_t to struct drm_device for consistency.
 
+commit 1f4e36081bd6ff7d7b53a62e0c8db7c0f82edf99
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 26 17:41:46 2008 -0700
+
+    [intel-gem] Must hold DRM lock while setting object domain
+    
+    Object domain transfer can involve adding flush ops to the request queue,
+    and so the DRM lock must be held to avoid having the X server smash pointers
+    badly.
+
+commit d434b64f6a760d85295e32298a9a1f3624ee1b69
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 26 03:25:16 2008 -0700
+
+    [i915] leave interrupts masked off when not in use.
+    
+    The interrupt enable register cannot be used to temporarily disable
+    interrupts, instead use the interrupt mask register.
+    
+    Note that this change means that a pile of buffers will be left stuck on the
+    chip as the final interrupts will not be recognized to come and drain things.
+
+commit 7cf3fd29fe058a0bfc2ba7e889d1b360398be161
+Author: Keith Packard <keithp@keithp.com>
+Date:   Sun May 25 20:45:20 2008 -0700
+
+    [intel-gem] Add DRM_I915_GEM_BUSY ioctl to check for idle buffers.
+    
+    This new ioctl returns whether re-using the buffer would force a wait.
+
+commit 6d1d11704ab36e4ee50b2c1d3b984ab6bb691417
+Author: Keith Packard <keithp@keithp.com>
+Date:   Sun May 25 20:44:19 2008 -0700
+
+    [intel-gem] Compute npages instead of nbytes in flush_pwrite
+    
+    i915_gem_flush_pwrite optimizes short writes to the buffer by clflushing
+    only the modified pages, but it was miscomputing the number of pages.
+
+commit c69b81df62cb7e04f956f2cf77091216754c3632
+Author: Keith Packard <keithp@keithp.com>
+Date:   Sun May 25 20:41:42 2008 -0700
+
+    [intel-gem] replace call to jiffies_to-msec with simple inline
+
+commit 8c2b207f9b1fb1cf6df23c7ef73ca57dfb5dd459
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu May 22 23:08:38 2008 -0700
+
+    [intel-gem] Encourage multiple caches to hold read data
+    
+    When reading from multiple domains, allow each cache to continue
+    to hold data until writes occur somewhere. This is done by
+    first leaving the read_domains alone at bind time (presumably the CPU read
+    cache contains valid data still) and then in set_domain, if no write_domain
+    is specified, the new read domains are simply merged into the existing read
+    domains.
+    
+    A huge comment was added above set_domain to explain how things are
+    expected to work.
+
+commit 44ed693ca6f8d19acb39174c6efada070652a027
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu May 22 11:34:56 2008 -0700
+
+    [gem] Use CPU domain for new or pageable objects
+    
+    Newly allocated objects need to be in the CPU domain as they've just been
+    cleared by the CPU. Also, unmapping objects from the GTT needs to put them
+    into the CPU domain, both to flush rendering as well as to ensure that any
+    paging action gets flushed before we remap to the GTT.
+
+commit 71b09a5f75c6063a592f7be07465761519839bcd
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu May 22 10:59:59 2008 -0700
+
+    [intel-gem] Force ring retire by emiting flush before user-interrupt.
+    
+    Commands in the ring are parsed and started when the head pointer passes by
+    them, but they are not necessarily finished until a MI_FLUSH happens. This
+    patch inserts a flush after the execbuffer (the only place a flush wasn't
+    already happening).
+
+commit a51c3a76ff415104426493a97ac686ccfe3f3926
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu May 22 10:48:32 2008 -0700
+
+    [intel] Add debug code to verify the cached ring tail pointer.
+    
+    Recording the tail pointer in a local variable improves performance, but if
+    someone messes up and fails to reload at the right time, the driver will
+    write commands to the wrong part of the ring and scramble execution badly.
+    
+    This change (available by setting I915_RING_VALIDATE to 1) checks to make
+    sure the cached tail pointer matches the hardware tail pointer at each ring
+    buffer addition, calling BUG_ON when that's not true.
+
+commit da3f099a7c4a18468ff84819ed39e42bec641e11
+Author: Keith Packard <keithp@keithp.com>
+Date:   Wed May 21 00:32:02 2008 -0700
+
+    [intel-gem] invalidate ring locals for pin/unpin/set_domain/free functions
+    
+    Ring locals must be reloaded from hardware in case the X server ran.
+
+commit 5e662f90d1143de53db866e2b8a94f1bfbe5fc51
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed May 14 15:13:14 2008 -0700
+
+    [gem] Release GEM buffers from work task scheduled from IRQ.
+    
+    There are now 3 lists.  Active is buffers currently in the ringbuffer.
+    Flushing is not in the ringbuffer, but needs a flush before unbinding.
+    Inactive is as before.  This prevents object_free → unbind →
+    wait_rendering → object_reference and a kernel oops about weird refcounting.
+    
+    This also avoids an synchronous extra flush and wait when freeing a buffer
+    which had a write_domain set (such as a temporary rendered to and then from
+    using the 2d engine).  It will sit around on the flushing list until the
+    appropriate flush gets emitted, or we need the GTT space for another
+    operation.
+
 commit 49075b678fad6c3a5cadd1af67a37332b9255ace
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Fri May 23 09:39:54 2008 +1000
@@ -101,6 +2818,37 @@ Date:   Thu May 15 11:13:03 2008 +1000
 
     drm: fix nouveau warning
 
+commit d6f796857780fc54641047e2aa4e7091376928eb
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue May 20 16:27:05 2008 -0700
+
+    [gem] Replace ring throttling hack with actual time measurement.
+
+commit 54fa32cdfe1529023324a0a261ee5d4e033f46ea
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed May 21 15:15:58 2008 -0700
+
+    [gem] Fix bad test for list_for_each completion.
+    
+    Since it's a circular list, the entry won't be NULL at termination.
+
+commit 7078978db0e014a2621984f6c67ca65fa4f23f3a
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed May 21 15:03:47 2008 -0700
+
+    [gem] Hold a reference on the object in i915_gem_wait_space.
+    
+    Otherwise, in the middle of the function called using it the last ref
+    might disappear.
+
+commit f8e38e49dd70bf4a5ef97c29f0c405a1fc5023f5
+Author: Keith Packard <keithp@keithp.com>
+Date:   Wed May 21 00:32:02 2008 -0700
+
+    [intel-gem] invalidate ring locals for pin/unpin/set_domain/free functions
+    
+    Ring locals must be reloaded from hardware in case the X server ran.
+
 commit 91c6c4b2403caca80273e8010e9ced74cf900be3
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Wed May 21 20:14:45 2008 +1000
@@ -111,11 +2859,57 @@ Date:   Wed May 21 20:14:45 2008 +1000
     
     Add support for vbl interrupts for these chips
 
+commit af8e087157ef5034fa12d93202037f87da61355d
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue May 20 14:03:27 2008 -0700
+
+    [gem] Use a separate sequence number field from classic/ttm
+    
+    This lets us get some qualities we desire, such as using the full 32-bit
+    range (except zero), avoiding DRM_WAIT_ON, and a 1:1 mapping of active
+    sequence numbers to request structs, which will be used soon for throttling
+    and interrupt-driven list cleanup.
+
+commit ab36a6f983107971890e81473452b3f0313fb692
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue May 20 10:52:24 2008 -0700
+
+    [gem] Rename sequence numbers from "cookie" to "seqno"
+
+commit 6c3ac484b049681f9f3e692f9a6238ed122a8191
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue May 20 10:48:36 2008 -0700
+
+    [gem] Clean up active/inactive list handling using helper functions.
+    
+    Additionally, a boolean active field is added to indicate which list an
+    object is on, rather than smashing last_rendering_cookie to 0 to show
+    inactive.  This will help with flush-reduction later on, and makes the code
+    clearer.
+
 commit 83996561061b99bb490fa0692a491ac9e51245a1
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Sat May 17 10:22:12 2008 +1000
 
     r500: add more register ranges for Mesa driver
+
+commit 7dced2f33a952ad12aafb7a3e34747156020a3ae
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 15 11:21:11 2008 -0700
+
+    [gem] Hold dev->struct_mutex to protect structure data.
+
+commit 3ab152da66f6c7bcc68a13efcf4a62800354f13b
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 15 09:37:49 2008 -0700
+
+    [gem] Rename the GTT LRU lists to active (executing) and inactive (idle).
+
+commit aafafe507ba6d073bad25b74c808b73c428db67f
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 15 09:32:34 2008 -0700
+
+    [gem] typo fix in comment.
 
 commit a09c0bbe11004a020d0fac47f7517db55fb91754
 Author: Dave Airlie <airlied@redhat.com>
@@ -162,6 +2956,50 @@ Date:   Tue May 13 21:02:17 2008 -0400
     RS400 (intel based IGP) and RS480 (AMD based IGP) have
     different MC and GART setups.  Currently we only support
     RS480.
+
+commit 6e46a3c762919af05fcc6a08542faa7d185487a1
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon May 12 15:42:20 2008 -0700
+
+    [GEM] Update testcases for new API.
+
+commit f650d7240a5b6eea8e605734f1211c20727c21d7
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon May 12 12:55:36 2008 -0700
+
+    [GEM] Typo (and thinking) fixes in drm-gem.txt and doxygen.
+
+commit 17e8000ac046e912bf02649e67165cafed270e2e
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 12 13:04:18 2008 -0700
+
+    [intel] Minor kludge -- wait for the ring to be nearly empty before queuing
+    
+    No need to fill the ring that much; wait for it to become nearly empty
+    before adding the execbuffer request. A better fix will involve scheduling
+    ring insertion in the irq handler.
+
+commit 7e7ea313c4a38370194290d05697bdb6a746669d
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 12 13:03:16 2008 -0700
+
+    [intel] When polling for ring space, sleep for a lot longer (10ms)
+    
+    If the ring is full, the engine will surely be running for more than 10ms.
+
+commit 6aeff6b9e32b61beed0d5c3d871968fa6217b79d
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 12 13:01:57 2008 -0700
+
+    [gem] Set write domain to CPU when doing pwrite.
+    
+    Leave the flush call in place, which can fix domains up if necessary.
+
+commit 6950b7da7157d4d775fc09c7bc31fb0e769c4249
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 12 13:00:55 2008 -0700
+
+    [gem] Clarify use of explicit domain control. Remove Gen3 from I-cache usage.
 
 commit 10d754f0a2ba2bdda87c243305c8fc46616e965c
 Author: Alex Deucher <alex@cube.(none)>
@@ -227,6 +3065,157 @@ Date:   Mon May 12 08:56:11 2008 -0400
 
     Radeon IGP: clean up registers and magic numbers
 
+commit ff39db099b9ca6c8feee68101a2269345b7bd798
+Author: Keith Packard <keithp@keithp.com>
+Date:   Sun May 11 00:10:16 2008 -0700
+
+    [GEM] Make pread/pwrite manage memory domains. No luck with movnti though.
+    
+    pread and pwrite must update the memory domains to ensure consistency with
+    the GPU. At some point, it should be possible to avoid clflush through this
+    path, but that isn't working for me.
+
+commit 1b0bf301431e76712de1ee43681bc818383b2e56
+Author: Keith Packard <keithp@keithp.com>
+Date:   Sat May 10 22:04:39 2008 -0700
+
+    [intel-GEM] exec list can contain pinned, lru cannot.
+    
+    The exec list contains all objects, in order of use. The lru list contains
+    only unpinned objects ready to be evicted. This required two changes -- the
+    first was to not migrate pinned objects from exec to lru, the second was to
+    search for the first unpinned object in the exec list when doing eviction.
+
+commit 1f9eaceb71792879a3ecb0046b64dbf65b870d50
+Merge: 177b8b0... 48a8531...
+Author: Keith Packard <keithp@keithp.com>
+Date:   Sat May 10 21:05:25 2008 -0700
+
+    Merge commit 'anholt/drm-gem' into drm-gem
+
+commit 177b8b07033c56c84d335808121690d235516bb5
+Author: Keith Packard <keithp@keithp.com>
+Date:   Sat May 10 21:04:42 2008 -0700
+
+    [GEM] Add drm-gem.txt
+    
+    Add some API and implementation documentation for GEM.
+
+commit a37ac493da1730436028ecc79a38513380ce15d0
+Author: Keith Packard <keithp@keithp.com>
+Date:   Sat May 10 21:04:18 2008 -0700
+
+    [intel-GEM] Clean up GEM ioctl naming.
+    
+    Rename 'validate_entry' to 'exec_object', then clean up some field names in
+    structures (renaming buffer_offset to just offset, for example).
+
+commit 48a8531aa403ea250696338aa8717e3e36477370
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri May 9 18:23:51 2008 -0700
+
+    GEM: Fix arguments to drm_memrange_init so we don't exceed our allocation.
+    
+    It takes (offset, size), not (offset, end).
+
+commit c5c59eab809604e4d0d4d1dc71fc11186d0220f8
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri May 9 14:34:20 2008 -0700
+
+    GEM: Separate the LRU into execution list and LRU list.
+    
+    Now, the LRU list has objects that are completely done rendering and ready
+    to kick out, while the execution list has things with active rendering,
+    which have associated cookies and reference counts on them.
+
+commit f56f2acb5a3f34ad6916ff315d3d2058bd4b8f9c
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri May 9 15:07:49 2008 -0700
+
+    GEM: Clear obj_priv->agp_mem when we free it.
+    
+    Still managing to get something wrong with this, oopsing down in agp.
+
+commit f0ae335cd70077043f2f7af39d7edcc529367c61
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri May 9 15:02:50 2008 -0700
+
+    GEM: Avoid leaking refs on target objects on presumed offset success.
+
+commit 1e26ca44c9f3e8a1a30652aa860b405e0248aae1
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri May 9 12:18:09 2008 -0700
+
+    [gem] API cleanup. allocate->create unreference->close name->flink
+    
+    Make the API names a bit more consistent.
+
+commit ec75369b402235d74b06b08907572050962075a6
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu May 8 11:45:53 2008 -0700
+
+    [i915] clean up whinging from checkpatch.pl
+
+commit 07ad5ce1e199ebca1e51a831503f923fa49cc57e
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu May 8 11:13:29 2008 -0700
+
+    Clean up whinging from checkpatch.pl in drm_gem.c
+    
+    Whitespace changes, a few too-long-lines and some extra braces.
+
+commit 2f573e6df4890784124eea24ce168702574f0152
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 8 12:46:02 2008 -0700
+
+    GEM: Fix oops on NULL dereference when we try clflushing when we don't need to.
+
+commit 9af4c497433398fa4576a7c1c31036448cf4f24c
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu May 8 10:44:02 2008 -0700
+
+    [intel-gem] Move domains to relocation records. add set_domain ioctl.
+    
+    Domain information is about buffer relationships, not buffer contents. That
+    means a relocation contains the domain information as it knows how the
+    source buffer references the target buffer.
+    
+    This also adds the set_domain ioctl so that user space can move buffers to
+    the cpu domain.
+
+commit effc6d998f080ba6f9c81d1b4b0e75a42be0238e
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed May 7 16:00:58 2008 -0700
+
+    GEM: fix testcases for new ioctl args.
+
+commit aa0621a19ffcdf2a92eac08fa4950e0423a8dd2b
+Author: Arjan van de Ven <arjan@linux.intel.com>
+Date:   Wed May 7 15:54:32 2008 -0700
+
+    Apply a few stylistic cleanups to match kernel code.
+
+commit 06e9761f94599c6378c8fa0cdbd1e1c1776bae7a
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed May 7 14:10:04 2008 -0700
+
+    GEM: Wait for existing rendering to complete before writing relocation data.
+    
+    This should already have been generally safe since we don't change contents
+    and put in new relocations between execbufs, so if we were writing in a new
+    relocation then we'd already waited rendering to complete when we moved
+    the target of the relocation.  However, doing the right thing will be required
+    if we do buffer reuse.
+
+commit 5f5f01ed91f5ad50f2b38e11740a30441ac845a4
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed May 7 12:46:06 2008 -0700
+
+    GEM: Extend cache domain stuff for 965.
+    
+    One of our MI_FLUSH bits is reserved on 965, being always implied, and there's
+    a vertex cache that was forgotten.
+
 commit b44f2da380e78769b58c751e81f376f0fa1f48aa
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Wed May 7 15:10:23 2008 +1000
@@ -238,11 +3227,292 @@ Date:   Wed May 7 15:10:23 2008 +1000
     nopfn is on its way out in the future also, so we should switch to using fault
     for that path as well soon
 
+commit 6a6c37af9ecaabfe1399a1300cadaff730767013
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue May 6 21:59:06 2008 -0700
+
+    [intel-GEM] ref count objects in gtt-lru.
+    
+    If objects on the lru aren't ref counted, they'll get pulled from the gtt as
+    soon as they are freed. This change does cause objects to get stuck in the
+    gtt until they're forced out by new requests. The lru should get cleaned
+    when the irq occurs.
+
+commit 61253f4f677518537368103799c9510b8b5ad1e3
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue May 6 20:00:23 2008 -0700
+
+    [intel-GEM] Add memory domain support.
+    
+    Memory domains allow the kernel to track which caches to flush and how to
+    move objects before buffer execution.
+
+commit 2b9ef32669acf8197cf7d9b73b851c001db494cd
+Merge: 631e86c... d2373b2...
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue May 6 14:43:56 2008 -0700
+
+    Merge commit 'anholt/drm-gem' into drm-gem
+
+commit 631e86c5c4ad9b2cdd40749ea3b351204a362c80
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue May 6 14:43:49 2008 -0700
+
+    Start coding up memory domains
+
+commit d2373b2a341868882208bb4297ab4f2f51302031
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue May 6 13:28:26 2008 -0700
+
+    GEM: Use irq-based fencing rather than syncing and evicting every exec.
+
+commit dd6976c56f9f14ea8aa630833e9cc9711157d74f
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue May 6 11:25:53 2008 -0700
+
+    GEM: Skip relocation if presumed offset matches.
+
+commit 8551bfc6dba03dcd9d182b2099a0906153ecfa01
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue May 6 11:18:47 2008 -0700
+
+    GEM: Save the last ioremapped page for relocations in case we need it again.
+
+commit 91cba3ae17eb34d1836164f86c13a2a8e08c2a29
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 5 22:10:02 2008 -0700
+
+    Dump last batch buffer when hardware lockup is detected.
+
+commit ed6657fa8e7977b19bb836782ac8e87f0f703cef
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 5 22:09:34 2008 -0700
+
+    Monitor ACTHD register while polling for idle ring.
+    
+    When batch buffers are executing, the ring may be stuck for a long time.
+    Monitor the ACTHD pointer which will show if the execution engine is
+    actually hung.
+
+commit 2c8f970baaba9c72c882677f40ce8271bff03bac
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 5 17:17:19 2008 -0700
+
+    Unlock pages right after getting them.
+    
+    pages come back from find_or_create_page locked, but must not stay locked
+    for long. Unlock them immediately instead of waiting until we're done with
+    them to avoid deadlock when applications try to touch them.
+
+commit 5b0d0fa7f81fb297778af97124a2273b2af317bb
+Merge: d59a930... dafe48e...
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 5 14:40:20 2008 -0700
+
+    Merge commit 'anholt/drm-gem' into drm-gem
+    
+    Conflicts:
+    
+    	linux-core/i915_gem.c
+
+commit dafe48e6239a4e9b49dd87b8c70224e8eeeb6079
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon May 5 14:38:04 2008 -0700
+
+    GEM: Replace drm_memrange_for_each with just evicting what we brought in.
+    
+    I was wrong about how the data structure worked, and didn't care to fix it
+    to support debugging code.
+
+commit d59a9300ec2ec5d6dc606f847a7589c197994793
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 5 14:32:01 2008 -0700
+
+    Remove some debug messages.
+
+commit f0bc796a028dc7c6281d3d0cb2deef9df37e380a
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 5 14:22:42 2008 -0700
+
+    Add object base to relocation store address.
+    
+    The relocated value was being written to the wrong location, missing
+    the object base address.
+
+commit 4867780bd6900293880d1db963798d075ec9b01a
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 5 13:32:28 2008 -0700
+
+    Emit clflush and chipset flush when mapping objects to gtt
+
+commit 4511e6cd80b4c47a142db48727753da8d0898857
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 5 11:27:06 2008 -0700
+
+    Correct execbuffer offset. Add memory barrier and chipset flush.
+
+commit b6f173c4300e90be9bdd3b24003b800afd8819c5
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 5 10:51:49 2008 -0700
+
+    Add i915_dispatch_gem_execbuffer (broken).
+    
+    This function submits a gem-based execbuffer to the ring.
+    It doesn't work yet.
+
 commit d015219bd0b25f367be23e5df8355f479ee53a0f
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Mon May 5 16:49:04 2008 +1000
 
     r500: add allowed range for us config/pixsize
+
+commit 166ff364fb09ec9885a164fca517c079a1d88718
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri May 2 17:50:46 2008 -0700
+
+    Don't forget to set the memrange private, and reset ring on kernel entry.
+
+commit afe574f328fca42f2fa5fbc1c7a1c13d0f35d2f6
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri May 2 17:49:52 2008 -0700
+
+    Don't include the tail guard memrange in foreach callbacking.
+
+commit 5f0614b86ff5760016bef87c6f6012fe4f42e14e
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri May 2 17:13:11 2008 -0700
+
+    Check for do_mmap errors
+
+commit ab3549d1336fc6c08581a9fd14a83513649d9187
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri May 2 16:34:16 2008 -0700
+
+    Add a bit of /proc/dri/*/gem support. Clean up some refcount/pagelock issues.
+    
+    Track named objects in /proc/dri/0/gem_names.
+    Track total object count in /proc/dri/0/gem_objects.
+    Initialize device gem data.
+    return -ENODEV for gem ioctls if the driver doesn't support gem.
+    Call unlock_page when unbinding from gtt.
+    Add numerous misssing calls to drm_gem_object_unreference.
+
+commit 39e20bcd5f4bf9fedac80188fda2e9fcab2f0360
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri May 2 12:28:49 2008 -0700
+
+    Add name/open ioctls, separate handle and pointer ref counts.
+    
+    Names are just another unique integer set (from another idr object).
+    Names are removed when the user refernces (handles) are all destroyed --
+    this required that handles for objects be counted separately from
+    internal kernel references (so that we can tell when the handles are all
+    gone).
+
+commit 49e8e3372afcf5fab9ffef5691d87ad8bc19599a
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri May 2 10:36:00 2008 -0700
+
+    Remove drm_driver argument to functions taking drm_gem_object.
+    
+    Now that drm_gem_object has a drm_driver * in it, functions don't need both
+    parameters.
+
+commit 5b5b68ffd220f43d4da35ac475b8a3dd91ebbfa7
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri May 2 10:34:46 2008 -0700
+
+    Fix nouveau warning when returning pointers in uint64_t objects.
+
+commit 0d547c9ed92c0183f2c727496154baa2849f326e
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu May 1 20:41:55 2008 -0700
+
+    Add alignment to all aperture allocation requests.
+    
+    When pinning buffers, or using execbuffer, allow the application to specify
+    the necessary aperture allocation alignment constraints.
+
+commit 30efad5113944681c1abd6452e10355c105e9c39
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu May 1 20:31:16 2008 -0700
+
+    Fix gem ioctls to be 32/64-bit clean.
+    
+    mixed 32/64 bit systems need 'special' help for ioctl where the user-space
+    and kernel-space datatypes differ. Fixing the datatypes to be the same size,
+    and align the same way for both 32 and 64-bit ppc and x86 environments will
+    elimiante the need to have magic 32/64-bit ioctl translation code.
+
+commit abc896638fdcd8ccb457ad7b43dbe7ad229ba501
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu May 1 20:12:39 2008 -0700
+
+    Use krefs for refcounting.
+    
+    krefs are way easier than a custom-coded spinlock+int combo.
+
+commit c10695bb7ab44494badc21c822eac3140cf4e117
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 1 17:31:57 2008 -0700
+
+    Unbind objects when freeing, fix some error paths, and warn in others.
+
+commit ddc80651d561ef3820e205255f34dc7c60dc2e7c
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 1 17:31:29 2008 -0700
+
+    Fix offset passed to AGP to be pages instead of bytes.
+    
+    Fix some utterly bonged loop while we were staring at it.
+
+commit 3f641b56c79d48f7e11aa3eb1dc678e09c8e01f7
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 1 16:48:25 2008 -0700
+
+    Fix missing member settings in obj/obj_priv, and some error paths.
+
+commit 7d5f783eca3302ec7efa164e2980c75e5e591585
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 1 16:38:37 2008 -0700
+
+    Make GEM object handles be nonzero.
+
+commit c530011aaaf485157ba6284c0c32c0db83523b64
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 1 16:35:12 2008 -0700
+
+    Update mm tests for GEM rename.
+
+commit d2529d13961f0df00754393e1ad9b72da5e998a4
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 1 16:27:03 2008 -0700
+
+    Remove _args from gem ioctl argument structure tags.
+
+commit 793549116ee6e9202fc7e474bd382eb19ffeb87f
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 1 15:40:02 2008 -0700
+
+    Add pin/unpin object ioctls for gem.
+
+commit ccd1bae0f676490a88240c62f02e072d2cf3b030
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 1 15:22:21 2008 -0700
+
+    checkpoint: relocations support.
+
+commit 5af87acbc2025b9f72d51b30f176e9c3909695ac
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 1 14:20:44 2008 -0700
+
+    checkpoint: gtt binding written.
+
+commit 2140e102f942edf7982cee2a3f00caf234551687
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu May 1 11:39:06 2008 -0700
+
+    checkpoint: rename to GEM and a few more i915 bits.
 
 commit 3ac74f3208ed15a990a0a26742fbfe566f08aa80
 Author: Ben Skeggs <skeggsb@gmail.com>
@@ -304,6 +3574,30 @@ Date:   Thu May 1 23:47:42 2008 +1000
     
     Since someone already added nv86, why not!
 
+commit 1a8406795052e3ec49e400465f3211d04fd9dd86
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Apr 30 16:03:15 2008 -0700
+
+    Hacking towards hooking up execbuffer.
+
+commit 81ba8ded7e01b21e600069977e496017c8966d66
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Apr 29 13:47:12 2008 -0700
+
+    Remove the remainder of the mmfs device.
+
+commit 3148c1636408cc422ab83c149a8963916dd376b0
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Apr 29 13:45:43 2008 -0700
+
+    Move mmfs tests over to be drm tests.
+
+commit dabd056bf34b389585b618cf03a297877505f06b
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Apr 29 13:30:44 2008 -0700
+
+    Move mmfs ioctls into the DRM. Untested.
+
 commit cb33133ef354b77a8cf06b16ce95a0babbe8bc6f
 Author: Jesse Barnes <jbarnes@jbarnes-d500.(none)>
 Date:   Tue Apr 29 12:36:04 2008 -0700
@@ -317,6 +3611,16 @@ Author: Maarten Maathuis <madman2003@gmail.com>
 Date:   Tue Apr 29 19:34:22 2008 +0200
 
     nouveau: NV9x cards exist as well.
+
+commit 3ad8db2071d30c198403e605f2726fc5c3e46bfd
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Apr 28 16:54:53 2008 -0700
+
+    Rename drm_mm.c and its fuctions to drm_memrange.
+    
+    It's not really a graphics memory allocator, just something to track ranges
+    of address space.  It doesn't involve actual allocation, and was consuming
+    some desired namespace.
 
 commit 7f8e4060859651993921281445ec00940c577222
 Author: Jesse Barnes <jbarnes@hobbes.(none)>
@@ -334,6 +3638,45 @@ Date:   Sat Apr 26 17:11:18 2008 -0700
     Enum-ectomy of vblank modesetting ioctl
     
     Enum can be of pretty much any size since C leaves the choice of size up to the implementation.  So avoid using it in new interfaces like the vblank pre- & post-modeset ioctl.  Thanks to hch for spotting this.
+
+commit 22877864c204139fe1c46899bedd237e38f0e849
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Apr 23 14:52:30 2008 -0700
+
+    Add mmap ioctl to mmfs.
+
+commit 8c741ed54e1be63528e79222b600f37506c6d6d2
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Apr 23 13:06:58 2008 -0700
+
+    Add pread/pwrite ioctls to mmfs.
+
+commit c1fec43b553ea93460b58995a1229e84d8bb45b4
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Apr 23 11:32:31 2008 -0700
+
+    Extend the mmfs basic test to do a couple of ioctls.
+
+commit 8665b666c7e2ecdee7d27e1ad540910a0223ba6d
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Apr 23 11:22:59 2008 -0700
+
+    Move mmfs.h userland interface to shared-core.
+
+commit 47a2b7dc03e35d4eaf8148b87aeea8dd96723b4d
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Apr 22 16:08:23 2008 -0700
+
+    Initial add of mmfs module.
+
+commit c82894034f611696c54c5aaf2112be638aa2cb35
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Mar 4 15:08:24 2008 -0800
+
+    Clarify that drm_agp_ttm_backend is associated with a drm_ttm.
+    
+    On first looking at it I assumed it was an aspect of the ttm backend as a
+    whole rather than specific allocations from a backend.
 
 commit 10b9a116a7b7fe3acf0848de9e0cf40f8e1bcd75
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
