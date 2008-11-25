@@ -1,7 +1,10 @@
 libdrm (2.4.1-1) UNRELEASED; urgency=low
 
   * New upstream release.
-  * Run autoreconf at build time, build-depend on automake and libtool.
+  * debian/rules:
+    -Run autoreconf at build time, build-depend on automake and libtool.
+    -Add a debian/libdrm2.symbols file and '-c4' parameter to dh_makeshlibs
+     to fail if new symbols are added. Don't use Debian versions for now.
 
  -- Timo Aaltonen <tepsipakki@ubuntu.com>  Tue, 25 Nov 2008 10:52:54 +0200
 
