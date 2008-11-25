@@ -1,3 +1,10 @@
+libdrm (2.4.1-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+  * Run autoreconf at build time, build-depend on automake and libtool.
+
+ -- Timo Aaltonen <tepsipakki@ubuntu.com>  Tue, 25 Nov 2008 10:52:54 +0200
+
 libdrm (2.3.1-2) unstable; urgency=high
 
   * Remove from the source package a bunch of files that are only used by the

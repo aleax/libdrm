@@ -9,7 +9,7 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-include /usr/share/quilt/quilt.make
+include debian/xsfbs/xsfbs.mk
 
 # These are used for cross-compiling and for saving the configure script
 # from having to guess our platform (since we know it already)
@@ -30,27 +30,39 @@ else
 	CFLAGS += -O2
 endif
 
-config.status: configure
+configure: $(STAMP_DIR)/patch
 	dh_testdir
-	./configure $(confflags) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --enable-static=yes CFLAGS="$(CFLAGS)"
+	autoreconf -vfi
+
+obj-$(DEB_BUILD_GNU_TYPE)/config.status: configure
+	dh_testdir
+	test -d obj-$(DEB_BUILD_GNU_TYPE) || mkdir obj-$(DEB_BUILD_GNU_TYPE)
+	cd obj-$(DEB_BUILD_GNU_TYPE) && \
+	../configure --prefix=/usr --mandir=\$${prefix}/share/man \
+		--infodir=\$${prefix}/share/info \
+		--enable-static=yes $(confflags) \
+		CFLAGS="$(CFLAGS)"
 
 build: build-stamp
-build-stamp: $(QUILT_STAMPFN) config.status
+build-stamp: obj-$(DEB_BUILD_GNU_TYPE)/config.status
 	dh_testdir
-	$(MAKE)
-	touch build-stamp
+	cd obj-$(DEB_BUILD_GNU_TYPE) && $(MAKE)
+	>$@
 
-clean: unpatch
+clean: xsfclean
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp
-	-$(MAKE) distclean
-ifneq "$(wildcard /usr/share/misc/config.sub)" ""
-	cp -f /usr/share/misc/config.sub config.sub
-endif
-ifneq "$(wildcard /usr/share/misc/config.guess)" ""
-	cp -f /usr/share/misc/config.guess config.guess
-endif
+
+	rm -f config.cache config.log config.status
+	rm -f */config.cache */config.log */config.status
+	rm -f conftest* */conftest*
+	rm -rf autom4te.cache */autom4te.cache
+	rm -rf obj-*
+	rm -f $$(find -name Makefile.in)
+	rm -f compile config.guess config.sub configure depcomp install-sh
+	rm -f ltmain.sh missing INSTALL aclocal.m4 config.h.in mkinstalldirs
+
 	dh_clean
 
 install: build
@@ -58,7 +70,8 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
+
+	cd obj-$(DEB_BUILD_GNU_TYPE) && $(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
 
 # Build architecture-independent files here.
 binary-indep: build install
