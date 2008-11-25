@@ -62,6 +62,7 @@ clean: xsfclean
 	rm -f $$(find -name Makefile.in)
 	rm -f compile config.guess config.sub configure depcomp install-sh
 	rm -f ltmain.sh missing INSTALL aclocal.m4 config.h.in mkinstalldirs
+	rm -f libdrm.pc libdrm/config.h.in
 
 	dh_clean
 
