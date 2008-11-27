@@ -7,7 +7,14 @@ libdrm (2.4.1-1) UNRELEASED; urgency=low
     -Add a debian/libdrm2.symbols file and '-c4' parameter to dh_makeshlibs
      to fail if new symbols are added. Don't use Debian versions for now.
 
- -- Timo Aaltonen <tepsipakki@ubuntu.com>  Tue, 25 Nov 2008 13:15:26 +0200
+  [ Julien Cristau ]
+  * Add a new package for the intel-specific bits (libdrm-intel1)
+  * Build-depend on pkg-config and libpthread-stubs0-dev (closes: #502078).
+    Thanks, Frank Lichtenheld!
+  * Don't mention *.la in libdrm-dev.install.
+  * Make libdrm-dev depend on libdrm-intel1.
+
+ -- Timo Aaltonen <tepsipakki@ubuntu.com>  Thu, 27 Nov 2008 09:33:05 +0200
 
 libdrm (2.3.1-2) unstable; urgency=high
 

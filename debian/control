@@ -2,7 +2,7 @@ Source: libdrm
 Priority: optional
 Maintainer: Debian X Strike Force <debian-x@lists.debian.org>
 Uploaders: Thierry Reding <thierry@gilfi.de>, Julien Cristau <jcristau@debian.org>, David Nusinow <dnusinow@debian.org>
-Build-Depends: debhelper (>= 5.0.0), libx11-dev, dpkg-dev (>= 1.13.19), quilt (>= 0.40), automake, libtool
+Build-Depends: debhelper (>= 5.0.0), libx11-dev, dpkg-dev (>= 1.13.19), quilt (>= 0.40), automake, libtool, pkg-config, libpthread-stubs0-dev
 Standards-Version: 3.7.3
 Section: libs
 Vcs-Git: git://git.debian.org/git/pkg-xorg/lib/libdrm
@@ -11,7 +11,7 @@ Vcs-Browser: http://git.debian.org/?p=pkg-xorg/lib/libdrm.git
 Package: libdrm-dev
 Section: libdevel
 Architecture: any
-Depends: libdrm2 (= ${binary:Version})
+Depends: libdrm2 (= ${binary:Version}), libdrm-intel1 (= ${binary:Version})
 Description: Userspace interface to kernel DRM services -- development files
  This library implements the userspace interface to the kernel DRM
  services.  DRM stands for "Direct Rendering Manager", which is the
@@ -47,3 +47,35 @@ Description: Userspace interface to kernel DRM services -- debugging symbols
  OpenGL drivers.
  .
  This package provides debugging symbols for the libdrm2 package.
+
+Package: libdrm-intel1
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Userspace interface to intel-specific kernel DRM services -- runtime
+ This library implements the userspace interface to the intel-specific kernel
+ DRM services.  DRM stands for "Direct Rendering Manager", which is the
+ kernelspace portion of the "Direct Rendering Infrastructure" (DRI). The DRI is
+ currently used on Linux to provide hardware-accelerated OpenGL drivers.
+ .
+ This package is built from a snapshot of DRM development code, to provide the
+ features necessary for testing new X.org drivers.  Do NOT expect this package
+ to be stable!
+
+Package: libdrm-intel1-dbg
+Section: libdevel
+Priority: extra
+Architecture: any
+Depends: libdrm-intel1 (= ${binary:Version}), ${misc:Depends}
+Description: Userspace interface to intel-specific kernel DRM services -- debugging symbols
+ This library implements the userspace interface to the kernel DRM services.
+ DRM stands for "Direct Rendering Manager", which is the kernelspace portion
+ of the "Direct Rendering Infrastructure" (DRI). The DRI is currently used on
+ Linux to provide hardware-accelerated OpenGL drivers.
+ .
+ This package is built from a snapshot of DRM development code, to provide the
+ features necessary for testing new X.org drivers. Do NOT expect this package
+ to be stable!
+ .
+ This package provides the debugging symbols for the libdrm-intel1 package.
+
