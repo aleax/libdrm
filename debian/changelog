@@ -13,7 +13,7 @@ libdrm (2.4.1-1) UNRELEASED; urgency=low
   * Build-depend on pkg-config and libpthread-stubs0-dev (closes: #502078).
     Thanks, Frank Lichtenheld!
   * Don't mention *.la in libdrm-dev.install.
-  * Make libdrm-dev depend on libdrm-intel1.
+  * Make libdrm-dev depend on libdrm-intel1 on x86.
   * On Linux, let udev create the device files.
 
  -- Timo Aaltonen <tepsipakki@ubuntu.com>  Thu, 27 Nov 2008 09:33:05 +0200
