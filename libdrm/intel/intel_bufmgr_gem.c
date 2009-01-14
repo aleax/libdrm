@@ -39,6 +39,7 @@
 #endif
 
 #include <xf86drm.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,6 +48,8 @@
 #include <pthread.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "errno.h"
 #include "intel_bufmgr.h"
@@ -103,7 +106,6 @@ struct _drm_intel_bo_gem {
 
     int refcount;
     /** Boolean whether the mmap ioctl has been called for this buffer yet. */
-    int mapped;
     uint32_t gem_handle;
     const char *name;
 
@@ -125,13 +127,19 @@ struct _drm_intel_bo_gem {
      */
     int swrast;
 
+    /**
+     * Current tiling mode
+     */
+    uint32_t tiling_mode;
+    uint32_t swizzle_mode;
+
     /** Array passed to the DRM containing relocation information. */
     struct drm_i915_gem_relocation_entry *relocs;
     /** Array of bos corresponding to relocs[i].target_handle */
     drm_intel_bo **reloc_target_bo;
     /** Number of entries in relocs */
     int reloc_count;
-    /** Mapped address for the buffer */
+    /** Mapped address for the buffer, saved across map/unmap cycles */
     void *virtual;
 
     /** free list */
@@ -160,6 +168,23 @@ struct _drm_intel_bo_gem {
 };
 
 static void drm_intel_gem_bo_reference_locked(drm_intel_bo *bo);
+
+static unsigned int
+drm_intel_gem_estimate_batch_space(drm_intel_bo **bo_array, int count);
+
+static unsigned int
+drm_intel_gem_compute_batch_space(drm_intel_bo **bo_array, int count);
+
+static int
+drm_intel_gem_bo_get_tiling(drm_intel_bo *bo, uint32_t *tiling_mode,
+			    uint32_t *swizzle_mode);
+
+static int
+drm_intel_gem_bo_set_tiling(drm_intel_bo *bo, uint32_t *tiling_mode,
+			    uint32_t stride);
+
+static void
+drm_intel_gem_bo_unreference(drm_intel_bo *bo);
 
 static int
 logbase2(int n)
@@ -216,7 +241,8 @@ static void drm_intel_gem_dump_validation_list(drm_intel_bufmgr_gem *bufmgr_gem)
 
 	    DBG("%2d: %d (%s)@0x%08llx -> %d (%s)@0x%08lx + 0x%08x\n",
 		i,
-		bo_gem->gem_handle, bo_gem->name, bo_gem->relocs[j].offset,
+		bo_gem->gem_handle, bo_gem->name,
+		(unsigned long long)bo_gem->relocs[j].offset,
 		target_gem->gem_handle, target_gem->name, target_bo->offset,
 		bo_gem->relocs[j].delta);
 	}
@@ -348,6 +374,7 @@ drm_intel_gem_bo_alloc(drm_intel_bufmgr *bufmgr, const char *name,
 
 	ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_CREATE, &create);
 	bo_gem->gem_handle = create.handle;
+	bo_gem->bo.handle = bo_gem->gem_handle;
 	if (ret != 0) {
 	    free(bo_gem);
 	    return NULL;
@@ -360,6 +387,8 @@ drm_intel_gem_bo_alloc(drm_intel_bufmgr *bufmgr, const char *name,
     bo_gem->validate_index = -1;
     bo_gem->reloc_tree_size = bo_gem->bo.size;
     bo_gem->used_as_reloc_target = 0;
+    bo_gem->tiling_mode = I915_TILING_NONE;
+    bo_gem->swizzle_mode = I915_BIT_6_SWIZZLE_NONE;
 
     DBG("bo_create: buf %d (%s) %ldb\n",
 	bo_gem->gem_handle, bo_gem->name, size);
@@ -381,6 +410,7 @@ drm_intel_bo_gem_create_from_name(drm_intel_bufmgr *bufmgr, const char *name,
     drm_intel_bo_gem *bo_gem;
     int ret;
     struct drm_gem_open open_arg;
+    struct drm_i915_gem_get_tiling get_tiling;
 
     bo_gem = calloc(1, sizeof(*bo_gem));
     if (!bo_gem)
@@ -404,6 +434,15 @@ drm_intel_bo_gem_create_from_name(drm_intel_bufmgr *bufmgr, const char *name,
     bo_gem->validate_index = -1;
     bo_gem->gem_handle = open_arg.handle;
     bo_gem->global_name = handle;
+
+    get_tiling.handle = bo_gem->gem_handle;
+    ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_GET_TILING, &get_tiling);
+    if (ret != 0) {
+	drm_intel_gem_bo_unreference(&bo_gem->bo);
+	return NULL;
+    }
+    bo_gem->tiling_mode = get_tiling.tiling_mode;
+    bo_gem->swizzle_mode = get_tiling.swizzle_mode;
 
     DBG("bo_create_from_handle: %d (%s)\n", handle, bo_gem->name);
 
@@ -437,7 +476,7 @@ drm_intel_gem_bo_free(drm_intel_bo *bo)
     struct drm_gem_close close;
     int ret;
 
-    if (bo_gem->mapped)
+    if (bo_gem->virtual)
 	munmap (bo_gem->virtual, bo_gem->bo.size);
 
     /* Close this object */
@@ -459,6 +498,7 @@ drm_intel_gem_bo_unreference_locked(drm_intel_bo *bo)
 
     if (--bo_gem->refcount == 0) {
 	struct drm_intel_gem_bo_bucket *bucket;
+	uint32_t tiling_mode;
 
 	if (bo_gem->relocs != NULL) {
 	    int i;
@@ -475,12 +515,15 @@ drm_intel_gem_bo_unreference_locked(drm_intel_bo *bo)
 
 	bucket = drm_intel_gem_bo_bucket_for_size(bufmgr_gem, bo->size);
 	/* Put the buffer into our internal cache for reuse if we can. */
-	if (bucket != NULL &&
+	tiling_mode = I915_TILING_NONE;
+	if (bo_gem->global_name == 0 &&
+	    bucket != NULL &&
 	    (bucket->max_entries == -1 ||
 	     (bucket->max_entries > 0 &&
-	      bucket->num_entries < bucket->max_entries)))
+	      bucket->num_entries < bucket->max_entries)) &&
+	    drm_intel_gem_bo_set_tiling(bo, &tiling_mode, 0) == 0)
 	{
-	    bo_gem->name = 0;
+	    bo_gem->name = NULL;
 	    bo_gem->validate_index = -1;
 	    bo_gem->relocs = NULL;
 	    bo_gem->reloc_target_bo = NULL;
@@ -519,34 +562,31 @@ drm_intel_gem_bo_map(drm_intel_bo *bo, int write_enable)
     /* Allow recursive mapping. Mesa may recursively map buffers with
      * nested display loops.
      */
-    if (!bo_gem->mapped) {
-    
-	assert(bo->virtual == NULL);
-    
-	DBG("bo_map: %d (%s)\n", bo_gem->gem_handle, bo_gem->name);
-    
-	if (bo_gem->virtual == NULL) {
-	    struct drm_i915_gem_mmap mmap_arg;
-    
-	    memset(&mmap_arg, 0, sizeof(mmap_arg));
-	    mmap_arg.handle = bo_gem->gem_handle;
-	    mmap_arg.offset = 0;
-	    mmap_arg.size = bo->size;
-	    ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_MMAP, &mmap_arg);
-	    if (ret != 0) {
-		fprintf(stderr, "%s:%d: Error mapping buffer %d (%s): %s .\n",
-			__FILE__, __LINE__,
-			bo_gem->gem_handle, bo_gem->name, strerror(errno));
-	    }
-	    bo_gem->virtual = (void *)(uintptr_t)mmap_arg.addr_ptr;
-	}
-	bo->virtual = bo_gem->virtual;
-	bo_gem->swrast = 0;
-	bo_gem->mapped = 1;
-	DBG("bo_map: %d (%s) -> %p\n", bo_gem->gem_handle, bo_gem->name, bo_gem->virtual);
-    }
+    if (!bo_gem->virtual) {
+	struct drm_i915_gem_mmap mmap_arg;
 
-    if (!bo_gem->swrast) {
+	DBG("bo_map: %d (%s)\n", bo_gem->gem_handle, bo_gem->name);
+
+	memset(&mmap_arg, 0, sizeof(mmap_arg));
+	mmap_arg.handle = bo_gem->gem_handle;
+	mmap_arg.offset = 0;
+	mmap_arg.size = bo->size;
+	ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_MMAP, &mmap_arg);
+	if (ret != 0) {
+	    fprintf(stderr, "%s:%d: Error mapping buffer %d (%s): %s .\n",
+		    __FILE__, __LINE__,
+		    bo_gem->gem_handle, bo_gem->name, strerror(errno));
+	    pthread_mutex_unlock(&bufmgr_gem->lock);
+	    return ret;
+	}
+	bo_gem->virtual = (void *)(uintptr_t)mmap_arg.addr_ptr;
+	bo_gem->swrast = 0;
+    }
+    DBG("bo_map: %d (%s) -> %p\n", bo_gem->gem_handle, bo_gem->name,
+	bo_gem->virtual);
+    bo->virtual = bo_gem->virtual;
+
+    if (bo_gem->global_name != 0 || !bo_gem->swrast) {
 	set_domain.handle = bo_gem->gem_handle;
 	set_domain.read_domains = I915_GEM_DOMAIN_CPU;
 	if (write_enable)
@@ -560,8 +600,80 @@ drm_intel_gem_bo_map(drm_intel_bo *bo, int write_enable)
 	if (ret != 0) {
 	    fprintf (stderr, "%s:%d: Error setting swrast %d: %s\n",
 		     __FILE__, __LINE__, bo_gem->gem_handle, strerror (errno));
+	    pthread_mutex_unlock(&bufmgr_gem->lock);
+	    return ret;
 	}
 	bo_gem->swrast = 1;
+    }
+
+    pthread_mutex_unlock(&bufmgr_gem->lock);
+
+    return 0;
+}
+
+int
+drm_intel_gem_bo_map_gtt(drm_intel_bo *bo)
+{
+    drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *)bo->bufmgr;
+    drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *)bo;
+    struct drm_i915_gem_set_domain set_domain;
+    int ret;
+
+    pthread_mutex_lock(&bufmgr_gem->lock);
+
+    /* Get a mapping of the buffer if we haven't before. */
+    if (bo_gem->virtual == NULL) {
+	struct drm_i915_gem_mmap_gtt mmap_arg;
+
+	DBG("bo_map_gtt: %d (%s)\n", bo_gem->gem_handle, bo_gem->name);
+
+	memset(&mmap_arg, 0, sizeof(mmap_arg));
+	mmap_arg.handle = bo_gem->gem_handle;
+
+	/* Get the fake offset back... */
+	ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_MMAP_GTT, &mmap_arg);
+	if (ret != 0) {
+	    fprintf(stderr,
+		    "%s:%d: Error preparing buffer map %d (%s): %s .\n",
+		    __FILE__, __LINE__,
+		    bo_gem->gem_handle, bo_gem->name,
+		    strerror(errno));
+	    pthread_mutex_unlock(&bufmgr_gem->lock);
+	    return ret;
+	}
+
+	/* and mmap it */
+	bo_gem->virtual = mmap(0, bo->size, PROT_READ | PROT_WRITE,
+			       MAP_SHARED, bufmgr_gem->fd,
+			       mmap_arg.offset);
+	if (bo_gem->virtual == MAP_FAILED) {
+	    fprintf(stderr,
+		    "%s:%d: Error mapping buffer %d (%s): %s .\n",
+		    __FILE__, __LINE__,
+		    bo_gem->gem_handle, bo_gem->name,
+		    strerror(errno));
+	    pthread_mutex_unlock(&bufmgr_gem->lock);
+	    return errno;
+	}
+    }
+
+    bo->virtual = bo_gem->virtual;
+
+    DBG("bo_map: %d (%s) -> %p\n", bo_gem->gem_handle, bo_gem->name,
+	bo_gem->virtual);
+
+    /* Now move it to the GTT domain so that the CPU caches are flushed */
+    set_domain.handle = bo_gem->gem_handle;
+    set_domain.read_domains = I915_GEM_DOMAIN_GTT;
+    set_domain.write_domain = I915_GEM_DOMAIN_GTT;
+    do {
+	    ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_SET_DOMAIN,
+			&set_domain);
+    } while (ret == -1 && errno == EINTR);
+
+    if (ret != 0) {
+	    fprintf (stderr, "%s:%d: Error setting swrast %d: %s\n",
+		     __FILE__, __LINE__, bo_gem->gem_handle, strerror (errno));
     }
 
     pthread_mutex_unlock(&bufmgr_gem->lock);
@@ -580,7 +692,7 @@ drm_intel_gem_bo_unmap(drm_intel_bo *bo)
     if (bo == NULL)
 	return 0;
 
-    assert(bo_gem->mapped);
+    assert(bo_gem->virtual != NULL);
 
     pthread_mutex_lock(&bufmgr_gem->lock);
     if (bo_gem->swrast) {
@@ -647,8 +759,22 @@ drm_intel_gem_bo_get_subdata (drm_intel_bo *bo, unsigned long offset,
     return 0;
 }
 
+/** Waits for all GPU rendering to the object to have completed. */
 static void
 drm_intel_gem_bo_wait_rendering(drm_intel_bo *bo)
+{
+    return drm_intel_gem_bo_start_gtt_access(bo, 0);
+}
+
+/**
+ * Sets the object to the GTT read and possibly write domain, used by the X
+ * 2D driver in the absence of kernel support to do drm_intel_gem_bo_map_gtt().
+ *
+ * In combination with drm_intel_gem_bo_pin() and manual fence management, we
+ * can do tiled pixmaps this way.
+ */
+void
+drm_intel_gem_bo_start_gtt_access(drm_intel_bo *bo, int write_enable)
 {
     drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *)bo->bufmgr;
     drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *)bo;
@@ -657,8 +783,10 @@ drm_intel_gem_bo_wait_rendering(drm_intel_bo *bo)
 
     set_domain.handle = bo_gem->gem_handle;
     set_domain.read_domains = I915_GEM_DOMAIN_GTT;
-    set_domain.write_domain = 0;
-    ret = ioctl (bufmgr_gem->fd, DRM_IOCTL_I915_GEM_SET_DOMAIN, &set_domain);
+    set_domain.write_domain = write_enable ? I915_GEM_DOMAIN_GTT : 0;
+    do {
+	ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_SET_DOMAIN, &set_domain);
+    } while (ret == -1 && errno == EINTR);
     if (ret != 0) {
 	fprintf (stderr, "%s:%d: Error setting memory domains %d (%08x %08x): %s .\n",
 		 __FILE__, __LINE__,
@@ -792,7 +920,7 @@ drm_intel_update_buffer_offsets (drm_intel_bufmgr_gem *bufmgr_gem)
 	if (bufmgr_gem->exec_objects[i].offset != bo->offset) {
 	    DBG("BO %d (%s) migrated: 0x%08lx -> 0x%08llx\n",
 		bo_gem->gem_handle, bo_gem->name, bo->offset,
-		bufmgr_gem->exec_objects[i].offset);
+		(unsigned long long)bufmgr_gem->exec_objects[i].offset);
 	    bo->offset = bufmgr_gem->exec_objects[i].offset;
 	}
     }
@@ -829,6 +957,14 @@ drm_intel_gem_bo_exec(drm_intel_bo *bo, int used,
 	ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_EXECBUFFER, &execbuf);
     } while (ret != 0 && errno == EAGAIN);
 
+    if (ret != 0 && errno == ENOMEM) {
+	fprintf(stderr, "Execbuffer fails to pin. Estimate: %u. Actual: %u. Available: %u\n",
+		drm_intel_gem_estimate_batch_space(bufmgr_gem->exec_bos,
+						   bufmgr_gem->exec_count),
+		drm_intel_gem_compute_batch_space(bufmgr_gem->exec_bos,
+						  bufmgr_gem->exec_count),
+		(unsigned int) bufmgr_gem->gtt_size);
+    }
     drm_intel_update_buffer_offsets (bufmgr_gem);
 
     if (bufmgr_gem->bufmgr.debug)
@@ -897,17 +1033,22 @@ drm_intel_gem_bo_set_tiling(drm_intel_bo *bo, uint32_t *tiling_mode,
     struct drm_i915_gem_set_tiling set_tiling;
     int ret;
 
+    if (bo_gem->global_name == 0 && *tiling_mode == bo_gem->tiling_mode)
+	return 0;
+
     set_tiling.handle = bo_gem->gem_handle;
     set_tiling.tiling_mode = *tiling_mode;
     set_tiling.stride = stride;
 
     ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_SET_TILING, &set_tiling);
     if (ret != 0) {
-	*tiling_mode = I915_TILING_NONE;
+	*tiling_mode = bo_gem->tiling_mode;
 	return -errno;
     }
+    bo_gem->tiling_mode = set_tiling.tiling_mode;
+    bo_gem->swizzle_mode = set_tiling.swizzle_mode;
 
-    *tiling_mode = set_tiling.tiling_mode;
+    *tiling_mode = bo_gem->tiling_mode;
     return 0;
 }
 
@@ -915,22 +1056,10 @@ static int
 drm_intel_gem_bo_get_tiling(drm_intel_bo *bo, uint32_t *tiling_mode,
 			    uint32_t *swizzle_mode)
 {
-    drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *)bo->bufmgr;
     drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *)bo;
-    struct drm_i915_gem_get_tiling get_tiling;
-    int ret;
 
-    get_tiling.handle = bo_gem->gem_handle;
-
-    ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_GET_TILING, &get_tiling);
-    if (ret != 0) {
-	*tiling_mode = I915_TILING_NONE;
-	*swizzle_mode = I915_BIT_6_SWIZZLE_NONE;
-	return -errno;
-    }
-
-    *tiling_mode = get_tiling.tiling_mode;
-    *swizzle_mode = get_tiling.swizzle_mode;
+    *tiling_mode = bo_gem->tiling_mode;
+    *swizzle_mode = bo_gem->swizzle_mode;
     return 0;
 }
 
@@ -1016,6 +1145,43 @@ drm_intel_gem_bo_clear_aperture_space_flag(drm_intel_bo *bo)
 }
 
 /**
+ * Return a conservative estimate for the amount of aperture required
+ * for a collection of buffers. This may double-count some buffers.
+ */
+static unsigned int
+drm_intel_gem_estimate_batch_space(drm_intel_bo **bo_array, int count)
+{
+    int i;
+    unsigned int total = 0;
+
+    for (i = 0; i < count; i++) {
+	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *)bo_array[i];
+	if (bo_gem != NULL)
+		total += bo_gem->reloc_tree_size;
+    }
+    return total;
+}
+
+/**
+ * Return the amount of aperture needed for a collection of buffers.
+ * This avoids double counting any buffers, at the cost of looking
+ * at every buffer in the set.
+ */
+static unsigned int
+drm_intel_gem_compute_batch_space(drm_intel_bo **bo_array, int count)
+{
+    int i;
+    unsigned int total = 0;
+
+    for (i = 0; i < count; i++)
+	total += drm_intel_gem_bo_get_aperture_space(bo_array[i]);
+
+    for (i = 0; i < count; i++)
+	drm_intel_gem_bo_clear_aperture_space_flag(bo_array[i]);
+    return total;
+}
+
+/**
  * Return -1 if the batchbuffer should be flushed before attempting to
  * emit rendering referencing the buffers pointed to by bo_array.
  *
@@ -1037,24 +1203,13 @@ drm_intel_gem_check_aperture_space(drm_intel_bo **bo_array, int count)
     drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *)bo_array[0]->bufmgr;
     unsigned int total = 0;
     unsigned int threshold = bufmgr_gem->gtt_size * 3 / 4;
-    int i;
 
-    for (i = 0; i < count; i++) {
-	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *)bo_array[i];
-	if (bo_gem != NULL)
-		total += bo_gem->reloc_tree_size;
-    }
+    total = drm_intel_gem_estimate_batch_space(bo_array, count);
+    
+    if (total > threshold)
+	total = drm_intel_gem_compute_batch_space(bo_array, count);
 
     if (total > threshold) {
-	total = 0;
-	for (i = 0; i < count; i++)
-	    total += drm_intel_gem_bo_get_aperture_space(bo_array[i]);
-
-	for (i = 0; i < count; i++)
-	    drm_intel_gem_bo_clear_aperture_space_flag(bo_array[i]);
-    }
-
-    if (total > bufmgr_gem->gtt_size * 3 / 4) {
 	DBG("check_space: overflowed available aperture, %dkb vs %dkb\n",
 	    total / 1024, (int)bufmgr_gem->gtt_size / 1024);
 	return -1;

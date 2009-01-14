@@ -19,7 +19,7 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 AC_PREREQ(2.57)
-AC_INIT([libdrm], 2.4.1, [dri-devel@lists.sourceforge.net], libdrm)
+AC_INIT([libdrm], 2.4.3, [dri-devel@lists.sourceforge.net], libdrm)
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_INIT_AUTOMAKE([dist-bzip2])
 
@@ -119,4 +119,6 @@ AC_OUTPUT([
 	libdrm/intel/Makefile
 	shared-core/Makefile
 	tests/Makefile
+	tests/modeprint/Makefile
+	tests/modetest/Makefile
 	libdrm.pc])

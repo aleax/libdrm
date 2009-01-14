@@ -15,6 +15,10 @@ libdrmtest_la_LIBADD = \
 
 LDADD = libdrmtest.la
 
+SUBDIRS = \
+	modeprint \
+	modetest
+
 TESTS = auth \
 	openclose \
 	getversion \

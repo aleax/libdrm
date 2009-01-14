@@ -111,14 +111,25 @@ typedef struct drm_i915_sarea {
 	unsigned int rotated_tiled;
 	unsigned int rotated2_tiled;
 
-	int planeA_x;
-	int planeA_y;
-	int planeA_w;
-	int planeA_h;
-	int planeB_x;
-	int planeB_y;
-	int planeB_w;
-	int planeB_h;
+	/* compat defines for the period of time when pipeA_* got renamed
+	 * to planeA_*.  They mean pipe, really.
+	 */
+#define planeA_x pipeA_x
+#define planeA_y pipeA_y
+#define planeA_w pipeA_w
+#define planeA_h pipeA_h
+#define planeB_x pipeB_x
+#define planeB_y pipeB_y
+#define planeB_w pipeB_w
+#define planeB_h pipeB_h
+	int pipeA_x;
+	int pipeA_y;
+	int pipeA_w;
+	int pipeA_h;
+	int pipeB_x;
+	int pipeB_y;
+	int pipeB_w;
+	int pipeB_h;
 
 	/* Triple buffering */
 	drm_handle_t third_handle;
@@ -193,6 +204,7 @@ typedef struct drm_i915_sarea {
 #define DRM_I915_GEM_SET_TILING	0x21
 #define DRM_I915_GEM_GET_TILING	0x22
 #define DRM_I915_GEM_GET_APERTURE 0x23
+#define DRM_I915_GEM_MMAP_GTT	0x24
 
 #define DRM_IOCTL_I915_INIT		DRM_IOW( DRM_COMMAND_BASE + DRM_I915_INIT, drm_i915_init_t)
 #define DRM_IOCTL_I915_FLUSH		DRM_IO ( DRM_COMMAND_BASE + DRM_I915_FLUSH)
@@ -224,6 +236,7 @@ typedef struct drm_i915_sarea {
 #define DRM_IOCTL_I915_GEM_PREAD	DRM_IOW (DRM_COMMAND_BASE + DRM_I915_GEM_PREAD, struct drm_i915_gem_pread)
 #define DRM_IOCTL_I915_GEM_PWRITE	DRM_IOW (DRM_COMMAND_BASE + DRM_I915_GEM_PWRITE, struct drm_i915_gem_pwrite)
 #define DRM_IOCTL_I915_GEM_MMAP		DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GEM_MMAP, struct drm_i915_gem_mmap)
+#define DRM_IOCTL_I915_GEM_MMAP_GTT	DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GEM_MMAP_GTT, struct drm_i915_gem_mmap_gtt)
 #define DRM_IOCTL_I915_GEM_SET_DOMAIN	DRM_IOW (DRM_COMMAND_BASE + DRM_I915_GEM_SET_DOMAIN, struct drm_i915_gem_set_domain)
 #define DRM_IOCTL_I915_GEM_SW_FINISH	DRM_IOW (DRM_COMMAND_BASE + DRM_I915_GEM_SW_FINISH, struct drm_i915_gem_sw_finish)
 #define DRM_IOCTL_I915_GEM_SET_TILING	DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_GEM_SET_TILING, struct drm_i915_gem_set_tiling)
@@ -467,8 +480,12 @@ struct drm_i915_gem_pread {
 	uint64_t offset;
 	/** Length of data to read */
 	uint64_t size;
-	/** Pointer to write the data into. */
-	uint64_t data_ptr;	/* void *, but pointers are not 32/64 compatible */
+	/**
+	 * Pointer to write the data into.
+	 *
+	 * This is a fixed-size type for 32/64 compatibility.
+	 */
+	uint64_t data_ptr;
 };
 
 struct drm_i915_gem_pwrite {
@@ -479,8 +496,12 @@ struct drm_i915_gem_pwrite {
 	uint64_t offset;
 	/** Length of data to write */
 	uint64_t size;
-	/** Pointer to read the data from. */
-	uint64_t data_ptr;	/* void *, but pointers are not 32/64 compatible */
+	/**
+	 * Pointer to read the data from.
+	 *
+	 * This is a fixed-size type for 32/64 compatibility.
+	 */
+	uint64_t data_ptr;
 };
 
 struct drm_i915_gem_mmap {
@@ -495,8 +516,24 @@ struct drm_i915_gem_mmap {
 	 * The value will be page-aligned.
 	 */
 	uint64_t size;
-	/** Returned pointer the data was mapped at */
-	uint64_t addr_ptr;	/* void *, but pointers are not 32/64 compatible */
+	/**
+	 * Returned pointer the data was mapped at.
+	 *
+	 * This is a fixed-size type for 32/64 compatibility.
+	 */
+	uint64_t addr_ptr;
+};
+
+struct drm_i915_gem_mmap_gtt {
+	/** Handle for the object being mapped. */
+	uint32_t handle;
+	uint32_t pad;
+	/**
+	 * Fake offset to use for subsequent mmap call
+	 *
+	 * This is a fixed-size type for 32/64 compatibility.
+	 */
+	uint64_t offset;
 };
 
 struct drm_i915_gem_set_domain {
@@ -629,7 +666,8 @@ struct drm_i915_gem_execbuffer {
 	uint32_t DR1;
 	uint32_t DR4;
 	uint32_t num_cliprects;
-	uint64_t cliprects_ptr;	/* struct drm_clip_rect *cliprects */
+	/** This is a struct drm_clip_rect *cliprects */
+	uint64_t cliprects_ptr;
 };
 
 struct drm_i915_gem_pin {

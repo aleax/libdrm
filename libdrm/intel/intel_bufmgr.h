@@ -48,6 +48,13 @@ struct _drm_intel_bo {
      */
     unsigned long size;
     /**
+     * Alignment requirement for object
+     *
+     * Used for GTT mapping & pinning the object.
+     */
+    unsigned long align;
+
+    /**
      * Card virtual address (offset from the beginning of the aperture) for the
      * object.  Only valid while validated.
      */
@@ -59,6 +66,11 @@ struct _drm_intel_bo {
 
     /** Buffer manager context associated with this buffer object */
     drm_intel_bufmgr *bufmgr;
+
+    /**
+     * MM-specific handle for accessing object
+     */
+    int handle;
 };
 
 drm_intel_bo *drm_intel_bo_alloc(drm_intel_bufmgr *bufmgr, const char *name,
@@ -98,6 +110,8 @@ drm_intel_bo *drm_intel_bo_gem_create_from_name(drm_intel_bufmgr *bufmgr,
 						const char *name,
 						unsigned int handle);
 void drm_intel_bufmgr_gem_enable_reuse(drm_intel_bufmgr *bufmgr);
+int drm_intel_gem_bo_map_gtt(drm_intel_bo *bo);
+void drm_intel_gem_bo_start_gtt_access(drm_intel_bo *bo, int write_enable);
 
 /* drm_intel_bufmgr_fake.c */
 drm_intel_bufmgr *drm_intel_bufmgr_fake_init(int fd,
