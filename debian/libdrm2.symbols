@@ -19,8 +19,10 @@ libdrm.so.2 libdrm2 #MINVER#
  drmAgpVendorId@Base 2.3.1
  drmAgpVersionMajor@Base 2.3.1
  drmAgpVersionMinor@Base 2.3.1
+ drmAllocCpy@Base 2.4.3
  drmAuthMagic@Base 2.3.1
  drmAvailable@Base 2.3.1
+ drmCheckModesettingSupported@Base 2.4.3
  drmClose@Base 2.3.1
  drmCloseOnce@Base 2.3.1
  drmCommandNone@Base 2.3.1
@@ -35,6 +37,7 @@ libdrm.so.2 libdrm2 #MINVER#
  drmDelContextTag@Base 2.3.1
  drmDestroyContext@Base 2.3.1
  drmDestroyDrawable@Base 2.3.1
+ drmDropMaster@Base 2.4.3
  drmError@Base 2.3.1
  drmFinish@Base 2.3.1
  drmFree@Base 2.3.1
@@ -65,12 +68,40 @@ libdrm.so.2 libdrm2 #MINVER#
  drmHashInsert@Base 2.3.1
  drmHashLookup@Base 2.3.1
  drmHashNext@Base 2.3.1
+ drmIoctl@Base 2.4.3
  drmMalloc@Base 2.3.1
  drmMap@Base 2.3.1
  drmMapBufs@Base 2.3.1
  drmMarkBufs@Base 2.3.1
+ drmModeAddFB@Base 2.4.3
+ drmModeAttachMode@Base 2.4.3
+ drmModeConnectorSetProperty@Base 2.4.3
+ drmModeCrtcGetGamma@Base 2.4.3
+ drmModeCrtcSetGamma@Base 2.4.3
+ drmModeDetachMode@Base 2.4.3
+ drmModeFreeConnector@Base 2.4.3
+ drmModeFreeCrtc@Base 2.4.3
+ drmModeFreeEncoder@Base 2.4.3
+ drmModeFreeFB@Base 2.4.3
+ drmModeFreeModeInfo@Base 2.4.3
+ drmModeFreeProperty@Base 2.4.3
+ drmModeFreePropertyBlob@Base 2.4.3
+ drmModeFreeResources@Base 2.4.3
+ drmModeGetConnector@Base 2.4.3
+ drmModeGetCrtc@Base 2.4.3
+ drmModeGetEncoder@Base 2.4.3
+ drmModeGetFB@Base 2.4.3
+ drmModeGetProperty@Base 2.4.3
+ drmModeGetPropertyBlob@Base 2.4.3
+ drmModeGetResources@Base 2.4.3
+ drmModeMoveCursor@Base 2.4.3
+ drmModeReplaceFB@Base 2.4.3
+ drmModeRmFB@Base 2.4.3
+ drmModeSetCrtc@Base 2.4.3
+ drmModeSetCursor@Base 2.4.3
  drmMsg@Base 2.4.1
  drmOpen@Base 2.3.1
+ drmOpenControl@Base 2.4.3
  drmOpenOnce@Base 2.3.1
  drmRandom@Base 2.3.1
  drmRandomCreate@Base 2.3.1
@@ -92,6 +123,7 @@ libdrm.so.2 libdrm2 #MINVER#
  drmSetContextFlags@Base 2.3.1
  drmSetDebugMsgFunction@Base 2.3.1
  drmSetInterfaceVersion@Base 2.3.1
+ drmSetMaster@Base 2.4.3
  drmSetServerInfo@Base 2.3.1
  drmSwitchToContext@Base 2.3.1
  drmUnlock@Base 2.3.1
