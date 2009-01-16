@@ -1,3 +1,17 @@
+libdrm (2.4.4-0ubuntu1) UNRELEASED; urgency=low
+
+  * Merge with Debian experimental, remaining changes:
+    - libdrm-intel1 Replaces libdrm2 (<= 2.4.1-0ubuntu5)
+    - libdrm-dev: Replace linux-libc-dev (<= 2.6.28-3.4), since it
+      includes the drm headers. We will drop them from libdrm-dev
+      after jaunty alpha2 when the drivers support the new headers.
+    - debian/libdrm-dev.install: Don't install the drm headers anymore,
+      the drivers should build against the ones provided by the kernel.
+  * debian/libdrm-dev.install: Include a couple of headers not found
+    in the 2.6.28 kernel. (LP: #314771)
+
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Fri, 16 Jan 2009 17:47:37 +0200
+
 libdrm (2.4.4-1) UNRELEASED; urgency=low
 
   [ Timo Aaltonen ]
@@ -17,6 +31,69 @@ libdrm (2.4.4-1) UNRELEASED; urgency=low
   * On Linux, let udev create the device files.
 
  -- Timo Aaltonen <tepsipakki@ubuntu.com>  Thu, 27 Nov 2008 09:33:05 +0200
+
+libdrm (2.4.1-0ubuntu9) jaunty; urgency=low
+
+  * debian/libdrm-dev.install: Don't install the drm headers anymore, 
+    the drivers should build against the ones provided by the kernel.
+    (LP: #308387)
+
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Fri, 02 Jan 2009 12:48:40 +0200
+
+libdrm (2.4.1-0ubuntu8) jaunty; urgency=low
+
+  * libdrm-dev: Replace linux-libc-dev (<= 2.6.28-3.4), since it
+    includes the drm headers. We will drop them from libdrm-dev
+    after jaunty alpha2 when the drivers support the new headers.
+    (LP: #308387)
+
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Tue, 16 Dec 2008 23:29:38 +0200
+
+libdrm (2.4.1-0ubuntu7) jaunty; urgency=low
+
+  * Merge with debian-experimental git, remaining changes:
+    - libdrm-intel1 Replaces libdrm2 (<= 2.4.1-0ubuntu5)
+
+ -- Timo Aaltonen <tepsipakki@ubuntu.com>  Wed, 03 Dec 2008 09:24:35 +0200
+
+libdrm (2.4.1-0ubuntu6) jaunty; urgency=low
+
+  * libdrm-intel1 Replaces libdrm2 (<= 2.4.1-0ubuntu5)
+
+ -- Timo Aaltonen <tepsipakki@ubuntu.com>  Thu, 27 Nov 2008 10:25:29 +0200
+
+libdrm (2.4.1-0ubuntu5) jaunty; urgency=low
+
+  * Split the symbols file (libdrm2, libdrm-intel1), remove shlibs and
+    use dh_makeshlibs properly instead.
+
+ -- Timo Aaltonen <tepsipakki@ubuntu.com>  Thu, 27 Nov 2008 09:42:59 +0200
+
+libdrm (2.4.1-0ubuntu4) jaunty; urgency=low
+
+  * debian/libdrm2.install: Careful with those wildmarks.
+    libdrm2 got libdrm_intel.so too, don't do that.
+
+ -- Timo Aaltonen <tepsipakki@ubuntu.com>  Thu, 27 Nov 2008 08:58:47 +0200
+
+libdrm (2.4.1-0ubuntu3) jaunty; urgency=low
+
+  * Actually build the new libdrm-intel1 package.
+
+ -- Timo Aaltonen <tepsipakki@ubuntu.com>  Wed, 26 Nov 2008 14:41:08 +0200
+
+libdrm (2.4.1-0ubuntu2) jaunty; urgency=low
+
+  * Build-depend on libpthread-stubs0-dev and pkg-config (FTBFS).
+  * Make libdrm-dev depend on libdrm-intel1.
+
+ -- Timo Aaltonen <tepsipakki@ubuntu.com>  Wed, 26 Nov 2008 01:15:07 +0200
+
+libdrm (2.4.1-0ubuntu1) jaunty; urgency=low
+
+  * New upstream release.
+
+ -- Timo Aaltonen <tepsipakki@ubuntu.com>  Wed, 26 Nov 2008 00:38:11 +0200
 
 libdrm (2.3.1-2) unstable; urgency=high
 
