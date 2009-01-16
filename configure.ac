@@ -19,7 +19,7 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 AC_PREREQ(2.57)
-AC_INIT([libdrm], 2.4.3, [dri-devel@lists.sourceforge.net], libdrm)
+AC_INIT([libdrm], 2.4.4, [dri-devel@lists.sourceforge.net], libdrm)
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_INIT_AUTOMAKE([dist-bzip2])
 
@@ -61,6 +61,13 @@ AC_DEFUN([LIBDRM_CC_TRY_FLAG], [
   fi
   AC_MSG_RESULT([$libdrm_cc_flag])
 ])
+
+dnl We use clock_gettime to check for timeouts in drmWaitVBlank
+
+AC_CHECK_FUNCS([clock_gettime], [CLOCK_LIB=],
+               [AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIB=-lrt],
+                             [AC_MSG_ERROR([Couldn't find clock_gettime])])])
+AC_SUBST([CLOCK_LIB])
 
 dnl Use lots of warning flags with with gcc and compatible compilers
 
