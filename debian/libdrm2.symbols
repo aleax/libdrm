@@ -95,7 +95,6 @@ libdrm.so.2 libdrm2 #MINVER#
  drmModeGetPropertyBlob@Base 2.4.3
  drmModeGetResources@Base 2.4.3
  drmModeMoveCursor@Base 2.4.3
- drmModeReplaceFB@Base 2.4.3
  drmModeRmFB@Base 2.4.3
  drmModeSetCrtc@Base 2.4.3
  drmModeSetCursor@Base 2.4.3
