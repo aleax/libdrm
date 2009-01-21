@@ -8,7 +8,7 @@ libdrm (2.4.4-0ubuntu1) UNRELEASED; urgency=low
     - debian/libdrm-dev.install: Don't install the drm headers anymore,
       the drivers should build against the ones provided by the kernel.
   * debian/libdrm-dev.install: Include a couple of headers not found
-    in the 2.6.28 kernel. (LP: #314771)
+    in the 2.6.28 kernel (mach64, nouveau). (LP: #314771)
   * debian/control: libdrm-dev Depends on linux-libc-dev (>= 2.6.28-5.12).
 
  -- Timo Aaltonen <tjaalton@ubuntu.com>  Fri, 16 Jan 2009 17:47:37 +0200

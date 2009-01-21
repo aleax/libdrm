@@ -1,5 +1,6 @@
 usr/include/drm/drm_mode.h
 usr/include/drm/mach64_drm.h
+usr/include/drm/nouveau_drm.h
 usr/include/intel_bufmgr.h
 usr/include/xf86drm.h
 usr/include/xf86drmMode.h
