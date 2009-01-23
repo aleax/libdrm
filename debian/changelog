@@ -1,4 +1,4 @@
-libdrm (2.4.4-0ubuntu1) UNRELEASED; urgency=low
+libdrm (2.4.4-0ubuntu1) jaunty; urgency=low
 
   * Merge with Debian experimental, remaining changes:
     - libdrm-intel1 Replaces libdrm2 (<= 2.4.1-0ubuntu5)
@@ -11,7 +11,7 @@ libdrm (2.4.4-0ubuntu1) UNRELEASED; urgency=low
     in the 2.6.28 kernel (mach64, nouveau). (LP: #314771)
   * debian/control: libdrm-dev Depends on linux-libc-dev (>= 2.6.28-5.15).
 
- -- Timo Aaltonen <tjaalton@ubuntu.com>  Fri, 16 Jan 2009 17:47:37 +0200
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Fri, 23 Jan 2009 10:19:06 +0200
 
 libdrm (2.4.4-1) UNRELEASED; urgency=low
 
