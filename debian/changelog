@@ -1,9 +1,9 @@
-libdrm (2.4.4-0ubuntu3) UNRELEASED; urgency=low
+libdrm (2.4.4-0ubuntu3) jaunty; urgency=low
 
   * libdrm-dev Depends on linux-libc-dev only on [amd64 armel i386]
     until the other archs have caught up.
 
- -- Timo Aaltonen <tjaalton@ubuntu.com>  Sat, 31 Jan 2009 12:33:21 +0200
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Sat, 31 Jan 2009 12:37:12 +0200
 
 libdrm (2.4.4-0ubuntu2) jaunty; urgency=low
 
