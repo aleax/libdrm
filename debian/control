@@ -14,7 +14,7 @@ Section: libdevel
 Architecture: any
 Depends: libdrm2 (= ${binary:Version}),
  libdrm-intel1 (= ${binary:Version}) [amd64 i386 kfreebsd-amd64 kfreebsd-i386],
- linux-libc-dev (>= 2.6.28-5.15)
+ linux-libc-dev (>= 2.6.28-5.15) [amd64 armel i386]
 Replaces: linux-libc-dev (<= 2.6.28-3.4)
 Description: Userspace interface to kernel DRM services -- development files
  This library implements the userspace interface to the kernel DRM
