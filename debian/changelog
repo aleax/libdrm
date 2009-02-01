@@ -1,3 +1,13 @@
+libdrm (2.4.4-0ubuntu4) jaunty; urgency=low
+
+  * Also depend on linux-libc-dev on [lpia] as linux-libc-dev_2.6.28-1.2_lpia
+    has the drm headers; the avoidance of this dep on other arches just helps
+    installability, but because the headers are missing you're unlikely to do
+    anything with the lib anyway.  The solution is a linux-ports upload.
+  * Rename Vcs-* to XS-Original-Vcs-*.
+
+ -- Loic Minier <lool@dooz.org>  Sat, 31 Jan 2009 23:50:33 +0100
+
 libdrm (2.4.4-0ubuntu3) jaunty; urgency=low
 
   * libdrm-dev Depends on linux-libc-dev only on [amd64 armel i386]
