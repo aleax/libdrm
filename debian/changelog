@@ -1,3 +1,9 @@
+libdrm (2.4.4-0ubuntu5) UNRELEASED; urgency=low
+
+  * Revert XS-Original-Vcs-* to Vcs-*, this *is* maintained in Git, sorry.
+
+ -- Loic Minier <lool@dooz.org>  Sun, 01 Feb 2009 16:25:46 +0100
+
 libdrm (2.4.4-0ubuntu4) jaunty; urgency=low
 
   * Also depend on linux-libc-dev on [lpia] as linux-libc-dev_2.6.28-1.2_lpia
