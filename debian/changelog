@@ -1,6 +1,10 @@
-libdrm (2.4.4-0ubuntu5) UNRELEASED; urgency=low
+libdrm (2.4.4-0ubuntu5) jaunty; urgency=low
 
   * Revert XS-Original-Vcs-* to Vcs-*, this *is* maintained in Git, sorry.
+  * Split the linux-libc-dev dep on lpia and depend on >= 2.6.28-1.1 on lpia
+    -- the version differs because it's built from linux-lpia instead of
+    linux; this is not going to be fixable anytime soon, so we should be
+    careful to use arch-specific versions for linux-libc-dev deps/bdeps.
 
  -- Loic Minier <lool@dooz.org>  Sun, 01 Feb 2009 16:25:46 +0100
 
