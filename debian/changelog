@@ -1,3 +1,10 @@
+libdrm (2.4.4-0ubuntu6) jaunty; urgency=low
+
+  * Bump dep on linux-libc-dev dep to >= 2.6.28-1.4 on lpia as this version of
+    the headers now include a compatibility #define which mesa requires.
+
+ -- Loic Minier <lool@dooz.org>  Tue, 03 Feb 2009 23:20:27 +0100
+
 libdrm (2.4.4-0ubuntu5) jaunty; urgency=low
 
   * Revert XS-Original-Vcs-* to Vcs-*, this *is* maintained in Git, sorry.
