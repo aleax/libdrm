@@ -6,7 +6,11 @@ libdrm (2.4.4-0ubuntu7) UNRELEASED; urgency=low
       include the latest fixes.  This library is now required by the DDX 
       component.
   * debian/rules:
-    + Add libdrm-nouveau1 package
+  * debian/control:
+    + Add libdrm-nouveau1 and libdrm-nouveau1-dbg package
+  * debian/control:
+    + Remove scary 'built from DRM snapshot' warning from long description of
+      libdrm-intel1{,-dbg}
 
  -- Christopher James Halse Rogers <raof@ubuntu.com>  Wed, 11 Feb 2009 18:12:41 +1100
 
