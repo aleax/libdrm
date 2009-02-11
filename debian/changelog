@@ -1,3 +1,11 @@
+libdrm (2.4.12-2) UNRELEASED; urgency=low
+
+  * debian/control:
+    + Remove scary 'built from DRM snapshot' warning from long description of
+      libdrm-intel1{,-dbg}
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Wed, 11 Feb 2009 18:12:41 +1100
+
 libdrm (2.4.12-1) unstable; urgency=low
 
   * New upstream release.

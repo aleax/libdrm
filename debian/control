@@ -57,10 +57,6 @@ Description: Userspace interface to intel-specific kernel DRM services -- runtim
  DRM services.  DRM stands for "Direct Rendering Manager", which is the
  kernelspace portion of the "Direct Rendering Infrastructure" (DRI). The DRI is
  currently used on Linux to provide hardware-accelerated OpenGL drivers.
- .
- This package is built from a snapshot of DRM development code, to provide the
- features necessary for testing new X.org drivers.  Do NOT expect this package
- to be stable!
 
 Package: libdrm-intel1-dbg
 Section: debug
@@ -72,10 +68,6 @@ Description: Userspace interface to intel-specific kernel DRM services -- debugg
  DRM stands for "Direct Rendering Manager", which is the kernelspace portion
  of the "Direct Rendering Infrastructure" (DRI). The DRI is currently used on
  Linux to provide hardware-accelerated OpenGL drivers.
- .
- This package is built from a snapshot of DRM development code, to provide the
- features necessary for testing new X.org drivers. Do NOT expect this package
- to be stable!
  .
  This package provides the debugging symbols for the libdrm-intel1 package.
 
