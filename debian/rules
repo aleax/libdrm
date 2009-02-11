@@ -95,11 +95,13 @@ binary-arch: build install
 	dh_link
 	dh_strip -plibdrm2 --dbg-package=libdrm2-dbg
 	dh_strip -plibdrm-intel1 --dbg-package=libdrm-intel1-dbg
+	dh_strip -plibdrm-nouveau1 --dbg-package=libdrm-nouveau1-dbg
 	dh_strip
 	dh_compress
 	dh_fixperms
 	dh_makeshlibs -plibdrm2 -V'libdrm2 (>=2.4.1)' -- -c4
 	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>=2.4.1)' -- -c4
+	dh_makeshlibs -plibdrm-nouveau1 -V'libdrm-nouveau1 (>=2.4.4)' -- -c4
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol

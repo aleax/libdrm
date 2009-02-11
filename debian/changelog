@@ -1,3 +1,15 @@
+libdrm (2.4.4-0ubuntu7) jaunty; urgency=low
+
+  * debian/patches/02_add_libdrm-nouveau
+  * debian/patches/03_fix_unfreed_buffers
+    + Add commits from drm master adding a libdrm-nouveau library, and 
+      include the latest fixes.  This library is now required by the DDX 
+      component.
+  * debian/rules:
+    + Add libdrm-nouveau1 package
+
+ --
+
 libdrm (2.4.4-0ubuntu6) jaunty; urgency=low
 
   * Bump dep on linux-libc-dev dep to >= 2.6.28-1.4 on lpia as this version of
