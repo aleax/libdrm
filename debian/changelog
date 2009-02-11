@@ -5,6 +5,10 @@ libdrm (2.4.4-0ubuntu7) UNRELEASED; urgency=low
     + Add commits from drm master adding a libdrm-nouveau library, and 
       include the latest fixes.  This library is now required by the DDX 
       component.
+  * debian/patchs/04_update_nouveau_header
+    + Update the nouveau DRM header to the new patchlevel.  Pulled from 
+      upstream, with the non-userspace components removed from the patch.
+      Required for libdrm-nouveau.
   * debian/rules:
   * debian/control:
     + Add libdrm-nouveau1 and libdrm-nouveau1-dbg package
