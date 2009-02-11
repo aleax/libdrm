@@ -1,4 +1,4 @@
-libdrm (2.4.4-0ubuntu7) jaunty; urgency=low
+libdrm (2.4.4-0ubuntu7) UNRELEASED; urgency=low
 
   * debian/patches/02_add_libdrm-nouveau
   * debian/patches/03_fix_unfreed_buffers
@@ -8,7 +8,7 @@ libdrm (2.4.4-0ubuntu7) jaunty; urgency=low
   * debian/rules:
     + Add libdrm-nouveau1 package
 
- --
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Wed, 11 Feb 2009 18:12:41 +1100
 
 libdrm (2.4.4-0ubuntu6) jaunty; urgency=low
 

@@ -84,3 +84,25 @@ Description: Userspace interface to intel-specific kernel DRM services -- debugg
  .
  This package provides the debugging symbols for the libdrm-intel1 package.
 
+Package: libdrm-nouveau1
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Userspace interface to intel-specific kernel DRM services -- runtime
+ This library implements the userspace interface to the intel-specific kernel
+ DRM services.  DRM stands for "Direct Rendering Manager", which is the
+ kernelspace portion of the "Direct Rendering Infrastructure" (DRI). The DRI is
+ currently used on Linux to provide hardware-accelerated OpenGL drivers.
+
+Package: libdrm-nouveau1-dbg
+Section: libdevel
+Priority: extra
+Architecture: any
+Depends: libdrm-nouveau1 (= ${binary:Version}), ${misc:Depends}
+Description: Userspace interface to intel-specific kernel DRM services -- debugging symbols
+ This library implements the userspace interface to the kernel DRM services.
+ DRM stands for "Direct Rendering Manager", which is the kernelspace portion
+ of the "Direct Rendering Infrastructure" (DRI). The DRI is currently used on
+ Linux to provide hardware-accelerated OpenGL drivers.
+ .
+ This package provides the debugging symbols for the libdrm-nouveau1 package.
