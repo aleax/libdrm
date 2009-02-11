@@ -18,6 +18,9 @@ libdrm (2.4.4-0ubuntu7) UNRELEASED; urgency=low
   * debian/control:
     + Remove scary 'built from DRM snapshot' warning from long description of
       libdrm-intel1{,-dbg}
+  * debian/libdrm-dev.install:
+    + Also install the libdrm-nouveau headers; these aren't going to be shipped
+      by the kernel any time soon.
 
  -- Christopher James Halse Rogers <raof@ubuntu.com>  Wed, 11 Feb 2009 18:12:41 +1100
 
