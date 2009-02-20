@@ -11,7 +11,7 @@ Vcs-Browser: http://git.debian.org/?p=pkg-xorg/lib/libdrm.git
 Package: libdrm-dev
 Section: libdevel
 Architecture: any
-Depends: libdrm2 (= ${binary:Version}), libdrm-intel1 (= ${binary:Version}) [amd64 i386 kfreebsd-amd64 kfreebsd-i386]
+Depends: linux-libc-dev (>= 2.6.28), libdrm2 (= ${binary:Version}), libdrm-intel1 (= ${binary:Version}) [amd64 i386 kfreebsd-amd64 kfreebsd-i386]
 Description: Userspace interface to kernel DRM services -- development files
  This library implements the userspace interface to the kernel DRM
  services.  DRM stands for "Direct Rendering Manager", which is the

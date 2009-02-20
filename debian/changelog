@@ -15,6 +15,8 @@ libdrm (2.4.4-1) UNRELEASED; urgency=low
   * Don't mention *.la in libdrm-dev.install.
   * Make libdrm-dev depend on libdrm-intel1 on x86.
   * On Linux, let udev create the device files.
+  * Let linux-libc-dev provide some drm headers, drop them from libdrm-dev.
+    Add dependency on linux-libc-dev >= 2.6.28.
 
  -- Timo Aaltonen <tepsipakki@ubuntu.com>  Thu, 27 Nov 2008 09:33:05 +0200
 
