@@ -1,7 +1,8 @@
-libdrm (2.4.4-1) UNRELEASED; urgency=low
+libdrm (2.4.5-1) UNRELEASED; urgency=low
+
+  * New upstream release. (closes: #505740)
 
   [ Timo Aaltonen ]
-  * New upstream release. (closes: #505740)
   * debian/rules:
     -Run autoreconf at build time, build-depend on automake and libtool.
      (closes: #482727)

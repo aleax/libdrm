@@ -1,3 +1,408 @@
+commit a773ce1db8801fcbbdb55b54172c9cd48b92e2d7
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Feb 23 13:30:20 2009 -0800
+
+    Add libdrm_intel.pc by popular demand.
+
+commit 6feac49398d0f037103a4ae3d5a512badeed61fb
+Author: Ivan Kokshaysky <ink@jurassic.park.msu.ru>
+Date:   Mon Feb 23 15:54:18 2009 -0500
+
+    Fix DRM_CAS() on Alpha. (#16549)
+
+commit 9fc85b4084b69fefab3dbdf1f6cf97ccb47c963a
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Mon Feb 23 15:08:03 2009 -0500
+
+    modetest: Print names of properties.
+
+commit 4a0d19ef4f210cea9e60c5acc355df03723ef808
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Sun Feb 22 12:40:47 2009 +0200
+
+    Fix fix distcheck for optional nouveau stuff.
+    
+    Tylo.
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit 4d5341340fb6df22fffa7d4a214c54c085a1b1cf
+Author: Eric Anholt <eric@anholt.net>
+Date:   Sat Feb 21 10:01:40 2009 -0800
+
+    Fix distcheck for optional nouveau stuff.
+
+commit 2f1cdf79a7b7679f2602f27f18a0737f6e40e490
+Author: Eric Anholt <eric@anholt.net>
+Date:   Sat Feb 21 09:57:19 2009 -0800
+
+    Bump version to 2.4.5 for new API additions.
+
+commit 72abe983adfe7e8dcdcec11f1bc11d0b3daae063
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Feb 18 13:06:35 2009 -0800
+
+    intel: Add a new bufmgr alloc function to get BOs ready for rendering to.
+    
+    This avoids using the oldest BO in the BO cache and waiting for it to be
+    idle before we turn around and render to it with the GPU.  Thanks to
+    Chris Wilson for pointing out how silly we were being.
+
+commit a1345338feb7af25c0a9fe02ec16c2b9cce83a9e
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Fri Feb 20 09:25:35 2009 +1000
+
+    libdrm/nouveau: free drmVersion after we're done with it
+
+commit 18f2fcf5aa299fe3b7b56af37e7eefe78c921f61
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Thu Feb 19 19:40:19 2009 +1000
+
+    libdrm/nouveau: fix dma debugging
+
+commit 6a31b445fa494b992d5ddb115dd022058b787fc2
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Wed Feb 18 22:46:40 2009 +0200
+
+    nouveau: support backlight only when kernel does
+    
+    Loading nouveau.ko would fail with unknown symbols, if the backlight
+    class device support is not provided in the kernel. Let's make the
+    backlight support dependant on the kernel configuration.
+    
+    This is a bit ugly, the proper way would be to check for the config in
+    Makefile.kernel whether to build nouveau_backlight.o at all, and if not,
+    nouveau_drv.h should provide the stubs.
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit 25c60cfeca16f2bce38dbf32a57f1edc04c23a19
+Author: Matthew Garrett <mjg59@srcf.ucam.org>
+Date:   Wed Feb 18 13:21:26 2009 +0000
+
+    nv40, nv50: fix backlight build for <2.6.29 kernels
+    
+    Signed-off-by: Matthew Garrett <mjg59@srcf.ucam.org>
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit 96ce587e8b915afeac38e5f547ba95803c1780f2
+Author: Matthew Garrett <mjg59@srcf.ucam.org>
+Date:   Wed Feb 18 02:08:25 2009 +0000
+
+    nouveau: Add in-kernel backlight control support
+    
+    Several nvidia-based systems don't support backlight control via the
+    standard ACPI control mechanisms. Instead, it's necessary for the driver
+    to modify the backlight control registers directly. This patch adds
+    support for determining whether the registers appear to be in use, and
+    if so registers a kernel backlight device to control them. The backlight
+    can then be controlled via existing userspace tools.
+    
+    Signed-off-by: Matthew Garrett <mjg@redhat.com>
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 0054e14793e585ec0d8e95e3d7b82cbf1a684af8
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Sat Feb 14 22:22:39 2009 +0200
+
+    drm_compat: remove kmap_atomic_prot_pfn()
+    
+    This function is unused, and yet creates build problems: the symbol
+    init_mm is not exported by the latest -rc kernels and I don't believe it
+    ever will be. Even CONFIG_UNUSED_SYMBOLS does not provide it anymore.
+    
+    If this function is needed in the future, it needs to be reinvented in
+    any case. So remove it.
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit e32aa6226fe98d8342647acf34decd3699eff5e4
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Mon Feb 16 20:43:02 2009 +0200
+
+    Remove i915 driver sources from linux-core
+    
+    Intel developers have stated, that their DRM development continues
+    elsewhere in some Linux kernel trees. This makes the code in drm.git
+    just dead weight. This removal allows further cleanup of compatibility
+    code.
+    
+    shared-core and bsd-core are left untouched this time.
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+    Acked-by: Eric Anholt <eric@anholt.net>
+
+commit 709b82e1a5971fa58d627912402aa14a6d231cdd
+Author: Eric Anholt <eric@anholt.net>
+Date:   Sun Feb 15 18:35:03 2009 -0800
+
+    intel: Clear ioctl parameter outvalues and pads that confuse valgrind.
+    
+    The minor CPU cost here is probably outweighed by bothering us with noise in
+    the tool.
+
+commit 084e143d0c82f5bf6e4ccc8c84a01307c820ca93
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Sun Feb 15 22:06:18 2009 +1000
+
+    nv40: fail completely if we don't have a ctxprog for the chipset
+
+commit a4ac60a10239bb6d19f6d89f2c044e9b7b29837c
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Sun Feb 15 21:52:19 2009 +1000
+
+    nv50: context info for chipset 0xa0
+
+commit 7e5c512104c3ae9b4ddd121f6bbf9464f8d73181
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Wed Feb 11 14:18:03 2009 +1000
+
+    libdrm: make libdrm_nouveau conditional, disabled by default
+    
+    libdrm isn't supposed to ship APIs not present in a released kernel.
+
+commit eb78c53aa1a980e60c0dd1f2d0d2f04cb9cb2622
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Wed Feb 11 16:43:20 2009 +0100
+
+    mode: Make xfdrmMode.[c|h] not depend on drm_mode.h
+
+commit 2d2f105f79921025bce1b9015378612328d2f06e
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Wed Feb 4 21:44:50 2009 +0200
+
+    nouveau: fix type warnings: void* arith, un/signed
+    
+    nouveau_notifier.c had two places where void* was used in arithmetic,
+    fixed by using char*.
+    
+    nouveau_dma_wait(), nouveau_notifier_wait_status() and
+    nouveau_resource_alloc() had signed/unsigned comparison warnings, fixed
+    by changing the function parameter into an unsigned type.
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit bc92c0edf33f3f38275f6aa4e0639b3ddeef68ca
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Wed Feb 11 10:48:36 2009 +1000
+
+    drm/nv50: fix nv9x chipsets
+    
+    NVIDIA do this fun little sequence after updating the PRAMIN page tables.
+    
+    On 9xxx chips, none of the PRAMIN BAR bindings (except the initial one)
+    worked, hence the majority of the setup needed to create a channel
+    ended up in the wrong place, causing all sorts of fun.
+    
+    This is done by NVIDIA on nv8x chips also, so we'll do it for them too,
+    even though they appear to work without it.
+
+commit 7bbd605a21200e5e4beb94f261aefe30c4e7853d
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Wed Feb 11 10:12:43 2009 +1000
+
+    drm/nv50: add context info for nv98
+    
+    It won't work yet, just like the other 9xxx chips.  Real soon now :)
+
+commit efcef2c2bcd7a8ea16381cc8d6ae06fff1bc3483
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Tue Feb 10 09:05:09 2009 +1000
+
+    drm/nv50: use a slightly different initial context for nv96
+    
+    I'm not 100% sure that the nv94 one we were using won't work.  The context
+    layouts are identical (well.. same ctxprog, so of course!), only a couple
+    of registers differ.  But, be safe until we actually get some 9xxx chips
+    working.
+
+commit f43039c52c7f27b61316beba5863968996a05bc0
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Tue Feb 10 09:02:17 2009 +1000
+
+    drm/nv50: correct ramfc pointer in channel header
+    
+    Suprisingly the card still worked without this...
+
+commit 889b811e319ab80a4714854a0c0b242b5e36e0ca
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Tue Feb 10 08:57:21 2009 +1000
+
+    drm/nv50: let the card handle the initial context switch
+    
+    Our PFIFO/PGRAPH context save/load functions don't really work well
+    (at all?) on nv5x yet.  Depending on what random state the card is
+    in before the drm loads, fbcon probably won't work correctly.
+    
+    Luckily we've setup the GPU in such a way that it'll actually do a
+    hw context switch for the first context.  Not sure of how successful
+    this'd be currently on the older chips (actually, pretty sure it won't
+    work), so NV50 only for now.
+
+commit 9c8d634e687a5a5b5d314b3fd5b34cc17a217139
+Author: Stuart Bennett <stuart@freedesktop.org>
+Date:   Sat Feb 7 21:20:17 2009 +0000
+
+    nouveau: don't try to traverse non-existent lists
+    
+    Fixes nouveau_ioctl_mem_free Oops
+
+commit 97fdadee6a79f9406a55c235ee46104814321152
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Thu Feb 5 23:03:29 2009 +1000
+
+    nouveau: fix some issues where buffer objects never get freed
+
+commit 8b8803695b24d4cb4d041437a4709be06e59471b
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Wed Feb 4 12:17:13 2009 -0500
+
+    modetest: Add syntax to also specify a crtc when setting a mode.
+
+commit 225e7e274f49d5e01fa1ad3fbbb9f1499865fe67
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Fri Jan 30 11:25:35 2009 +1000
+
+    nouveau: install libdrm_nouveau with libdrm
+
+commit cb85630c02ddb46f168064befb2296d46b69f57a
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Fri Jan 30 11:18:54 2009 +1000
+
+    nouveau: bring in new mm api definitions, without the actual mm code
+    
+    Use of the new bits is guarded with a mm_enabled=0 hardcode.
+
+commit 7a389aab86bde183de8806878b8cf055f662ee73
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Tue Feb 3 15:03:41 2009 -0500
+
+    modetest: Use cairo (if available) to paint a better pattern.
+
+commit 2c113a1b159f57ab94b54316ece49c677cfe04ce
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Tue Feb 3 14:02:50 2009 -0500
+
+    modetest: Don't sleep when just dumping state, wait for key for modeset.
+
+commit 669fde3472ae71c55cc7526e3b3bd6fe00d6a5a5
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Tue Feb 3 14:00:00 2009 -0500
+
+    modetest: Handle setting modes on multiple crtcs with one fb.
+
+commit d9c55a6becb530dcf11bc980cb6b31843be0b8c2
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Tue Feb 3 13:26:22 2009 -0500
+
+    modetest: Use a more interesting test pattern.
+
+commit 39755db856794a4d0481d66b46b1b86e46a39b39
+Author: Stephane Marchesin <marchesin@icps.u-strasbg.fr>
+Date:   Mon Feb 2 23:47:11 2009 +0100
+
+    Remove the "nv" driver.
+
+commit bf46e0941fc6d342ad38057f23c8a74ac03b72f0
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Mon Feb 2 15:47:09 2009 -0500
+
+    No need to pin buffer anymore in modetest.c
+
+commit 854bd8f2cae8389d1152993a1d751687632df323
+Author: Stuart Bennett <sb476@cam.ac.uk>
+Date:   Thu Jan 29 23:39:50 2009 +0000
+
+    nouveau: don't save channel context if it has recently become invalid
+    
+    Bug exposed by DDX change d9da090c
+
+commit 408fc85a21689ee9859b64cb90902242bbc7e314
+Author: Stuart Bennett <sb476@cam.ac.uk>
+Date:   Sat Oct 25 20:59:38 2008 +0100
+
+    nouveau: no suspend support for nv50+
+
+commit e37bd24d3c99319b372517c2ddb77bfb4829f1df
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Jan 27 18:00:45 2009 -0800
+
+    Clean up README for the current state of kernel module affairs.
+    
+    Bug #19608.
+
+commit cbdd6272c04f487c8a63b595829d2d551e2b58f8
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Jan 27 17:16:11 2009 -0800
+
+    intel: don't count fences on 965 and later, as they don't use them.
+
+commit 9209c9a653e40d66435fbee7dde7450d5e470e03
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Jan 27 16:54:11 2009 -0800
+
+    intel: Fix under-counting of fences registers required in check_aperture.
+
+commit 2fa5f28eeef4ce13a48c1998856a115c7e4161ac
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Fri Jan 23 14:13:45 2009 -0800
+
+    intel: libdrm support for fence management in execbuf
+    
+    This patch tries to use the available fence count to figure out whether a
+    given batch can succeed or not (just like the aperture check).
+    
+    Signed-off-by: Jesse Barnes <jbarnes@virtuousgeek.org>
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+
+commit 26ca0bca9bd5e23b1d31bc6dfb6d58b62143447b
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Tue Jan 27 22:39:50 2009 +0200
+
+    drm compat: fix euid for >=2.6.28
+    
+    drm_fops.c reads the current process' EUID directly from task_struct.
+    Apparently starting in 2.6.28-rc4 this fails to build.
+    
+    In Linus' tree, commit b6dff3ec5e116e3af6f537d4caedcad6b9e5082a
+    "CRED: Separate task security context from task_struct"
+    moves the euid field from task_struct to another struct.
+    
+    Earlier commit 9e2b2dc4133f65272a6d3c5dcb2ce63f8a87cae9
+    "CRED: Introduce credential access wrappers" implements the wrapper
+    macros to access e.g. euid. This is in 2.6.27-rc4, and this contains the
+    definition of current_euid() that will be used in the DRM compatibility header
+    for kernels before 2.6.27. That commit also creates <linux/cred.h>, which
+    contains the upstream definition of current_euid().
+    
+    drm_fops.c is fixed to use current_euid(), and drm_compat.h will offer
+    the compatibility definition for kernels <2.6.27.
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit e6a062c21a73ac4ab420648e78c6fe1798de6cbd
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Tue Jan 27 08:36:33 2009 +1000
+
+    nv50: support chipset NV96
+    
+    ctxprog seen in okias' trace identical to one we use on NV94, assuming
+    the initial context values for NV94 will work here too.
+
+commit 753d4c39ff87f6b73dac72db4444b7627f39d2a9
+Author: Ben Skeggs <skeggsb@gmail.com>
+Date:   Thu Nov 13 13:04:21 2008 +1100
+
+    nv04-nv40: correct RAMHT size
+
+commit 27fae006853647ad0087067adc4eaa8d4ed4594a
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Mon Jan 19 06:46:23 2009 +1000
+
+    drm: remove drmstat/dristat from linux-core build
+    
+    pointed out by pq
+
 commit 18d3cc076b53f2032eed1f9a4b21947f4cb9e4e7
 Author: Eric Anholt <eric@anholt.net>
 Date:   Wed Jan 14 16:11:32 2009 -0800
