@@ -18,7 +18,8 @@ libdrm (2.4.5-1) UNRELEASED; urgency=low
   * On Linux, let udev create the device files.
   * Let linux-libc-dev provide some drm headers, drop them from libdrm-dev.
     Add dependency on linux-libc-dev >= 2.6.28.
-  * Set libdrm2 and libdrm-intel1 shlibs to 2.4.3.
+  * Set libdrm2 shlibs to 2.4.3, libdrm-intel1 shlibs to 2.4.5.  Update
+    symbols files.
 
  -- Timo Aaltonen <tepsipakki@ubuntu.com>  Thu, 27 Nov 2008 09:33:05 +0200
 
