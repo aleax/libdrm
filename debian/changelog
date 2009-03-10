@@ -1,17 +1,20 @@
-libdrm (2.4.4-0ubuntu7) UNRELEASED; urgency=low
+libdrm (2.4.5-0ubuntu1) jaunty; urgency=low
 
-  * debian/patches/02_add_libdrm-nouveau
-  * debian/patches/03_fix_unfreed_buffers
-    + Add commits from drm master adding a libdrm-nouveau library, and 
-      include the latest fixes.  This library is now required by the DDX 
-      component.
-  * debian/patchs/04_update_nouveau_header
-    + Update the nouveau DRM header to the new patchlevel.  Pulled from 
-      upstream, with the non-userspace components removed from the patch.
-      Required for libdrm-nouveau.
-  * debian/rules:
-  * debian/control:
-  * debian/libdrm-nouveau1.install
+  [Bryce Harrington]
+  * Merge from debian-unstable (unreleased git).  Remaining changes:
+    - debian/control: libdrm-intel1 Replaces libdrm2 (<= 2.4.1-0ubuntu5)
+    - debian/control: libdrm-dev Depends on linux-libc-dev only 
+      on [amd64 armel i386] until the other archs have caught up.
+    - debian/control: libdrm-dev Replace linux-libc-dev (<= 2.6.28-3.4),
+      since it includes the drm headers. We will drop them from libdrm-dev
+      when the drivers support the new headers.
+    - debian/control: Split the linux-libc-dev dep on lpia and depend 
+      on >= 2.6.28-2.4 on lpia
+    - debian/control: libdrm-dev Depends on linux-libc-dev (>= 2.6.28-5.15).
+  * debian/rules: enable nouveau experimental api
+  
+  [Christopher James Halse Rogers]
+  * debian/rules, debian/control, debian/libdrm-nouveau1.install:
     + Add libdrm-nouveau1 and libdrm-nouveau1-dbg package
   * debian/libdrm-nouveau1.symbols:
     + Add initial symbols file.
@@ -24,7 +27,27 @@ libdrm (2.4.4-0ubuntu7) UNRELEASED; urgency=low
   * debian/copyright:
     + Update to include new files from add_libdrm-nouveau.patch
 
- -- Christopher James Halse Rogers <raof@ubuntu.com>  Thu, 12 Feb 2009 10:40:22 +1100
+ -- Bryce Harrington <bryce@ubuntu.com>  Mon, 09 Mar 2009 16:43:00 -0700
+
+libdrm (2.4.5-1) UNRELEASED; urgency=low
+
+  [ Timo Aaltonen ]
+  * New upstream release. (closes: #505740)
+  * debian/rules:
+    -Run autoreconf at build time, build-depend on automake and libtool.
+     (closes: #482727)
+    -Add a debian/libdrm2.symbols file and '-c4' parameter to dh_makeshlibs
+     to fail if new symbols are added. Don't use Debian versions for now.
+
+  [ Julien Cristau ]
+  * Add a new package for the intel-specific bits (libdrm-intel1)
+  * Build-depend on pkg-config and libpthread-stubs0-dev (closes: #502078).
+    Thanks, Frank Lichtenheld!
+  * Don't mention *.la in libdrm-dev.install.
+  * Make libdrm-dev depend on libdrm-intel1 on x86.
+  * On Linux, let udev create the device files.
+
+ -- Timo Aaltonen <tepsipakki@ubuntu.com>  Thu, 27 Nov 2008 09:33:05 +0200
 
 libdrm (2.4.4-0ubuntu6) jaunty; urgency=low
 
@@ -80,26 +103,6 @@ libdrm (2.4.4-0ubuntu1) jaunty; urgency=low
   * debian/control: libdrm-dev Depends on linux-libc-dev (>= 2.6.28-5.15).
 
  -- Timo Aaltonen <tjaalton@ubuntu.com>  Fri, 23 Jan 2009 10:19:06 +0200
-
-libdrm (2.4.4-1) UNRELEASED; urgency=low
-
-  [ Timo Aaltonen ]
-  * New upstream release. (closes: #505740)
-  * debian/rules:
-    -Run autoreconf at build time, build-depend on automake and libtool.
-     (closes: #482727)
-    -Add a debian/libdrm2.symbols file and '-c4' parameter to dh_makeshlibs
-     to fail if new symbols are added. Don't use Debian versions for now.
-
-  [ Julien Cristau ]
-  * Add a new package for the intel-specific bits (libdrm-intel1)
-  * Build-depend on pkg-config and libpthread-stubs0-dev (closes: #502078).
-    Thanks, Frank Lichtenheld!
-  * Don't mention *.la in libdrm-dev.install.
-  * Make libdrm-dev depend on libdrm-intel1 on x86.
-  * On Linux, let udev create the device files.
-
- -- Timo Aaltonen <tepsipakki@ubuntu.com>  Thu, 27 Nov 2008 09:33:05 +0200
 
 libdrm (2.4.1-0ubuntu9) jaunty; urgency=low
 
