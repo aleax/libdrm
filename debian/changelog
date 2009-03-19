@@ -1,10 +1,12 @@
-libdrm (2.4.5-0ubuntu2) UNRELEASED; urgency=low
+libdrm (2.4.5-0ubuntu2) jaunty; urgency=low
 
+  * debian/control: nouveau package description should refer to it, not
+    intel. (LP: #341294)
   * debian/libdrm-dev.install: Also install r300_reg.h, via_3d_reg.h, and
     xgi_drm.h.
   * debian/rules:  Enforce --fail-missing again
 
- -- Bryce Harrington <bryce@ubuntu.com>  Tue, 10 Mar 2009 10:54:31 -0700
+ -- Bryce Harrington <bryce@ubuntu.com>  Wed, 18 Mar 2009 18:50:31 -0700
 
 libdrm (2.4.5-0ubuntu1) jaunty; urgency=low
 
