@@ -1,3 +1,11 @@
+libdrm (2.4.5-0ubuntu2) UNRELEASED; urgency=low
+
+  * debian/libdrm-dev.install: Also install r300_reg.h, via_3d_reg.h, and
+    xgi_drm.h.
+  * debian/rules:  Enforce --fail-missing again
+
+ -- Bryce Harrington <bryce@ubuntu.com>  Tue, 10 Mar 2009 10:54:31 -0700
+
 libdrm (2.4.5-0ubuntu1) jaunty; urgency=low
 
   [Bryce Harrington]
