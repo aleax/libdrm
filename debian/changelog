@@ -1,3 +1,10 @@
+libdrm (2.4.5-0ubuntu3) UNRELEASED; urgency=low
+
+  * debian/control: libdrm-dev should also depend on libdrm-nouveau1
+    Fixes xserver-xorg-video-nouveau FTBFS on amd64.
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Sat, 21 Mar 2009 11:17:59 +1100
+
 libdrm (2.4.5-0ubuntu2) jaunty; urgency=low
 
   * debian/control: nouveau package description should refer to it, not
