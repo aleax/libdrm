@@ -1,4 +1,4 @@
-libdrm (2.4.5-1) UNRELEASED; urgency=low
+libdrm (2.4.5-1) unstable; urgency=low
 
   * New upstream release. (closes: #505740)
 
@@ -21,7 +21,7 @@ libdrm (2.4.5-1) UNRELEASED; urgency=low
   * Set libdrm2 shlibs to 2.4.3, libdrm-intel1 shlibs to 2.4.5.  Update
     symbols files.
 
- -- Timo Aaltonen <tepsipakki@ubuntu.com>  Thu, 27 Nov 2008 09:33:05 +0200
+ -- Julien Cristau <jcristau@debian.org>  Tue, 24 Mar 2009 22:20:50 +0100
 
 libdrm (2.3.1-2) unstable; urgency=high
 
