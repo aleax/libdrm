@@ -1,8 +1,8 @@
-libdrm (2.4.5-2) UNRELEASED; urgency=low
+libdrm (2.4.5-2) unstable; urgency=low
 
   * Add drm_mode.h to the list of headers we don't ship.
 
- -- Julien Cristau <jcristau@debian.org>  Wed, 25 Mar 2009 10:55:10 +0100
+ -- Julien Cristau <jcristau@debian.org>  Wed, 25 Mar 2009 10:56:53 +0100
 
 libdrm (2.4.5-1) unstable; urgency=low
 
