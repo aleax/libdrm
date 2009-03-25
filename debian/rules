@@ -80,7 +80,7 @@ install: build
 
 	cd obj-$(DEB_BUILD_GNU_TYPE) && $(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
 	# remove files provided by linux-libc-dev
-	for file in drm_sarea.h drm.h i915_drm.h mga_drm.h r128_drm.h radeon_drm.h savage_drm.h sis_drm.h via_drm.h; do \
+	for file in drm_mode.h drm_sarea.h drm.h i915_drm.h mga_drm.h r128_drm.h radeon_drm.h savage_drm.h sis_drm.h via_drm.h; do \
 		rm -f debian/tmp/usr/include/drm/$$file; \
 	done
 
