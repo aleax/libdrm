@@ -1,3 +1,10 @@
+libdrm (2.4.5-3) UNRELEASED; urgency=low
+
+  * Make the linux-libc-dev dependency linux-only (closes: #521253).  Thanks,
+    Petr Salinger!
+
+ -- Julien Cristau <jcristau@debian.org>  Thu, 26 Mar 2009 12:12:31 +0100
+
 libdrm (2.4.5-2) unstable; urgency=low
 
   * Add drm_mode.h to the list of headers we don't ship.
