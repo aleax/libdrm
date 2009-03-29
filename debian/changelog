@@ -1,3 +1,15 @@
+libdrm (2.4.5-0ubuntu4) UNRELEASED; urgency=low
+
+  * debian/libdrm-nouveau1.symbols:
+    - Fix thinko copied over from libdrm-intel1.symbols.  The file should
+      specify libdrm-nouveau1 as the corresponding package, not libdrm2.
+      Fixes xserver-xorg-video-nouveau failing to depend on libdrm-nouveau1
+  * debian/control:
+    - There's no good reason to restrict the dependency of libdrm-dev on
+      libdrm-nouveau1 to x86 architectures.
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Sun, 29 Mar 2009 17:32:31 +1100
+
 libdrm (2.4.5-0ubuntu3) jaunty; urgency=low
 
   * debian/control: libdrm-dev should also depend on libdrm-nouveau1
