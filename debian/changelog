@@ -1,3 +1,13 @@
+libdrm (2.4.5-0ubuntu5) jaunty; urgency=low
+
+  * debian/patches/02_libdrm_nouveau_update.patch:
+    - Pull in upstream changes to libdrm-nouveau.  
+      + Fixes a memory leak in fence handling.
+      + Fixes an error the DDX reports in accessing the frontbuffer.
+      + Should be reverted for the next upstream version of libdrm.
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Sat, 04 Apr 2009 17:54:51 +1100
+
 libdrm (2.4.5-0ubuntu4) jaunty; urgency=low
 
   * debian/libdrm-nouveau1.symbols:
