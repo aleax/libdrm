@@ -1,3 +1,596 @@
+commit 07646002c6835537c6ae44ef9b3f8480762279b8
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Fri Apr 10 15:34:24 2009 -0700
+
+    Bump version to 2.4.9
+    
+    Who needs 2.4.8 anyway?
+
+commit 4d5e82e7d3cf9f94c1c74bd5067e3ea1fb9d0981
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Fri Apr 10 15:24:41 2009 -0700
+
+    Bump version to 2.4.8
+
+commit 3637dcc66d707aa9ababf0b12cd4a299559522f5
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Fri Apr 10 15:24:10 2009 -0700
+
+    Revert "libdrm: speed up connector & mode fetching"
+    
+    This reverts commit cd5c66c659168cbe2e3229ebf8be79f764ed0ee1.  It broke too
+    many kernel assumptions about the double ioctl (connector status, mode
+    fetching, etc.)
+
+commit fef29358bb407f35b90e8c6ee913e4979786cfd5
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Thu Apr 9 15:19:10 2009 -0400
+
+    Bump version to 2.4.7
+
+commit ec9b7b320a724e49d61375b4ad53e2c88fa30f66
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Thu Apr 9 15:17:51 2009 -0400
+
+    test: Avoid recursive dependency in makefile
+
+commit a85e07b9031c819f3cdf54b66c90ac0c450e3e75
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Thu Apr 9 15:02:40 2009 -0400
+
+    test: Makefile.am grammar nazi
+
+commit 1faab66cfd1a854925da6ff7109aa614292dea90
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Tue Apr 7 09:26:32 2009 +1000
+
+    drm: fix test makefile
+    
+    no idea if this is correct but it works so meh
+
+commit 751db3fe27d5e51925c28ceecadb828784d46028
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Mon Apr 6 17:22:10 2009 -0400
+
+    Skip tests that require root
+    
+    This lets us do make distcheck as non-root.
+
+commit 8a5c4d567fafffbda57cbe5e4ed8c419193cada5
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Mon Apr 6 17:18:17 2009 -0400
+
+    XFAIL auth and lock test cases
+    
+    They're writing to the read end of a pipe and failing.
+
+commit e9d6116e5bd30639d6333ef95462fe300f47ccd5
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Mon Apr 6 17:13:01 2009 -0400
+
+    Use libudev in test case to only run gem tests for intel devices.
+
+commit 51d6346f9f3c425f49e57d185530c6bcaeb94f5e
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Tue Mar 31 13:33:18 2009 -0500
+
+    Move drm_vblank_cleanup() after lastclose.
+    
+    This may prevent a possible panic on shutdown.
+
+commit cd5c66c659168cbe2e3229ebf8be79f764ed0ee1
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Mon Mar 30 14:35:30 2009 -0700
+
+    libdrm: speed up connector & mode fetching
+    
+    This patch speeds up drmModeGetConnector by pre-allocating mode &
+    property info space before calling into the kernel.  In many cases this
+    pre-allocation will be sufficient to hold the returned values (it's easy
+    enough to tweak if the common case becomes larger), which means we don't
+    have to make the second call, which saves a lot of time.
+    
+    Acked-by: Jakob Bornecrantz <wallbraker@gmail.com>
+    Signed-off-by: Jesse Barnes <jbarnes@virtuousgeek.org>
+
+commit 93e65271601e6a1c7c90453f2f13157ae24b35c2
+Author: Stuart Bennett <stuart@freedesktop.org>
+Date:   Mon Mar 30 20:38:49 2009 +0100
+
+    nouveau: nForce 1/2 IGP memory sanity check from DDX
+
+commit 2ada85502242a3d5328b8f392d7843ef58a78780
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Mon Mar 30 11:25:09 2009 -0700
+
+    libdrm: bump version to 2.4.6
+    
+    This version includes GTT unmap support for the Intel bufmgr.
+
+commit e2d7dfb61ad7a97367f050150160c205614d152e
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Thu Mar 26 16:43:00 2009 -0700
+
+    libdrm/intel: support GTT maps correctly
+    
+    libdrm has some support for GTT mapping already, but there are bugs
+    with it (no surprise since it hasn't been used much).
+    
+    In fixing 20803, I found that sharing bo_gem->virtual was a bad idea,
+    since a previously mapped object might not end up getting GTT mapped,
+    leading to corruption.  So this patch splits the fields according to
+    use, taking care to unmap both at free time (but preserving the map
+    caching).
+    
+    There's still a risk we might run out of mappings (there's a sysctl
+    tunable for max number of mappings per process, defaulted to 64k or so
+    it looks like) but at least GTT maps will work with these changes (and
+    some others for fixing PAT breakage in the kernel).
+    
+    Reviewed-by: Eric Anholt <eric@anholt.net>
+    Signed-off-by: Jesse Barnes <jbarnes@virtuousgeek.org>
+
+commit c9cfeaa5542e08381a8144d0a5bd96036a19082f
+Author: Stuart Bennett <stuart@freedesktop.org>
+Date:   Tue Mar 24 23:39:41 2009 +0000
+
+    nouveau: plug drm fifo ioremap leak (#14941)
+
+commit 03ca202fa56ad7711ad0f7527a1e537154093e8a
+Author: Stuart Bennett <stuart@freedesktop.org>
+Date:   Tue Mar 24 23:26:30 2009 +0000
+
+    nouveau: add linux compat defines for PCI config access, use them for nvidia IGPs
+
+commit b71f3f114e6f0e94e15958c0aa12e804392f9df2
+Author: Stuart Bennett <stuart@freedesktop.org>
+Date:   Tue Mar 24 16:42:36 2009 +0000
+
+    nouveau: use PFB_CSTATUS naming from ddx (reg introduced with nv10)
+    
+    NV04 had a PFB_FIFO_DATA at the same address, which we don't use, so
+    remove it to reduce confusion
+
+commit d6ad0dba01a8246b9e7c96388f747c8ed9631ce4
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Wed Mar 25 08:10:12 2009 +1000
+
+    libdrm/nouveau: fix typo in nouveau_device_close()
+
+commit 98b0df3953f229fd5fb7484d2f566aeb0443c12f
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Fri Mar 20 10:35:55 2009 +1000
+
+    libdrm/nouveau: ask the kernel for vram/gart aperture sizes
+
+commit bad16a6b22e06b0adf7663543e26caae9916444c
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Fri Mar 20 10:32:47 2009 +1000
+
+    libdrm/nouveau: remove unneccesary null ptr checks
+
+commit c37fca4ef678667bcba9c45c6e0a59c8d174c7c5
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Fri Mar 20 10:24:40 2009 +1000
+
+    libdrm/nouveau: incr refcount on ref fence before decr on old fence
+
+commit 00d8e960ca665b7f0528438331f4d0ae77fbb4cc
+Author: Maarten Maathuis <madman2003@gmail.com>
+Date:   Thu Mar 19 23:59:42 2009 +0100
+
+    libdrm/nouveau: unref fences when deleting bo
+    
+    - This was causing a significant memory leak.
+
+commit 6169e3a6012d55522fc8028a5674891a5a99d935
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Wed Mar 18 10:25:22 2009 +1000
+
+    libdrm/nouveau: implement bo_handle_get for !mm_enabled
+    
+    bo_handle_ref on !mm_enabled treats handle as an offset, make
+    bo_handle_get do the same rather than failing.
+
+commit 2e2e8575b1ed4703653a72ac2b60b75316c388d7
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Sun Mar 15 13:52:58 2009 -0500
+
+    libdrm_nouveau: The handle that is passed to mmap needs to be drm_handle_t
+    
+    drm_handle_t is defined to be a u32 on linux and a u64 on everything
+    else.  This addresses an issue on FreeBSD amd64 where the map offsets
+    may be greater than 32bits.  When the handle is cast to 32bit, mmap
+    cannot match the requested map and causes X to crash.
+    
+    This should be a NOOP on linux since drm_handle_t is always 32bit.
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit e8d34762558224bb76862425de965c47858f2afd
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Mar 16 01:07:15 2009 -0500
+
+    FreeBSD: Set up the nouveau build infrastructure
+    
+    disabled by default until the rest of the patches are in.
+
+commit dec955d728505f060afccd047ff2b572cb4ba3c1
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Mar 16 00:41:23 2009 -0500
+
+    FreeBSD: Add support for matching solely on vedor id.
+    
+    This also adds that ability to set device name from VPD, but that
+    doesn't seem to be working...
+
+commit 44fec1a8e487a14e0221e32759cc16ce9fcd7b00
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Mar 16 00:35:18 2009 -0500
+
+    FreeBSD: Improve the debug output of drm_mmap().
+
+commit f8f49aa6ec10e281b08279143f2bd999df118147
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Mar 16 00:30:28 2009 -0500
+
+    FreeBSD: Add list_for_each_prev() to our bank of compat functions.
+
+commit 6777c6bb8bb399e48500d742e80822808451010b
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Mar 16 00:17:54 2009 -0500
+
+    FreeBSD: Don't set the PZERO flag to mtx_sleep.
+    
+    We also don't support anything old enough to need tsleep.
+
+commit 06e182d0259d1d2e775814fa070c6cce0ee233a8
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Mar 16 00:08:06 2009 -0500
+
+    FreeBSD: use flsl() instead of ffsl().
+    
+    I noticed that we were computing drm_order differently than linux.
+
+commit 2ce00c6b674a51bdfaa3276b88d2015c59d4584e
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Mar 16 00:07:31 2009 -0500
+
+    FreeBSD: Minor code cleanup.
+
+commit b0acc886069c0054da98059319a84eaf60114d32
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Mar 16 00:03:40 2009 -0500
+
+    FreeBSD: Increase MAX_PCI_RESOURCE
+    
+    We can have more than 3 BARs to access.
+
+commit f78040266bbddf6cf020fb957e3f92000c2bc69b
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Mar 16 00:01:47 2009 -0500
+
+    FreeBSD: Cast map handles to vm_offset_t
+    
+    This prevents some warnings with nouveau.
+
+commit 82eac8060b98b425f29051bfd7830ba3622be7d8
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Mar 9 13:37:57 2009 -0500
+
+    FreeBSD: Fix the printing of maps on amd64/i386 to be consistent
+
+commit a3ba51bd041a448f3bb14678cebb0976e0fda47a
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Mar 9 13:34:26 2009 -0500
+
+    FreeBSD: Fix up the flags for bus_dmamem here as well.
+
+commit af1afb3c381797e6bf0fb56abd4505094cb6c11e
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Sun Mar 8 22:55:01 2009 -0500
+
+    FreeBSD: Fix up the flags to bus_dmamem_*
+    
+    Allow it to sleep waiting for resources during the allocation stage.
+    Only use BUS_DMA_NOWAIT when loading the map.
+
+commit 2221e16703bf5bf813a98926b968bd5b28eb5d70
+Author: vehemens <vehemens@verizon.net>
+Date:   Sun Mar 8 18:17:15 2009 -0700
+
+    FreeBSD use kdev for kernel device name
+    
+    Signed-off-by: Robert Noland <rnoland@2hip.net>
+
+commit 391c92ae1799f0d1fddb2321c5713afc58575514
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Fri Mar 6 09:04:44 2009 +1000
+
+    drm/nouveau: make portion of vram as reserved for PRAMIN on all chipsets
+    
+    NV04 was completely busted.  Push buffers were getting allocated at the
+    end of VRAM, overwriting PRAMIN.  So, it turns out PRAMIN is in VRAM on
+    all chips.  Question answered!
+
+commit 14503dafa79cfdea69d618f2c28dafb66765a8a0
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Thu Mar 5 00:47:26 2009 -0600
+
+    FreeBSD: Rework DRM_[DEBUG,ERROR,INFO] macros a bit.
+
+commit 0a227a3361054f06da4bba34d02c8dadcd448e9a
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Thu Mar 5 00:46:32 2009 -0600
+
+    FreeBSD: Garbage collect entries from pcireg.h since we now include it.
+
+commit 222dc6582e7afad0cd397452a0c4bcea23efeb04
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Thu Mar 5 00:44:56 2009 -0600
+
+    FreeBSD: We only want drm to ever attach to the primary pci device.
+    
+    Intel 855 chips present the same pci id for both heads.  This prevents
+    us from attaching to the dummy second head.  All other chips that I
+    am aware of either only present a single pci id, or different ids
+    for each head so that we only match on the correct head.
+
+commit 4a27f1c6384c3987dc25e0d2b65e4cf56af7769a
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Thu Mar 5 00:42:52 2009 -0600
+
+    FreeBSD: rework drm_scatter.c which allocates scatter / gather pages for use by
+    ati pci gart to use bus_dma to handle the allocations.  This fixes
+    a garbled screen issue on at least some radeons (X1400 tested).
+
+commit e4b065ad9a0834fb646baf5a6051902d15716e5e
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Tue Mar 3 22:42:51 2009 +0200
+
+    drm: drop Linux < 2.6.21 support
+    
+    This also means, that DRM_FULL_MM_COMPAT is always defined,
+    so it is dropped, too.
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit a6b28a86a6141259583c3699d1a2d9b26e366ba8
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Tue Mar 3 22:20:59 2009 +0200
+
+    drm, via: drop Linux < 2.6.20 support
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit f44c740dc7a05d651df7604baad8f667836d1b09
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Mon Mar 2 23:14:45 2009 +0200
+
+    drm: drop Linux < 2.6.19 support
+    
+    This also means dropping the DRM_ODD_MM_COMPAT case.
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit 081b2d6da22e08e1448285d647a35b17905512cf
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Mon Mar 2 22:39:32 2009 +0200
+
+    drm: drop Linux < 2.6.18 support
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit 62f4344c98b72535df88a5a3d577c1df314e4f9b
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Mon Mar 2 22:35:23 2009 +0200
+
+    drm: drop Linux < 2.6.16 support
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit 056ce26344197042cbef800436f16d3f8ba288c8
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Mon Mar 2 22:26:46 2009 +0200
+
+    drm: drop Linux < 2.6.15 support
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit b47de8d5a3dbfc669c7ba9c6cb66a7491c30b537
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Mon Mar 2 22:09:26 2009 +0200
+
+    drm: drop Linux < 2.6.12 support
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit 4c439ac4a7fa627691dfcd6a4be67cd95d8d33ee
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Mon Mar 2 00:17:44 2009 +0200
+
+    drm: drop Linux < 2.6.10 support
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit 4bdddf57155a774318ed3739ede9511f074d394e
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Mon Mar 2 00:13:00 2009 +0200
+
+    drm: drop Linux <= 2.6.8 support
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit d3f25ccca882f91071a0d68bb4b75ff871f0cc04
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Sun Mar 1 23:53:02 2009 +0200
+
+    drm: drm_bo_mmap_locked() is static.
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit a6dd0afa87558a670f970e61b023f45a396539eb
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Sat Feb 28 17:45:02 2009 +0200
+
+    drm, ati: fix printf format warnings
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit 9e8591dbdbd99ec1cc4922d61ec4cc54ef42f0ac
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Sat Feb 28 16:09:56 2009 +0200
+
+    drm: build fix for Linux drm_vblank_cleanup()
+    
+    The commit 957b10695b619d6ed2f1098b00502395d9a3c149, "Move vblank_init
+    to driver load time." forgot to add the function declaration in
+    linux-core/drmP.h.
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit ad64ff30d0e85486bba8fb6f0e2fcb1caa06fd5c
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Fri Feb 27 17:52:08 2009 -0600
+
+    FreeBSD: Introduce a kernel tuneable to disable msi at boot time.
+
+commit 957b10695b619d6ed2f1098b00502395d9a3c149
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Wed Feb 25 17:59:26 2009 -0600
+
+    Move vblank_init to driver load time.
+
+commit 7ce8d4c1fec618ac2578ea0ddb8915b1b41ab9cb
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Feb 27 13:46:31 2009 -0800
+
+    intel: Update reloc_tree_size of the first buffer when we count the tree size.
+    
+    This helps avoid the n^2 performance cost of counting tree size when we
+    get a lot of relocations into our batch buffer.  rgb10text on keithp's laptop
+    went from 136k glyphs/sec to 234k glyphs/sec.
+
+commit ab582f64fd54565f66eba866972f0fe2c313f000
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Thu Feb 26 23:51:57 2009 -0600
+
+    FreeBSD: Fix up some ioctl permissions issues missed many times over.
+    
+    This was somehow hit with r600 demo.
+    
+    Submitted by: 	Jung-uk Kim <jkim@FreeBSD.org>
+
+commit 948af0bd9b9eade489599d7ec160d42706331779
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Wed Feb 25 14:19:01 2009 -0600
+
+    i915: Backport jbarnes gm45 vblank counter patch.
+
+commit efa485b2cf2f1f46760a3d9297ba1a73a2dbcd05
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Feb 24 21:36:56 2009 -0800
+
+    intel: Don't copy dirty data out when freeing a BO in the fake bufmgr.
+
+commit e96fc62e5339e3c8c8944dfe9f5163f769bccbd8
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Tue Feb 24 15:49:45 2009 -0600
+
+    FreeBSD: Drop the Giant lock.
+
+commit b9b8e8f3cc61a37cce2ae48957514ce6a4f30566
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Tue Feb 24 15:47:35 2009 -0600
+
+    FreeBSD: Turn on msi
+    
+    There is a blacklist for devices that advertise the capability, but
+    don't work properly.
+
+commit 153a0803db19cf8c0b4f532e0d0243747875e154
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Tue Feb 24 14:21:10 2009 -0600
+
+    FreeBSD: Add some vblank related debugging and replace DRM_WAIT_ON with a local instance.
+
+commit a44b4ca8203e366df5a2ed5fe3d78faea4cf7d81
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Tue Feb 24 14:00:21 2009 -0600
+
+    i915:  A few whitespace cleanups.
+
+commit 04d94197e69ed7d3cad194e8579631849135b08c
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Tue Feb 24 12:59:08 2009 -0600
+
+    linux: Add msi_enabled to the drm_device so the build should be happy.
+
+commit 68707804284438140413987849fee989b9fe4ba8
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Tue Feb 24 12:28:42 2009 -0600
+
+    radeon: Prepare radeon for msi support.
+
+commit d45bc6667c6f10cbb3832178e4a6a8cdd036b739
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Tue Feb 24 02:00:42 2009 -0600
+
+    i915: This was part of a sync to the intel driver at some point
+    
+    	-Remove the old TTM interface
+    	-Move register definitions to i915_reg.h
+    	-Rework the irq handler
+
+commit c3c21303e381310a0962ecc24af1797dccd9a99f
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Tue Feb 24 11:33:34 2009 -0500
+
+    nouveau: Dist nouvea_dma.h as well.
+    
+    Oops.  Disting is hard.
+
+commit a71d3edd6c09a0141fae0893cbee21b71578d99d
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Tue Feb 24 11:19:41 2009 -0500
+
+    nouveau: Also dist nouveau_private.h.
+
+commit 1c381092a310af9b1b39b3a983ad5760b71a9025
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Tue Feb 24 00:22:56 2009 -0600
+
+    FreeBSD: Rip out the locked task support now that i915 no longer uses it.
+
+commit 9f94e39f0d5bed48d5ea56767cd92a2509908df0
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Feb 23 22:39:07 2009 -0600
+
+    i915: Rip out the use of vblank_swap
+
+commit 9d402905c07a38e1eb327db96ae561de7930f616
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Feb 23 20:22:44 2009 -0600
+
+    FreeBSD: There is no compelling reason to hold the lock here.
+    
+    When I was lock profiling, this was high up on the list and I
+    see no reason to do it.
+
+commit d6c97868361da48d13a5fe7fe106d67a64969ab1
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Feb 23 20:16:15 2009 -0600
+
+    FreeBSD: Don't set PZERO in mtx_sleep.
+
+commit a9486ee3a8aaae888b4a05ae0d475cfa2a2641cb
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Mon Feb 23 20:01:26 2009 -0600
+
+    FreeBSD: Set MAP_NOSYNC on mmaps.
+    
+    There is no reason to gratuitously sync these maps to swap.
+
 commit a773ce1db8801fcbbdb55b54172c9cd48b92e2d7
 Author: Eric Anholt <eric@anholt.net>
 Date:   Mon Feb 23 13:30:20 2009 -0800
@@ -640,7 +1233,7 @@ Date:   Wed Dec 10 15:37:29 2008 -0800
     Update .gitignore with new modetest program
 
 commit 6656db10551bbb8770dd945b6d81d5138521f208
-Merge: c99566f... 12e68f8...
+Merge: c99566f 12e68f8
 Author: Jesse Barnes <jbarnes@virtuousgeek.org>
 Date:   Tue Dec 9 10:23:43 2008 -0800
 
@@ -655,14 +1248,14 @@ Date:   Mon Dec 8 14:05:32 2008 +1000
     we already have a 2.3.x version out there
 
 commit 12e68f8059485fb4f02a15f74ab2fa3bdff38c81
-Merge: d5d5aca... b0d93c7...
+Merge: d5d5aca b0d93c7
 Author: Jesse Barnes <jbarnes@virtuousgeek.org>
 Date:   Wed Dec 3 11:54:07 2008 -0800
 
     Merge branch 'master' into modesetting-gem
 
 commit d5d5aca7f959f0e357f99dd517a421c015d0712f
-Merge: 10c3e1a... 7e4e0fb...
+Merge: 10c3e1a 7e4e0fb
 Author: Jesse Barnes <jbarnes@virtuousgeek.org>
 Date:   Wed Dec 3 11:53:36 2008 -0800
 
@@ -701,7 +1294,7 @@ Date:   Fri Nov 21 12:43:44 2008 +1100
     In any case, at least one of the original NV50 chipsets work now.
 
 commit 10c3e1a8b55355b1ae1697ebf3d77ac4702d61c9
-Merge: 5923831... 2e2fd6c...
+Merge: 5923831 2e2fd6c
 Author: Jesse Barnes <jbarnes@virtuousgeek.org>
 Date:   Thu Nov 20 11:01:24 2008 -0800
 
@@ -731,7 +1324,7 @@ Date:   Wed Nov 19 23:17:27 2008 +0100
     Unbreak drm build.
 
 commit c67a83dfe1b60f81343ff7c2604a96b18ecb3b0c
-Merge: 60c1e3a... e98eda9...
+Merge: 60c1e3a e98eda9
 Author: Jesse Barnes <jbarnes@virtuousgeek.org>
 Date:   Wed Nov 19 12:42:49 2008 -0800
 
@@ -817,7 +1410,7 @@ Date:   Fri Nov 14 12:08:27 2008 +0100
     should help in tracking unbalanced ref/unref calls.
 
 commit 965b4d662a5236ee5aeb94a70f62565b6ed5644c
-Merge: 9a4cb7e... 7e27b3b...
+Merge: 9a4cb7e 7e27b3b
 Author: Jesse Barnes <jbarnes@virtuousgeek.org>
 Date:   Thu Nov 13 15:30:06 2008 -0800
 
@@ -902,7 +1495,7 @@ Date:   Wed Nov 12 15:56:40 2008 +0100
                     help in avoiding moving content in or out)
 
 commit 6d59bad8e9cab6170e1af3d67597b6f5f145c33f
-Merge: 72997fb... 15464f5...
+Merge: 72997fb 15464f5
 Author: Jerome Glisse <glisse@freedesktop.org>
 Date:   Mon Nov 10 22:21:32 2008 +0100
 
@@ -1016,7 +1609,7 @@ Date:   Wed Nov 5 16:00:04 2008 +0100
     radeon: libdrm_radeon add handle to debug string
 
 commit ddfb12b32e64d00d302f7fbb36fb079deec3646f
-Merge: 7651b4c... 68fcb77...
+Merge: 7651b4c 68fcb77
 Author: Jerome Glisse <glisse@freedesktop.org>
 Date:   Wed Nov 5 15:59:37 2008 +0100
 
@@ -1299,7 +1892,7 @@ Date:   Thu Oct 30 09:33:07 2008 -0700
     released code is maintained using #defines.
 
 commit 40c64eb5243bbd511f30e68cb4abce55b364a74f
-Merge: 5d86195... 1db35ba...
+Merge: 5d86195 1db35ba
 Author: Jerome Glisse <glisse@freedesktop.org>
 Date:   Wed Oct 29 23:41:48 2008 +0100
 
@@ -1379,7 +1972,7 @@ Date:   Mon Oct 27 14:39:05 2008 -0400
     This allows us to not crash X when using newer Intel ddx drivers.
 
 commit 3b17b50e9c49ae113c7ad1c4a0af51e873de1a7e
-Merge: 7617d1f... 389b761...
+Merge: 7617d1f 389b761
 Author: Jerome Glisse <glisse@freedesktop.org>
 Date:   Mon Oct 27 19:33:56 2008 +0100
 
@@ -1805,14 +2398,14 @@ Date:   Tue Sep 30 16:35:26 2008 -0700
     callback to get it.
 
 commit 7b3aa626482963cc52086da629f682fce2c7322c
-Merge: 972f657... 9c6732e...
+Merge: 972f657 9c6732e
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Tue Sep 30 14:17:27 2008 +1000
 
     Merge remote branch 'origin/modesetting-gem' into modesetting-gem
 
 commit 972f6572652bc4a2f6c44c525e5e91f2becdb62a
-Merge: 89126bb... 2db8e0c...
+Merge: 89126bb 2db8e0c
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Fri Sep 26 15:37:21 2008 +1000
 
@@ -1854,7 +2447,7 @@ Date:   Fri Sep 26 17:20:04 2008 -0400
     to try using atom on r4xx.
 
 commit 89126bb58ec82511758bed36a28e698b721fb435
-Merge: d883347... ea9711b...
+Merge: d883347 ea9711b
 Author: Alex Deucher <alexdeucher@gmail.com>
 Date:   Thu Sep 25 18:47:47 2008 -0400
 
@@ -2596,7 +3189,7 @@ Date:   Fri Aug 22 07:08:29 2008 +1000
     drm: add gpu create script
 
 commit 76cec451d3380c0db28be58123904b489be672a7
-Merge: ba61880... 2d4cf9c...
+Merge: ba61880 2d4cf9c
 Author: Alex Deucher <alexdeucher@gmail.com>
 Date:   Tue Aug 19 13:08:47 2008 -0400
 
@@ -2689,7 +3282,7 @@ Date:   Sat Aug 16 12:09:24 2008 -0700
     Makes it build again.
 
 commit d313108167a793652a5fe4c1015198e0a9deac4c
-Merge: 893315d... 2030db7...
+Merge: 893315d 2030db7
 Author: Jesse Barnes <jbarnes@virtuousgeek.org>
 Date:   Sat Aug 16 11:45:53 2008 -0700
 
@@ -2744,7 +3337,7 @@ Date:   Thu Aug 14 09:43:23 2008 +1000
     i915: fixup from last merge hopefully
 
 commit 2d4420c6669dbaead27346b8c7e1979edc94ae5a
-Merge: 1c6abce... 2a65759...
+Merge: 1c6abce 2a65759
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Thu Aug 14 09:36:34 2008 +1000
 
@@ -2923,14 +3516,14 @@ Date:   Wed Aug 13 11:39:22 2008 -0700
     Needed for the modesetting case where we initialize the ring at load time.
 
 commit b8724ae647c2c622f33f3a82d1b8632c887fa69b
-Merge: 2f03ba4... 9a2adc4...
+Merge: 2f03ba4 9a2adc4
 Author: Jesse Barnes <jbarnes@virtuousgeek.org>
 Date:   Wed Aug 13 10:09:41 2008 -0700
 
     Merge branch 'modesetting-101' into modesetting-gem
 
 commit 2f03ba4aad1718a36168550b6a146b79540252e6
-Merge: 085df64... b0e6882...
+Merge: 085df64 b0e6882
 Author: Jesse Barnes <jbarnes@virtuousgeek.org>
 Date:   Wed Aug 13 10:08:02 2008 -0700
 
@@ -3037,7 +3630,7 @@ Date:   Fri Aug 8 14:08:43 2008 -0700
     Fix compile warning from check_aperture change.
 
 commit e1b8e79796b172c356af98eb49107c8abbebfe5a
-Merge: 0c47151... 46e9274...
+Merge: 0c47151 46e9274
 Author: Eric Anholt <eric@anholt.net>
 Date:   Fri Aug 8 14:05:01 2008 -0700
 
@@ -3075,7 +3668,7 @@ Date:   Fri Aug 8 16:04:45 2008 +1000
     not all there yet
 
 commit 8074b2e83d18bbf85d1c3284f561d849c829dd4b
-Merge: c7fb19e... 4585787...
+Merge: c7fb19e 4585787
 Author: Jesse Barnes <jbarnes@virtuousgeek.org>
 Date:   Thu Aug 7 17:15:50 2008 -0700
 
@@ -3090,7 +3683,7 @@ Date:   Thu Aug 7 15:26:30 2008 -0700
     Make flink save the kernel-assigned name and return it instead of creating another name
 
 commit c7fb19e9b074281f143b0e1c9d054ebcf5ff1091
-Merge: 086716c... ac20e14...
+Merge: 086716c ac20e14
 Author: Jesse Barnes <jbarnes@virtuousgeek.org>
 Date:   Thu Aug 7 14:02:04 2008 -0700
 
@@ -3234,7 +3827,7 @@ Date:   Mon Aug 4 14:52:58 2008 +1000
     drm: remove unneeded debugging
 
 commit 086716c8e2516dd71e94ebda03e20943188a5e5e
-Merge: 5052e96... ccbaad5...
+Merge: 5052e96 ccbaad5
 Author: Kristian Høgsberg <krh@redhat.com>
 Date:   Fri Aug 1 13:35:56 2008 -0400
 
@@ -3262,7 +3855,7 @@ Date:   Fri Aug 1 07:43:58 2008 +1000
     Please re-do over properly
 
 commit 5052e966ec7fe5146c2d73b90482003619add5da
-Merge: 6d4e147... 95c0274...
+Merge: 6d4e147 95c0274
 Author: Kristian Høgsberg <krh@redhat.com>
 Date:   Thu Jul 31 15:18:32 2008 -0400
 
@@ -3420,7 +4013,7 @@ Date:   Mon Jul 28 16:33:50 2008 -0700
     intel-gem: checkpatch.pl on drm_proc.c new contents.
 
 commit 1d2bb68d28fe39746299ee8ddb664a62de839b0c
-Merge: 487c42b... 514c05c...
+Merge: 487c42b 514c05c
 Author: Eric Anholt <eric@anholt.net>
 Date:   Mon Jul 28 15:17:21 2008 -0700
 
@@ -3564,7 +4157,7 @@ Date:   Sat Jul 26 08:56:23 2008 +1000
     for the DDX to test modesetting.
 
 commit 31da9492a4129f5255e949836c51e9dfbfb270c4
-Merge: 11d3075... 7fd7ba8...
+Merge: 11d3075 7fd7ba8
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Sat Jul 26 08:46:38 2008 +1000
 
@@ -3601,7 +4194,7 @@ Date:   Sat Jul 26 08:41:01 2008 +1000
     modesetting: pass file_priv into cursor set functions
 
 commit fb05c4d621084d7a3fb3dd52d7d9c888eac852d0
-Merge: 2556341... 5342845...
+Merge: 2556341 5342845
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Sat Jul 26 08:38:59 2008 +1000
 
@@ -4031,7 +4624,7 @@ Date:   Fri Jul 11 14:47:33 2008 -0700
     Only fully tested on GM965 so far.
 
 commit 2556341f8baf0e0b7b5f7843135e43e662751af0
-Merge: 38a5f66... 0b7d9a9...
+Merge: 38a5f66 0b7d9a9
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Wed Jul 9 14:53:47 2008 +1000
 
@@ -4064,7 +4657,7 @@ Date:   Thu Jun 26 09:35:14 2008 -0700
     [intel-gem] typo fix in DRM_ERROR
 
 commit 3e02f7fd310ae062d250d8db01ddc3b7de3d7943
-Merge: 7fd8a5d... d250a55...
+Merge: 7fd8a5d d250a55
 Author: Kristian Høgsberg <krh@redhat.com>
 Date:   Mon Jul 7 15:43:43 2008 -0400
 
@@ -4493,7 +5086,7 @@ Date:   Tue Jun 24 20:29:08 2008 +0200
     NV50: minor change
 
 commit ce2effbe2dd205e67e294304b97ee7bf221137b1
-Merge: 2c6feb7... 01a33d7...
+Merge: 2c6feb7 01a33d7
 Author: Keith Packard <keithp@keithp.com>
 Date:   Tue Jun 24 10:03:05 2008 -0700
 
@@ -4871,7 +5464,7 @@ Date:   Wed Jun 18 15:31:48 2008 -0700
     pci_disable_msi() is called.
 
 commit 86accbcb344ff25fbb47a788bb0f7464b5cd797f
-Merge: c843d47... e7424e4...
+Merge: c843d47 e7424e4
 Author: Jesse Barnes <jbarnes@jbarnes-t61.(none)>
 Date:   Wed Jun 18 15:25:54 2008 -0700
 
@@ -4896,7 +5489,7 @@ Date:   Wed Jun 18 14:51:46 2008 -0700
     i915: use WC mapping for framebuffer screen_base
 
 commit 241ff808b0f7368e3988d51d2ea3775adb75b6f4
-Merge: 4a2e29b... 7010d50...
+Merge: 4a2e29b 7010d50
 Author: Jesse Barnes <jbarnes@jbarnes-t61.(none)>
 Date:   Wed Jun 18 14:01:47 2008 -0700
 
@@ -5287,7 +5880,7 @@ Date:   Wed Jun 11 11:28:20 2008 -0700
     They are not unnecessary since the kernel's the only thing touching the ring.
 
 commit f5412a944fa4666e25f4fa27b6ed85c21ccb65a0
-Merge: a1d9600... 62a3be9...
+Merge: a1d9600 62a3be9
 Author: Jesse Barnes <jbarnes@jbarnes-t61.(none)>
 Date:   Wed Jun 11 10:25:45 2008 -0700
 
@@ -5329,7 +5922,7 @@ Date:   Tue Jun 10 22:18:14 2008 -0700
     xgixp: Remove dependency on TTM fences
 
 commit a1d96007241a78dd2b4a718df8e0568fe7994c22
-Merge: c987e76... 500c81d...
+Merge: c987e76 500c81d
 Author: Jesse Barnes <jbarnes@hobbes.lan>
 Date:   Tue Jun 10 17:31:54 2008 -0700
 
@@ -5561,7 +6154,7 @@ Date:   Fri Jun 6 15:38:53 2008 +1000
     intel: don't set the mode on the framebuffer if isn't set to scanout our framebuffer
 
 commit ec774e4d7201cf875a48cd2fb799e8e5b7f30cc8
-Merge: be501f0... 03bf1fb...
+Merge: be501f0 03bf1fb
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Fri Jun 6 15:21:57 2008 +1000
 
@@ -5951,7 +6544,7 @@ Date:   Sun Jun 1 16:17:31 2008 -0400
     [FreeBSD] Get rid of vbl_lock and re-use irq_lock.
 
 commit eba6cdc936cb33d929997ccb9bade6f75bb40670
-Merge: efb48c6... 7fec6c0...
+Merge: efb48c6 7fec6c0
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Mon Jun 2 12:58:10 2008 +1000
 
@@ -6020,7 +6613,7 @@ Date:   Fri May 30 18:20:01 2008 -0400
     RADEON: fix typo in last commit
 
 commit 461bfa3da6f85b85c21cd84f81bb4eefa5481418
-Merge: 50bce2b... 6e8a2cf...
+Merge: 50bce2b 6e8a2cf
 Author: Eric Anholt <eric@anholt.net>
 Date:   Fri May 30 14:42:08 2008 -0700
 
@@ -6224,7 +6817,7 @@ Date:   Thu May 29 13:58:26 2008 +1000
     as I'm going to break it.
 
 commit 3a3f39d144c47ce937d6924d344a9ad3d82a2db5
-Merge: 070755a... 5b86823...
+Merge: 070755a 5b86823
 Author: Alan Hourihane <alanh@tungstengraphics.com>
 Date:   Wed May 28 21:01:18 2008 +0100
 
@@ -6630,7 +7223,7 @@ Date:   Tue May 13 21:02:17 2008 -0400
     RS480.
 
 commit e4f29968f4860008c13635fa0891cb535e672b93
-Merge: ee631e1... 5be53a0...
+Merge: ee631e1 5be53a0
 Author: Jesse Barnes <jbarnes@nietzche.virtuousgeek.org>
 Date:   Tue May 13 14:47:17 2008 -0700
 
@@ -6850,7 +7443,7 @@ Date:   Sat May 10 22:04:39 2008 -0700
     search for the first unpinned object in the exec list when doing eviction.
 
 commit 1f9eaceb71792879a3ecb0046b64dbf65b870d50
-Merge: 177b8b0... 48a8531...
+Merge: 177b8b0 48a8531
 Author: Keith Packard <keithp@keithp.com>
 Date:   Sat May 10 21:05:25 2008 -0700
 
@@ -7062,7 +7655,7 @@ Date:   Thu May 8 10:26:37 2008 +1000
     cursor: pass handle not BO.
 
 commit ef204fb5c24f9bd09192a9abebad6a06dd0b88db
-Merge: 7f269be... b44f2da...
+Merge: 7f269be b44f2da
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Thu May 8 10:25:01 2008 +1000
 
@@ -7138,7 +7731,7 @@ Date:   Tue May 6 20:00:23 2008 -0700
     move objects before buffer execution.
 
 commit 2b9ef32669acf8197cf7d9b73b851c001db494cd
-Merge: 631e86c... d2373b2...
+Merge: 631e86c d2373b2
 Author: Keith Packard <keithp@keithp.com>
 Date:   Tue May 6 14:43:56 2008 -0700
 
@@ -7195,7 +7788,7 @@ Date:   Mon May 5 17:17:19 2008 -0700
     them to avoid deadlock when applications try to touch them.
 
 commit 5b0d0fa7f81fb297778af97124a2273b2af317bb
-Merge: d59a930... dafe48e...
+Merge: d59a930 dafe48e
 Author: Keith Packard <keithp@keithp.com>
 Date:   Mon May 5 14:40:20 2008 -0700
 
@@ -7513,7 +8106,7 @@ Date:   Mon Apr 28 16:54:53 2008 -0700
     some desired namespace.
 
 commit 7f269bec7ed49385de394fdbd970f463ef2060f0
-Merge: 55a9941... 7f8e406...
+Merge: 55a9941 7f8e406
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Mon Apr 28 12:10:44 2008 +0200
 
@@ -7750,7 +8343,7 @@ Date:   Thu Mar 27 11:40:04 2008 -0700
     Save and restore dsparb and d_state regs
 
 commit 6cc2d7e7ae92bbac630d0053fc214521ce610dc6
-Merge: 5891b0b... 3b32ee3...
+Merge: 5891b0b 3b32ee3
 Author: Jerome Glisse <glisse@freedesktop.org>
 Date:   Sat Apr 12 00:15:47 2008 +0200
 
@@ -7861,7 +8454,7 @@ Date:   Wed Apr 9 11:30:15 2008 -0700
     sysfs yet.
 
 commit e3c7a0fcb0122400e5b5035125ad4fa88599f28a
-Merge: a2edd07... 779e826...
+Merge: a2edd07 779e826
 Author: Jesse Barnes <jbarnes@nietzche.virtuousgeek.org>
 Date:   Tue Apr 8 12:48:41 2008 -0700
 
@@ -8108,7 +8701,7 @@ Date:   Mon Mar 24 18:52:26 2008 +1000
     Kernel bug 10289.
 
 commit 4323ee3e5b263a1dc8cfdf72485a20a3c1d8f144
-Merge: a244d29... 36e11dd...
+Merge: a244d29 36e11dd
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Mon Mar 24 18:47:50 2008 +1000
 
@@ -8147,7 +8740,7 @@ Date:   Fri Mar 21 16:59:52 2008 +1000
     Limit frag address to 8 bits
 
 commit 71b66b00435a10e762a4bb7abedb263196942da4
-Merge: 6ef119a... 607964e...
+Merge: 6ef119a 607964e
 Author: Jerome Glisse <glisse@freedesktop.org>
 Date:   Thu Mar 20 17:44:32 2008 +0100
 
@@ -8403,7 +8996,7 @@ Date:   Wed Mar 12 23:37:29 2008 +1100
     DMA object and only populate a single PDE for VRAM use.
 
 commit 88bd1e4a350d011ec44f6786e0bfdf8fb386800c
-Merge: 2a618e5... 612c22f...
+Merge: 2a618e5 612c22f
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Wed Mar 12 11:34:29 2008 +0100
 
@@ -8420,7 +9013,7 @@ Date:   Wed Mar 12 11:34:29 2008 +0100
     relocation type.
 
 commit b6dc381fabb199e70dc681e44e31452af8536313
-Merge: 7f04dd0... 2a618e5...
+Merge: 7f04dd0 2a618e5
 Author: Alan Hourihane <alanh@tungstengraphics.com>
 Date:   Wed Mar 12 10:18:33 2008 +0000
 
@@ -8543,7 +9136,7 @@ Date:   Tue Mar 11 11:49:27 2008 +1000
     drm: hopefully fix cursors on 965
 
 commit a7e6ca62ad0d9c3c45fd9e1d81b59c2db2d714cf
-Merge: a7dc4d0... 9f19e79...
+Merge: a7dc4d0 9f19e79
 Author: Jerome Glisse <glisse@freedesktop.org>
 Date:   Mon Mar 10 23:36:27 2008 +0100
 
@@ -8630,7 +9223,7 @@ Date:   Fri Mar 7 12:15:38 2008 +1100
     drm/modesetting: fixup irq removal on exit
 
 commit f96baf1e1ec10768ea2027f75ebaef46f7d7f30a
-Merge: ccae12a... 2540ea7...
+Merge: ccae12a 2540ea7
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Fri Mar 7 11:59:21 2008 +1100
 
@@ -8708,7 +9301,7 @@ Date:   Tue Mar 4 17:50:59 2008 +0000
     Fix connector description table
 
 commit 44a2209790e3f9651b72a884cc8539144b619d1c
-Merge: e00dea8... d5c0101...
+Merge: e00dea8 d5c0101
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Thu Mar 6 05:39:07 2008 +1000
 
@@ -8736,7 +9329,7 @@ Date:   Wed Feb 20 13:27:10 2008 +1000
     taken from modesetting branch but could be useful outside it.
 
 commit e00dea812ddb9b483de9f58f7a7aa7105427512d
-Merge: f78cdac... 1257459...
+Merge: f78cdac 1257459
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Thu Mar 6 05:26:23 2008 +1000
 
@@ -8802,7 +9395,7 @@ Date:   Wed Mar 5 10:41:54 2008 +1000
     libdrm: fix warnings in mode code
 
 commit 43891ff2d0176f013796b3c2a340b7d379d703ee
-Merge: 81db485... a6a2f2c...
+Merge: 81db485 a6a2f2c
 Author: Dave Airlie <airlied@panoply-rh.(none)>
 Date:   Wed Mar 5 10:37:02 2008 +1000
 
@@ -8980,7 +9573,7 @@ Date:   Tue Feb 26 23:30:45 2008 +0100
     radeon: remove TTM from an earlier merge
 
 commit 1e66322633943bc27bf5e68609f564fa95e6e6a1
-Merge: 73cb02b... e87cec1...
+Merge: 73cb02b e87cec1
 Author: Alan Hourihane <alanh@tungstengraphics.com>
 Date:   Tue Feb 26 15:42:41 2008 +0000
 
@@ -9130,7 +9723,7 @@ Date:   Wed Feb 20 13:26:40 2008 +1000
     hopefully shit works now without this...
 
 commit e85ec6693ac85a75da1f4b20beee255b6672cb33
-Merge: ea3de6d... 32c6792...
+Merge: ea3de6d 32c6792
 Author: Alan Hourihane <alanh@tungstengraphics.com>
 Date:   Thu Feb 21 23:56:27 2008 +0000
 
@@ -9143,7 +9736,7 @@ Date:   Thu Feb 21 15:31:48 2008 -0500
     Don't free irq resources until after we've unregistered the handler.
 
 commit ea3de6daa4226cdcc4b50c339e0df6130014d2fe
-Merge: 3f6c8f6... 374b41e...
+Merge: 3f6c8f6 374b41e
 Author: Alan Hourihane <alanh@tungstengraphics.com>
 Date:   Thu Feb 21 11:37:07 2008 +0000
 
@@ -9225,7 +9818,7 @@ Date:   Tue Feb 19 15:17:24 2008 +0000
     Fix up conflicts for DRI2 (untested)
 
 commit f24ed2ad6c66e50268fd175146a1661ae4bbd350
-Merge: 2b1c9cd... 5d8c754...
+Merge: 2b1c9cd 5d8c754
 Author: Alan Hourihane <alanh@tungstengraphics.com>
 Date:   Mon Feb 18 22:35:46 2008 +0000
 
@@ -9670,7 +10263,7 @@ Date:   Fri Jan 25 16:32:09 2008 +1000
     don't reinit ring if already initialised
 
 commit e7a41d7f5be49241480a20eb733262712e0f8dcb
-Merge: fb9ea12... bfdddd2...
+Merge: fb9ea12 bfdddd2
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Fri Jan 25 15:27:53 2008 +1000
 
@@ -9695,7 +10288,7 @@ Date:   Thu Jan 24 20:59:51 2008 -0800
     Should be 0x08 rather than 0xa0, and shouldn't use typedefs.
 
 commit e3c42f00042ffacc7868ed608b9ecf786dcc4e4a
-Merge: c7ee6cc... 5b99306...
+Merge: c7ee6cc 5b99306
 Author: Eric Anholt <eric@anholt.net>
 Date:   Thu Jan 24 12:32:08 2008 -0800
 
@@ -9790,7 +10383,7 @@ Date:   Tue Jan 22 13:11:29 2008 -0800
     deal with flipped pipe/plane mappings if present.
 
 commit 0cd4cbc9a6330bd619608f274592082de7c05bcf
-Merge: 128a8f7... 5231a52...
+Merge: 128a8f7 5231a52
 Author: Jesse Barnes <jbarnes@hobbes.virtuousgeek.org>
 Date:   Tue Jan 22 09:42:37 2008 -0800
 
@@ -10153,7 +10746,7 @@ Date:   Thu Jan 3 16:56:04 2008 +1000
     airlied:- I cleaned up a few that this patch missed also
 
 commit 5e99b42b043e36a8db4a27522be27944a344715e
-Merge: b9417f4... 96a0005...
+Merge: b9417f4 96a0005
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Thu Jan 3 16:05:13 2008 +1000
 
@@ -10260,7 +10853,7 @@ Date:   Wed Dec 19 18:27:38 2007 +0100
     radeon_ms: add sarea & install header
 
 commit 629231c62675fe09f4eb948861a21980a9b79a5a
-Merge: ea915c7... 6d03411...
+Merge: ea915c7 6d03411
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Tue Dec 18 19:18:21 2007 +1100
 
@@ -10407,7 +11000,7 @@ Date:   Sat Dec 15 10:23:30 2007 +0100
     This reverts commit 46235ea4595152d8dd5f016c18c6845a77db30b0.
 
 commit f62a300547b1f495472f773587cd20c6c9da06aa
-Merge: 8d2da20... 35a8b61...
+Merge: 8d2da20 35a8b61
 Author: Alan Hourihane <alanh@tungstengraphics.com>
 Date:   Thu Dec 13 10:41:23 2007 +0000
 
@@ -10475,7 +11068,7 @@ Date:   Tue Dec 4 12:22:30 2007 -0800
         need to wait for any fences to pass.
 
 commit 8d2da202337300e821f4867cb2654b41ff6053b6
-Merge: f99dea7... cfa21b2...
+Merge: f99dea7 cfa21b2
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Tue Dec 11 16:58:00 2007 +1000
 
@@ -10500,7 +11093,7 @@ Date:   Tue Dec 11 14:46:51 2007 +1000
     modesetting: add dpms property and initial settable property ioctl
 
 commit 814f695135f21aadeba77a3114df505d81a8d433
-Merge: e51b3c8... cfa21b2...
+Merge: e51b3c8 cfa21b2
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Mon Dec 10 15:53:59 2007 +1000
 
@@ -10567,7 +11160,7 @@ Date:   Thu Dec 6 23:19:52 2007 +0100
     radeon_ms: update to lastest fb change
 
 commit 931b4a84a09e29570dfef1da96acc5b894529bc3
-Merge: 3a51a80... 9814e87...
+Merge: 3a51a80 9814e87
 Author: Jerome Glisse <glisse@freedesktop.org>
 Date:   Thu Dec 6 22:42:17 2007 +0100
 
@@ -10881,7 +11474,7 @@ Date:   Mon Nov 26 14:05:49 2007 +1100
     this stops usermode from getting a mode in the crtc it can't make sense off.
 
 commit a20587e3950f849deb1e723a0b4455a19f7b3fb8
-Merge: 8fd8bf5... 5dc5c36...
+Merge: 8fd8bf5 5dc5c36
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Thu Nov 22 17:17:06 2007 +1100
 
@@ -11048,7 +11641,7 @@ Date:   Thu Nov 15 16:00:25 2007 +0100
     nouveau: use get_property instead of of_get_property on pre-2.6.22 kernels.
 
 commit d1b0258b32ad2af99f3aff4f0aedea676d0ff421
-Merge: ca499f4... 6206091...
+Merge: ca499f4 6206091
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Thu Nov 15 10:42:47 2007 +0100
 
@@ -11103,7 +11696,7 @@ Date:   Thu Nov 15 16:51:15 2007 +1100
     tests: update for new drm interface
 
 commit f0fe478c1587780690edc465d957a762e02acc8a
-Merge: e1bc147... 62cdc6d...
+Merge: e1bc147 62cdc6d
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Thu Nov 15 15:04:19 2007 +1100
 
@@ -11181,7 +11774,7 @@ Date:   Wed Nov 14 05:11:11 2007 +1100
     Err.. didn't mean for that to slip in :)
 
 commit eb5487b9ca1d7ce60d5ddc784089d91cf176f439
-Merge: 2370ded... 7c1e59f...
+Merge: 2370ded 7c1e59f
 Author: Ben Skeggs <skeggsb@gmail.com>
 Date:   Wed Nov 14 05:09:07 2007 +1100
 
@@ -11257,7 +11850,7 @@ Date:   Fri Nov 9 11:30:50 2007 +1000
     i915: cleanup pageflip derefs sarea even if no sarea exists
 
 commit e9805de5c736f899dea5220ab8b521cc69c9eca6
-Merge: c07dd80... c20370e...
+Merge: c07dd80 c20370e
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Wed Nov 7 18:10:46 2007 +0100
 
@@ -11280,7 +11873,7 @@ Date:   Wed Nov 7 23:10:24 2007 +1000
     i915: oops disable TTM is backwards
 
 commit c07dd80269fad45fdad61de0a43fe3d15cd1a119
-Merge: 5ce43a3... 40fb079...
+Merge: 5ce43a3 40fb079
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Tue Nov 6 10:01:52 2007 +0100
 
@@ -11338,7 +11931,7 @@ Date:   Tue Nov 6 11:32:58 2007 +1000
     i915: cleanup most of the whitespace
 
 commit 5ce43a346cb9b2a6f6f31f1f750db75d5628c15b
-Merge: 1b91113... 427cc56...
+Merge: 1b91113 427cc56
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Mon Nov 5 13:46:06 2007 +0100
 
@@ -11549,7 +12142,7 @@ Date:   Thu Nov 1 19:04:38 2007 -0400
     nouveau: more filling in for ttm.  Change copyright since it's based off of radeon code.
 
 commit 9906c7e54bdb9fa172155eaa57b7e6c47ab01c58
-Merge: 629c8b0... 94c22c3...
+Merge: 629c8b0 94c22c3
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Fri Nov 2 16:07:36 2007 +0100
 
@@ -11579,7 +12172,7 @@ Date:   Sat Nov 3 00:39:44 2007 +1000
     I wonder if this will fix some of those r4xx DRI issues we've seen in the past.
 
 commit 629c8b0dbf975632473d848f60606baf309f2f3b
-Merge: 90d8f79... 5766d81...
+Merge: 90d8f79 5766d81
 Author: Jesse Barnes <jesse.barnes@intel.com>
 Date:   Thu Nov 1 15:27:55 2007 -0700
 
@@ -11630,7 +12223,7 @@ Date:   Wed Oct 31 21:27:00 2007 -0400
     nouveau: add missing file.
 
 commit 9416541fb29666c630f2bcfcc0f3ae0b6c4436d8
-Merge: 31847b4... 61cbcb5...
+Merge: 31847b4 61cbcb5
 Author: Jeremy Kolb <jkolb@brandeis.edu>
 Date:   Wed Oct 31 20:14:48 2007 -0400
 
@@ -11678,7 +12271,7 @@ Date:   Wed Oct 31 11:21:05 2007 +1100
     drm: call driver load after initing agp subsystem
 
 commit 91aae7e683786a48547872b0a5fa92b2232e02c0
-Merge: 7e9ea55... 79744d7...
+Merge: 7e9ea55 79744d7
 Author: Jesse Barnes <jesse.barnes@intel.com>
 Date:   Tue Oct 30 12:52:46 2007 -0700
 
@@ -11742,7 +12335,7 @@ Date:   Sun Oct 28 01:59:11 2007 +0200
     nouveau: don't touch PMC_BOOT_1 on x86, it seems to be undefined on some early cards.
 
 commit 90d8f792794d46d1a8e998856bc7bbe54596114b
-Merge: 3436965... 89d44a1...
+Merge: 3436965 89d44a1
 Author: Jerome Glisse <glisse@freedesktop.org>
 Date:   Sun Oct 28 00:55:27 2007 +0200
 
@@ -11797,7 +12390,7 @@ Date:   Fri Oct 26 15:11:38 2007 +0200
     nouveau: flip the CHECK_STATE bit off on nv30. This lets you do 8-bit surface destination.
 
 commit 343696583c77983ac7689b24cd49529864035cf7
-Merge: 26c32a3... a4c87d3...
+Merge: 26c32a3 a4c87d3
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Fri Oct 26 10:33:42 2007 +0200
 
@@ -11834,7 +12427,7 @@ Date:   Thu Oct 25 17:14:53 2007 -0700
     This is currently only compile tested.
 
 commit 9adf8c02563b1e6110e46dabd733e2dc440b4200
-Merge: d5f2b4b... b9d9c30...
+Merge: d5f2b4b b9d9c30
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Thu Oct 25 11:00:45 2007 +0200
 
@@ -11872,7 +12465,7 @@ Date:   Thu Oct 25 09:49:33 2007 +0200
     Fix buffer object flag / mask checking.
 
 commit 07706c9b79b88baff5f160351b482ccdf3315f0c
-Merge: 3d4b32e... a70fe82...
+Merge: 3d4b32e a70fe82
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Thu Oct 25 09:24:45 2007 +0200
 
@@ -11909,7 +12502,7 @@ Date:   Wed Oct 24 11:13:15 2007 +1100
     i915: use a drm memory barrier define
 
 commit d5f2b4b411c5ca95d6f66a33d213ece387ac4fc5
-Merge: 198170a... a294aa7...
+Merge: 198170a a294aa7
 Author: Alan Hourihane <alanh@tungstengraphics.com>
 Date:   Tue Oct 23 15:34:12 2007 +0100
 
@@ -12105,7 +12698,7 @@ Date:   Wed Oct 17 15:36:14 2007 +1000
     i915: lock struct mutex about buffer object lookups
 
 commit 90bfc8e611cb0c72ee03dce47027b50d2cc614b1
-Merge: 2b07b0a... db1709f...
+Merge: 2b07b0a db1709f
 Author: Alan Hourihane <alanh@tungstengraphics.com>
 Date:   Tue Oct 16 15:28:33 2007 +0100
 
@@ -12336,7 +12929,7 @@ Date:   Sat Oct 6 12:00:08 2007 +0200
     nouveau : print correct value in nouveau_graph_dump_trap_info for nv04
 
 commit 19b7cc34443889fc73de2e10462e1c0f9fa38041
-Merge: d351601... 495bbba...
+Merge: d351601 495bbba
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Fri Oct 5 12:11:43 2007 +1000
 
@@ -12658,7 +13251,7 @@ Date:   Tue Sep 25 16:15:48 2007 -0700
     associated with the buffer, so don't bug out on an empty list.
 
 commit c4b3a0f602abd02038f7e5dd45fcfb2df4b5fcfa
-Merge: 0774090... 03c47f1...
+Merge: 0774090 03c47f1
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Tue Sep 25 18:03:31 2007 +0200
 
@@ -12704,7 +13297,7 @@ Date:   Mon Sep 24 15:40:55 2007 -0700
     Update IS_MOBILE macro to include new IS_I965GM test.
 
 commit 5cc3083179b19678456905a9122a3d0f04e6f623
-Merge: 2a2d02b... 54df1b9...
+Merge: 2a2d02b 54df1b9
 Author: Jesse Barnes <jbarnes@jbarnes-mobile.amr.corp.intel.com>
 Date:   Mon Sep 24 14:41:46 2007 -0700
 
@@ -12763,7 +13356,7 @@ Date:   Sat Sep 22 13:34:33 2007 +0200
     A number of error fixes.
 
 commit 24e33627c5dfb92324a9faf1c7d366e7f33e622a
-Merge: 7587e96... e7bfeb3...
+Merge: 7587e96 e7bfeb3
 Author: Eric Anholt <eric@anholt.net>
 Date:   Fri Sep 21 17:05:21 2007 -0700
 
@@ -12811,7 +13404,7 @@ Date:   Thu Sep 20 14:01:29 2007 +1000
     drm_sysfs: update sysfs code from kernel
 
 commit 3d3a96ad4e5596187236898ca241515a21661b69
-Merge: 0055fd5... e349b58...
+Merge: 0055fd5 e349b58
 Author: Eric Anholt <eric@anholt.net>
 Date:   Wed Sep 19 15:55:58 2007 -0700
 
@@ -12879,7 +13472,7 @@ Date:   Wed Sep 12 08:55:33 2007 -0700
     the param was never set of course).
 
 commit 7fdf98051a51a0117f415f7f7374f2b4d0b2e531
-Merge: 3cb8acd... 0bd8752...
+Merge: 3cb8acd 0bd8752
 Author: Jesse Barnes <jesse.barnes@intel.com>
 Date:   Tue Sep 11 03:50:17 2007 -0700
 
@@ -12931,7 +13524,7 @@ Date:   Fri Sep 7 20:07:13 2007 +1000
     nouveau: Use nv41 ctxprog/vals on nv42.
 
 commit 54c96cbc46a21e05cf991d0e4a26da58bd87ce85
-Merge: edf5a86... c597bd5...
+Merge: edf5a86 c597bd5
 Author: Ian Romanick <idr@us.ibm.com>
 Date:   Thu Sep 6 15:37:52 2007 -0700
 
@@ -12962,7 +13555,7 @@ Date:   Tue Sep 4 18:51:57 2007 +0200
     Add context init voodoo and context switch code for NV41.
 
 commit fee49e2071f2f528d7041bf1f14c640fff7478cc
-Merge: bb3da88... bac3f49...
+Merge: bb3da88 bac3f49
 Author: Ian Romanick <idr@us.ibm.com>
 Date:   Fri Aug 31 10:54:55 2007 -0700
 
@@ -13138,7 +13731,7 @@ Date:   Thu Aug 16 13:43:04 2007 -0700
     Forgot to add this file on the last commit.
 
 commit 0055fd5c35306a6363b0414f7f2220b3d1c27ecc
-Merge: 3a0bc51... 02c4e0e...
+Merge: 3a0bc51 02c4e0e
 Author: Eric Anholt <eric@anholt.net>
 Date:   Thu Aug 16 09:23:09 2007 -0700
 
@@ -13653,7 +14246,7 @@ Date:   Thu Aug 2 13:51:55 2007 -0700
     Add a couple of doxygen comments from reading the code.
 
 commit 9dfcc1ba07b6ad1a41234ae4016b54444094ac18
-Merge: 405c48b... 7602e4f...
+Merge: 405c48b 7602e4f
 Author: Patrice Mandin <pmandin@caramail.com>
 Date:   Thu Aug 2 20:08:05 2007 +0200
 
@@ -13746,7 +14339,7 @@ Date:   Thu Jul 26 16:58:59 2007 -0700
     Eliminate unnecessary (and now wrong) call gto drm_sg_free.
 
 commit c561cb4650dc5895acfb3ae00c7ff455be31a860
-Merge: 2bafeb6... 4175dd8...
+Merge: 2bafeb6 4175dd8
 Author: Ian Romanick <idr@us.ibm.com>
 Date:   Thu Jul 26 16:58:28 2007 -0700
 
@@ -14088,7 +14681,7 @@ Date:   Thu Jul 19 06:46:13 2007 -0700
     FreeBSD warnings cleanup.
 
 commit 05204b9c8d021e019456a8dbd83c012e277c7aaf
-Merge: e544286... 0c95d48...
+Merge: e544286 0c95d48
 Author: Eric Anholt <eric@anholt.net>
 Date:   Thu Jul 19 06:31:26 2007 -0700
 
@@ -14367,7 +14960,7 @@ Date:   Mon Jul 16 10:13:58 2007 +1000
     drm: remove typedefs in drm.h to their own section
 
 commit 2134193af6c29fcb83408b2878facd4b9cc4c4c8
-Merge: bc7d6c7... 2c9e05c...
+Merge: bc7d6c7 2c9e05c
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Mon Jul 16 10:05:20 2007 +1000
 
@@ -14386,7 +14979,7 @@ Date:   Fri Jul 13 20:51:52 2007 +0200
     applied patch from Ian Romanick fixing PCI DMA object creation code
 
 commit 00a5ab760b1d65ceea95e703d8ce8ecf8b63fbb3
-Merge: 5ae3ad4... 3007b03...
+Merge: 5ae3ad4 3007b03
 Author: Arthur Huillet <arthur.huillet@free.fr>
 Date:   Fri Jul 13 16:03:25 2007 +0200
 
@@ -14411,7 +15004,7 @@ Date:   Fri Jul 13 15:09:31 2007 +1000
     nouveau: nuke internal typedefs, and drm_device_t use.
 
 commit 5522136b7f01402ae02cbe35180e3d80f850a6b3
-Merge: 76ca1e8... 851c950...
+Merge: 76ca1e8 851c950
 Author: Ian Romanick <idr@us.ibm.com>
 Date:   Thu Jul 12 15:28:17 2007 -0700
 
@@ -14495,7 +15088,7 @@ Date:   Wed Jul 11 12:38:48 2007 +1000
     nouveau: Some checks on userspace object handles.
 
 commit 2c9e05cf4c6eb18c941321f764ed1b282a314ba9
-Merge: 9b9a127... 694e1c5...
+Merge: 9b9a127 694e1c5
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Wed Jul 11 11:23:41 2007 +1000
 
@@ -14825,7 +15418,7 @@ Date:   Fri Jun 29 20:14:09 2007 +0100
     merge fixes
 
 commit 8a78dead291ffdb5a8774419cdca369a1e27cad9
-Merge: e79e2a5... a27af4c...
+Merge: e79e2a5 a27af4c
 Author: Alan Hourihane <alanh@fairlite.demon.co.uk>
 Date:   Fri Jun 29 20:09:44 2007 +0100
 
@@ -15118,7 +15711,7 @@ Date:   Sun Jun 24 18:54:36 2007 +1000
     nouveau: rename engtab functions
 
 commit 7f2a1cf2753c0c97b1290469a15322f7549f78ae
-Merge: d2d5302... 97dcd7f...
+Merge: d2d5302 97dcd7f
 Author: Jesse Barnes <jesse.barnes@intel.com>
 Date:   Fri Jun 22 11:12:02 2007 -0700
 
@@ -15177,7 +15770,7 @@ Date:   Fri Jun 22 11:42:54 2007 +0200
     hangs when an unexpected interrupt is flagged.
 
 commit 24c09faec1c47260cd280221fa72fe18a12efef9
-Merge: 2d24455... afe8422...
+Merge: 2d24455 afe8422
 Author: Jesse Barnes <jbarnes@jbarnes-mobile.amr.corp.intel.com>
 Date:   Thu Jun 21 15:26:34 2007 -0700
 
@@ -15529,7 +16122,7 @@ Date:   Tue Jun 5 10:35:41 2007 +1000
     cleanup pcigart ttm for new backend layout
 
 commit 07345af838a7443d29d12cb3fe91614e43c4fa81
-Merge: 704ca06... 4327d7f...
+Merge: 704ca06 4327d7f
 Author: Dave Airlie <airlied@nx6125b.(none)>
 Date:   Tue Jun 5 10:09:11 2007 +1000
 
@@ -15748,7 +16341,7 @@ Date:   Tue May 22 13:38:58 2007 -0700
     other drivers.
 
 commit a4929b921e44dcd3cae8e384b9b7eabc51db28ff
-Merge: f894587... d42c1de...
+Merge: f894587 d42c1de
 Author: Jesse Barnes <jbarnes@hobbes.virtuousgeek.org>
 Date:   Fri May 18 09:42:51 2007 -0700
 
@@ -15790,7 +16383,7 @@ Date:   Fri May 18 13:59:46 2007 +0100
     Fix merge problem.
 
 commit 315cf14af814da60285adb95238181de430c6f68
-Merge: 95945bb... ea98d7e...
+Merge: 95945bb ea98d7e
 Author: Alan Hourihane <alanh@fairlite.demon.co.uk>
 Date:   Fri May 18 13:48:56 2007 +0100
 
@@ -15825,7 +16418,7 @@ Date:   Thu May 17 19:28:03 2007 +0100
     Move destruction of crtc as intelfb_remove uses the crtc to locate the fb.
 
 commit b7bf317f42915dc4f5fde4a696e37985cea45104
-Merge: a18b4be... fd63ea9...
+Merge: a18b4be fd63ea9
 Author: Jesse Barnes <jbarnes@hobbes.virtuousgeek.org>
 Date:   Thu May 17 10:35:07 2007 -0700
 
@@ -16173,7 +16766,7 @@ Date:   Wed Apr 11 12:51:52 2007 -0700
     (cherry picked from commit 2e21779992bd5026d8ec4dea52466377dbe5a0ed)
 
 commit b589b846e73bfe6235cd702bb8ae89701c85eaab
-Merge: 34be91f... 5c8561a...
+Merge: 34be91f 5c8561a
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Thu Apr 26 15:56:21 2007 +1000
 
@@ -16329,7 +16922,7 @@ Date:   Wed Apr 18 12:07:55 2007 +0100
     Should we do this here though ???
 
 commit ef2bce3a16428feb89f447e528bdea00c1066b8b
-Merge: 51e867c... 20b2949...
+Merge: 51e867c 20b2949
 Author: Alan Hourihane <alanh@fairlite.demon.co.uk>
 Date:   Wed Apr 18 11:55:09 2007 +0100
 
@@ -16366,7 +16959,7 @@ Date:   Wed Apr 18 14:55:43 2007 +1000
     make sure TMDS gets a crtc
 
 commit e46e028bd21552331ca4db409c2b45e54491ced6
-Merge: c71c44b... 5a96d59...
+Merge: c71c44b 5a96d59
 Author: Dave Airlie <airlied@airlied2.(none)>
 Date:   Wed Apr 18 14:11:49 2007 +1000
 
@@ -16379,7 +16972,7 @@ Date:   Wed Apr 18 14:11:49 2007 +1000
     Merge in changes from master from Thomas fixiing TTM problems
 
 commit c71c44bb9288e0bf1b319ec19a2e25f4467d9583
-Merge: 4f0841a... d20aaf4...
+Merge: 4f0841a d20aaf4
 Author: Jesse Barnes <jbarnes@hobbes.virtuousgeek.org>
 Date:   Tue Apr 17 18:20:05 2007 -0700
 
@@ -16430,7 +17023,7 @@ Date:   Tue Apr 17 22:27:46 2007 +0200
     be 0 it will set maximum level.
 
 commit 1c7f895fa6531b16e7e9fd4568d4f6a50ca5711e
-Merge: 4e4d9cb... b729b91...
+Merge: 4e4d9cb b729b91
 Author: Jesse Barnes <jbarnes@hobbes.virtuousgeek.org>
 Date:   Tue Apr 17 10:14:18 2007 -0700
 
@@ -16651,7 +17244,7 @@ Date:   Thu Apr 12 08:56:34 2007 -0700
     Whitespace cleanup
 
 commit e7b97f552390319d817595da8accefbe56199346
-Merge: f2e3d79... cf01689...
+Merge: f2e3d79 cf01689
 Author: Jesse Barnes <jbarnes@hobbes.virtuousgeek.org>
 Date:   Thu Apr 12 08:55:51 2007 -0700
 
@@ -16678,14 +17271,14 @@ Date:   Thu Apr 12 15:11:38 2007 +0100
     Remove extraneous drm_crtc.h include
 
 commit 9420ab4b419458605c678d179de6c80de23b8ee1
-Merge: 9b7211d... b1f0fd6...
+Merge: 9b7211d b1f0fd6
 Author: Alan Hourihane <alanh@fairlite.demon.co.uk>
 Date:   Thu Apr 12 15:10:08 2007 +0100
 
     Merge remote branch 'origin/modesetting-101' into modesetting-101
 
 commit e8bd9fdf31bf3db91431b69ce1fc8d419148c838
-Merge: 0430a80... b1f0fd6...
+Merge: 0430a80 b1f0fd6
 Author: Jesse Barnes <jbarnes@hobbes.virtuousgeek.org>
 Date:   Wed Apr 11 20:41:54 2007 -0700
 
@@ -16891,7 +17484,7 @@ Date:   Wed Apr 11 13:18:49 2007 +1000
     use fb pitch and fix up some whitespace
 
 commit f50eec752c8754595ba99f0ec7a7c8138316a819
-Merge: 44a8761... b62ffb8...
+Merge: 44a8761 b62ffb8
 Author: Jesse Barnes <jbarnes@hobbes.virtuousgeek.org>
 Date:   Tue Apr 10 17:58:30 2007 -0700
 
@@ -16910,7 +17503,7 @@ Date:   Tue Apr 10 23:19:29 2007 +0200
     nouveau: nv10 per channel init from ddx
 
 commit 44a8761302888080f1cb6596d4573d88c1746da4
-Merge: e114b98... 50672ad...
+Merge: e114b98 50672ad
 Author: Jesse Barnes <jbarnes@hobbes.virtuousgeek.org>
 Date:   Tue Apr 10 10:45:55 2007 -0700
 
@@ -17148,7 +17741,7 @@ Date:   Fri Apr 6 03:03:59 2007 +1000
     nouveau: Power up all card units by default on startup.
 
 commit 50ee722e018a5f17f886286e3d9eebe93f3cecaa
-Merge: 6f3534a... 652bbb7...
+Merge: 6f3534a 652bbb7
 Author: Jesse Barnes <jbarnes@jbarnes-mobile.amr.corp.intel.com>
 Date:   Thu Apr 5 09:27:12 2007 -0700
 
@@ -17323,14 +17916,14 @@ Date:   Sun Apr 1 00:44:11 2007 +0200
     "5a072f32        (Stephane Marchesin     2007-02-03 04:57:06 +0100" broke nv10 ctx switch by setting wrong PGRAPH_CTX_CONTROL reg
 
 commit ddb1715e06f6b5ab81ed0bc6667104bb9e7fcdee
-Merge: cd4c821... 406a894...
+Merge: cd4c821 406a894
 Author: Eric Anholt <eric@anholt.net>
 Date:   Fri Mar 30 12:56:34 2007 -0700
 
     Merge branch 'crestline-qa', adding support for the 965GM chipset.
 
 commit cd4c82176f3f429e722ca3fac2abf231af479780
-Merge: 5d69640... 3f70518...
+Merge: 5d69640 3f70518
 Author: Eric Anholt <eric@anholt.net>
 Date:   Fri Mar 30 12:56:08 2007 -0700
 
@@ -17365,7 +17958,7 @@ Date:   Tue Mar 27 17:59:30 2007 +1000
     This was causing an oops in my miniglx code to try and use a TTM-only setup.
 
 commit 406a894e529267177e6161c1713f2aa2293e7734
-Merge: ddc87d3... 674cefd...
+Merge: ddc87d3 674cefd
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Tue Mar 27 12:53:13 2007 +0800
 
@@ -17385,7 +17978,7 @@ Date:   Mon Mar 26 19:43:48 2007 +1000
     Tested on: NV5, NV18, NV28, NV35, NV40, NV4E
 
 commit ddc87d302526347f670e8b61e227c0eb05c15cde
-Merge: e7cd5a1... 5ad43f4...
+Merge: e7cd5a1 5ad43f4
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Sun Mar 25 17:00:36 2007 +0800
 
@@ -17404,7 +17997,7 @@ Date:   Sat Mar 24 17:58:27 2007 +1100
     vm: cleanup drm_vm.c along lines of cleanups queued for kernel
 
 commit e7cd5a1e2df29c1a06b74439faf750c6c5bb8e4a
-Merge: 0467ad4... 4988fa4...
+Merge: 0467ad4 4988fa4
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Fri Mar 23 17:00:41 2007 +0800
 
@@ -17435,7 +18028,7 @@ Date:   Fri Mar 23 13:45:29 2007 +1100
     nouveau: remove unused cruft
 
 commit 0467ad41188031073cbbad1139a916e2439af2f1
-Merge: fe4cc50... e222254...
+Merge: fe4cc50 e222254
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Wed Mar 21 17:00:43 2007 +0800
 
@@ -17448,7 +18041,7 @@ Date:   Wed Mar 21 17:57:47 2007 +1100
     nouveau: support multiple channels per client (breaks drm interface)
 
 commit fe4cc50983bdaf51bf29ef041f65e0007f547844
-Merge: 8398b99... 209870a...
+Merge: 8398b99 209870a
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Tue Mar 20 13:11:02 2007 +0800
 
@@ -17473,7 +18066,7 @@ Date:   Mon Mar 19 11:40:05 2007 +0000
     Remove old i830 kernel driver.
 
 commit 8398b99d8d146278adc13d6093811e53cd42c88a
-Merge: df73975... 1e77e52...
+Merge: df73975 1e77e52
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Mon Mar 19 17:00:31 2007 +0800
 
@@ -17552,7 +18145,7 @@ Date:   Sun Mar 18 21:42:48 2007 +1100
     remove drm_lookup_map unused now
 
 commit df73975980e926e350bf36bf4bc8a07220f66164
-Merge: 80d0018... 93f66af...
+Merge: 80d0018 93f66af
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Wed Mar 14 17:00:27 2007 +0800
 
@@ -17566,7 +18159,7 @@ Date:   Tue Mar 13 14:48:01 2007 +0000
     enough information is known about them to be sure as to what the values mean.
 
 commit 80d0018bc078d489f509152673c838be3c471854
-Merge: ab75d50... a90c285...
+Merge: ab75d50 a90c285
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Tue Mar 13 17:00:31 2007 +0800
 
@@ -17614,7 +18207,7 @@ Date:   Tue Mar 13 00:50:05 2007 +0000
     Guess another unknown register used for R300 pacification.
 
 commit ab75d50d6ca72615259e4fa857effeb6192c28a9
-Merge: b369724... 0cd5c65...
+Merge: b369724 0cd5c65
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Mon Mar 12 09:03:40 2007 +0800
 
@@ -17627,7 +18220,7 @@ Date:   Sun Mar 11 14:02:40 2007 +0100
     nouveau: PUT,GET, not 2xPUT
 
 commit b36972407747154abc0c5f2cdcf3b8ddbba4ff2e
-Merge: 0a85c9f... 6ffe94f...
+Merge: 0a85c9f 6ffe94f
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Wed Mar 7 16:01:50 2007 -0500
 
@@ -17640,7 +18233,7 @@ Date:   Wed Mar 7 09:19:57 2007 +0100
     Add via CX700.
 
 commit 0a85c9fa02608426a9a97f1d26e37c301330926b
-Merge: 6c48b8e... 188a93c...
+Merge: 6c48b8e 188a93c
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Mon Mar 5 09:01:45 2007 -0500
 
@@ -17665,14 +18258,14 @@ Date:   Sun Mar 4 18:13:34 2007 +1100
     to allow me fix it up later
 
 commit 6c48b8e7ffd0af4d49855d7175e822f4af1f526f
-Merge: 0bbbb46... 72caa48...
+Merge: 0bbbb46 72caa48
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Thu Mar 1 09:02:09 2007 -0500
 
     Merge git://proxy01.pd.intel.com:9419/git/mesa/drm into crestline
 
 commit 0bbbb46650667c84a50f1a675a7a910d6ef7df4b
-Merge: 7c3aeaf... 6a51da7...
+Merge: 7c3aeaf 6a51da7
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Wed Feb 28 09:00:12 2007 -0500
 
@@ -17701,7 +18294,7 @@ Date:   Wed Feb 28 15:14:08 2007 +1100
     	  NOTIFICATION_PENDING.
 
 commit 7c3aeafe756f823e2cd6352ed1788aeec0000b95
-Merge: df2fc3e... 80468e7...
+Merge: df2fc3e 80468e7
 Author: Nian Wu <nian@tinderbox.sh.intel.com>
 Date:   Tue Feb 27 14:42:26 2007 -0500
 
@@ -17722,7 +18315,7 @@ Date:   Mon Feb 26 18:17:54 2007 +0100
     vm code.
 
 commit df2fc3ec62d6799a3266cfb18b1279a126892f44
-Merge: 80095ff... 9d8ba2d...
+Merge: 80095ff 9d8ba2d
 Author: Nian Wu <nian@graphics.(none)>
 Date:   Sun Feb 25 17:06:13 2007 -0800
 
@@ -17776,7 +18369,7 @@ Date:   Thu Feb 15 09:26:16 2007 +0100
     Fix build against older kernels.
 
 commit a78f70faade8950ebb11ac8334c8c551f8e32b35
-Merge: 35eb12d... 1345076...
+Merge: 35eb12d 1345076
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Wed Feb 14 15:33:40 2007 +0100
 
@@ -17870,7 +18463,7 @@ Date:   Tue Feb 13 16:20:45 2007 +0800
     i915: Add 965GM pci id update
 
 commit 2a2d72623306de01e620485169721c790167d2b1
-Merge: 3234b29... 5bd13c5...
+Merge: 3234b29 5bd13c5
 Author: Wang Zhenyu <zhenyu.z.wang@intel.com>
 Date:   Tue Feb 13 16:18:15 2007 +0800
 
@@ -17935,7 +18528,7 @@ Date:   Sat Mar 10 17:13:54 2007 +0100
     Bump version patchlevel so it can be tested for new functionality.
 
 commit 4f795a05f1f987491d85d5b9bdbf280451c7ed20
-Merge: 1b3a6d4... d734992...
+Merge: 1b3a6d4 d734992
 Author: Michel Dänzer <michel@tungstengraphics.com>
 Date:   Sat Mar 10 00:11:10 2007 +0100
 
@@ -18460,7 +19053,7 @@ Date:   Thu Jan 25 23:06:48 2007 +0100
     nouveau: simplify and fix BIG_ENDIAN flags
 
 commit 3886b7e62925a6eb7ca05e3ab23f3d4781439d06
-Merge: 9f5cda4... 90ae39d...
+Merge: 9f5cda4 90ae39d
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Thu Jan 25 13:30:46 2007 -0800
 
@@ -18536,7 +19129,7 @@ Date:   Wed Jan 17 08:46:59 2007 -0500
     Thanks to Carlos Martin for the help.
 
 commit 9f5cda44dbf5b8f3c7cc00b8a58eee2690a864e6
-Merge: 6ac742d... fdbc34f...
+Merge: 6ac742d fdbc34f
 Author: Xiang, Haihao <haihao.xiang@intel.com>
 Date:   Tue Jan 16 09:49:20 2007 +0800
 
@@ -18689,7 +19282,7 @@ Date:   Sun Jan 7 23:05:39 2007 -0800
     Align whitespace with master
 
 commit c5aaf7648df82665851c9e67f5509b427ca34c8e
-Merge: 63c0f39... d0080d7...
+Merge: 63c0f39 d0080d7
 Author: Keith Packard <keithp@neko.keithp.com>
 Date:   Sun Jan 7 22:37:40 2007 -0800
 
@@ -18708,7 +19301,7 @@ Date:   Mon Jan 8 05:02:40 2007 +0100
     nouveau: nv4a context support.
 
 commit 6eaa1272b4159a547d6da21f14cbcc5b5d0f600c
-Merge: 1f0f7d7... 5bf60c9...
+Merge: 1f0f7d7 5bf60c9
 Author: Stephane Marchesin <marchesin@icps.u-strasbg.fr>
 Date:   Mon Jan 8 03:50:34 2007 +0100
 
@@ -18810,7 +19403,7 @@ Date:   Fri Jan 5 20:59:45 2007 +0100
     nouveau: oops, we don't need OS_HAS_MTRR actually.
 
 commit d99c7c27e2df1a7093f3d2f5c7d196f58bfe1647
-Merge: 025f281... 0f95ddc...
+Merge: 025f281 0f95ddc
 Author: Stephane Marchesin <marchesin@icps.u-strasbg.fr>
 Date:   Fri Jan 5 20:50:46 2007 +0100
 
@@ -18823,7 +19416,7 @@ Date:   Fri Jan 5 20:49:34 2007 +0100
     nouveau: Add an mtrr over the whole FB
 
 commit 0f95ddc42892abdbc1f111b6b105f2ef4ed2b05f
-Merge: 9d167f1... f80659b...
+Merge: 9d167f1 f80659b
 Author: Matthieu Castet <mat@mat-pc.(none)>
 Date:   Fri Jan 5 19:41:12 2007 +0100
 
@@ -19012,7 +19605,7 @@ Date:   Wed Dec 20 13:04:21 2006 +0100
     Some via PCI posting flushes.
 
 commit e5c4a26a29a9af301cb8b0aebbba84e70f995b83
-Merge: 3b7508d... dc1b68a...
+Merge: 3b7508d dc1b68a
 Author: Dave Airlie <airlied@optimus.localdomain>
 Date:   Wed Dec 20 10:30:16 2006 +1100
 
@@ -19340,7 +19933,7 @@ Date:   Mon Nov 27 15:55:32 2006 +0800
     Zou Nan hai
 
 commit 0a364be289c27c81a1d157c94291bdf60b43299e
-Merge: 5e7f584... adf71cb...
+Merge: 5e7f584 adf71cb
 Author: Stephane Marchesin <marchesin@icps.u-strasbg.fr>
 Date:   Tue Nov 21 23:32:58 2006 +0100
 
@@ -19374,7 +19967,7 @@ Date:   Fri Nov 17 08:05:23 2006 +1100
     seems to produce sane info.
 
 commit 5e7f58474dbc766632a71c3eb556e24ead6c6afc
-Merge: 5a0cdf7... 2fd812f...
+Merge: 5a0cdf7 2fd812f
 Author: Stephane Marchesin <marchesin@icps.u-strasbg.fr>
 Date:   Thu Nov 16 14:47:52 2006 +0100
 
@@ -19398,7 +19991,7 @@ Date:   Tue Nov 14 08:11:49 2006 +1100
      - Make sure instance mem for objects is *after* RAM{FC,HT,RO}
 
 commit 35bf8fb5cf8ab4d4e055cdef26531d86dbf822dc
-Merge: 9ef4bbc... 1123ab0...
+Merge: 9ef4bbc 1123ab0
 Author: Ben Skeggs <darktama@iinet.net.au>
 Date:   Tue Nov 14 04:52:08 2006 +1100
 
@@ -19415,14 +20008,14 @@ Date:   Tue Nov 14 04:51:13 2006 +1100
     solution to having this problem again in the future..
 
 commit 5a0cdf7db34fc679160a58b257afc9e9b216907e
-Merge: 1123ab0... d51e1bb...
+Merge: 1123ab0 d51e1bb
 Author: Stephane Marchesin <marchesin@icps.u-strasbg.fr>
 Date:   Sat Nov 11 01:57:05 2006 +0100
 
     Merge branch 'master' of git+ssh://marcheu@git.freedesktop.org/git/mesa/drm into nouveau-1
 
 commit 14e3f2711e90fe9a9c315d96abd4c7681539936a
-Merge: e2ea721... d51e1bb...
+Merge: e2ea721 d51e1bb
 Author: Nian Wu <nian.wu@intel.com>
 Date:   Thu Nov 9 21:21:17 2006 -0800
 
@@ -19478,7 +20071,7 @@ Date:   Mon Nov 6 11:41:51 2006 +1100
     use a uint64_t for this not a pointer
 
 commit 1e90b7ee8cefff59b70e285557aa7920dea77e81
-Merge: 0c34d0f... 7b6cd95...
+Merge: 0c34d0f 7b6cd95
 Author: Dave Airlie <airlied@linux.ie>
 Date:   Mon Nov 6 08:03:18 2006 +1100
 
@@ -19587,7 +20180,7 @@ Date:   Thu Oct 26 21:14:23 2006 +0200
     Add a one-page hole in the file offset space between buffers.
 
 commit 7ea059ae076c50f2012dee2ccbb8d41745705383
-Merge: 9ed4656... a8909a0...
+Merge: 9ed4656 a8909a0
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Sat Oct 21 14:20:28 2006 +0200
 
@@ -19623,14 +20216,14 @@ Date:   Fri Oct 20 15:06:31 2006 +0200
     Bug #8707, 2.6.19-rc compatibility for memory manager code.
 
 commit d70347bfc07bb5e34e36684b95560df37d669db4
-Merge: 5de4665... 561e23a...
+Merge: 5de4665 561e23a
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Thu Oct 19 17:07:26 2006 +0200
 
     Merge branch 'master' of git+ssh://git.freedesktop.org/git/mesa/drm
 
 commit 5de4665747c441b2a8e82b020cc386f2d974499d
-Merge: e22b04f... e8ba62d...
+Merge: e22b04f e8ba62d
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Thu Oct 19 17:00:03 2006 +0200
 
@@ -19645,7 +20238,7 @@ Date:   Thu Oct 19 16:58:00 2006 +0200
     Fix some error messages.
 
 commit e22b04f807b9869c8c89b6316214517f5da13322
-Merge: 11aaa35... e172945...
+Merge: 11aaa35 e172945
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Wed Oct 18 17:33:19 2006 +0200
 
@@ -19801,7 +20394,7 @@ Date:   Mon Oct 16 14:22:27 2006 +0200
     Change Intel AGP memory type numbers.
 
 commit 93fee5cf222ad6d97e0dcb85e13a8d8b84dba81f
-Merge: 2c5b91a... a9f57a2...
+Merge: 2c5b91a a9f57a2
 Author: Stephane Marchesin <marchesin@icps.u-strasbg.fr>
 Date:   Sun Oct 15 00:12:13 2006 +0200
 
@@ -20975,7 +21568,7 @@ Date:   Mon Aug 28 16:36:37 2006 +0200
     Initial buffer object creation.
 
 commit 3cfab681b3c82c7951f1cc337d2021a6f0d08b1e
-Merge: 8892838... 9b984b3...
+Merge: 8892838 9b984b3
 Author: Dave Airlie <airlied@starflyer-ubuntu.(none)>
 Date:   Tue Aug 29 00:01:19 2006 +1000
 
@@ -21001,7 +21594,7 @@ Date:   Mon Aug 28 09:49:09 2006 +0200
     Conversion functions in drmP.h and xf86drm.c.
 
 commit 4ddabd15620e6e4638a6a37a3a2b5bced626fcf9
-Merge: 886d3b3... 9b984b3...
+Merge: 886d3b3 9b984b3
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Mon Aug 28 09:28:10 2006 +0200
 
@@ -21160,7 +21753,7 @@ Date:   Wed Aug 23 13:49:13 2006 +0200
     when there is a duplicate handle error. Not for other errors.
 
 commit 8fa43d4b2ff4137bab743bfaf6282aa327f16830
-Merge: e201511... 459b234...
+Merge: e201511 459b234
 Author: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
 Date:   Wed Aug 23 13:31:45 2006 +0200
 
