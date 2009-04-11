@@ -1,14 +1,15 @@
-libdrm (2.4.9-1) UNRELEASED; urgency=low
+libdrm (2.4.9-1) unstable; urgency=low
 
   [ Brice Goglin ]
   * New upstream release.
     + Remove buggy symlinks for the upstream tarball.
+  * Add myself to Uploaders.
 
   [ Julien Cristau ]
   * Make the linux-libc-dev dependency linux-only (closes: #521253).  Thanks,
     Petr Salinger!
 
- -- Brice Goglin <bgoglin@debian.org>  Sat, 11 Apr 2009 23:11:50 +0200
+ -- Brice Goglin <bgoglin@debian.org>  Sat, 11 Apr 2009 23:12:49 +0200
 
 libdrm (2.4.5-2) unstable; urgency=low
 
