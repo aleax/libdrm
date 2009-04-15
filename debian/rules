@@ -103,7 +103,7 @@ binary-arch: build install
 	dh_compress
 	dh_fixperms
 	dh_makeshlibs -plibdrm2 -V'libdrm2 (>= 2.4.3)' -- -c4
-	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.5)' -- -c4
+	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.9)' -- -c4
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol
