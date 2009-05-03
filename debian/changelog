@@ -1,6 +1,7 @@
 libdrm (2.4.9-2) UNRELEASED; urgency=low
 
   * Ship all drm headers on kfreebsd, again.
+  * Move -dbg packages to new debug section.
 
  -- Julien Cristau <jcristau@debian.org>  Sun, 19 Apr 2009 00:12:43 +0200
 

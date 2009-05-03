@@ -35,7 +35,7 @@ Description: Userspace interface to kernel DRM services -- runtime
  This package provides the runtime environment for libdrm.
 
 Package: libdrm2-dbg
-Section: libdevel
+Section: debug
 Priority: extra
 Architecture: any
 Depends: libdrm2 (= ${binary:Version})
@@ -63,7 +63,7 @@ Description: Userspace interface to intel-specific kernel DRM services -- runtim
  to be stable!
 
 Package: libdrm-intel1-dbg
-Section: libdevel
+Section: debug
 Priority: extra
 Architecture: any
 Depends: libdrm-intel1 (= ${binary:Version}), ${misc:Depends}
