@@ -1,9 +1,9 @@
-libdrm (2.4.9-2) UNRELEASED; urgency=low
+libdrm (2.4.9-2) unstable; urgency=low
 
   * Ship all drm headers on kfreebsd, again.
   * Move -dbg packages to new debug section.
 
- -- Julien Cristau <jcristau@debian.org>  Sun, 19 Apr 2009 00:12:43 +0200
+ -- Julien Cristau <jcristau@debian.org>  Sun, 03 May 2009 18:55:42 +0200
 
 libdrm (2.4.9-1) unstable; urgency=low
 
