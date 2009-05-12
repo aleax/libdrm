@@ -145,7 +145,9 @@ struct _drm_intel_bo_gem {
     /** Number of entries in relocs */
     int reloc_count;
     /** Mapped address for the buffer, saved across map/unmap cycles */
-    void *virtual;
+    void *mem_virtual;
+    /** GTT virtual address for the buffer, saved across map/unmap cycles */
+    void *gtt_virtual;
 
     /** BO cache list */
     drmMMListHead head;
@@ -524,8 +526,10 @@ drm_intel_gem_bo_free(drm_intel_bo *bo)
     struct drm_gem_close close;
     int ret;
 
-    if (bo_gem->virtual)
-	munmap (bo_gem->virtual, bo_gem->bo.size);
+    if (bo_gem->mem_virtual)
+	munmap (bo_gem->mem_virtual, bo_gem->bo.size);
+    if (bo_gem->gtt_virtual)
+	munmap (bo_gem->gtt_virtual, bo_gem->bo.size);
 
     /* Close this object */
     memset(&close, 0, sizeof(close));
@@ -609,7 +613,7 @@ drm_intel_gem_bo_map(drm_intel_bo *bo, int write_enable)
     /* Allow recursive mapping. Mesa may recursively map buffers with
      * nested display loops.
      */
-    if (!bo_gem->virtual) {
+    if (!bo_gem->mem_virtual) {
 	struct drm_i915_gem_mmap mmap_arg;
 
 	DBG("bo_map: %d (%s)\n", bo_gem->gem_handle, bo_gem->name);
@@ -626,12 +630,12 @@ drm_intel_gem_bo_map(drm_intel_bo *bo, int write_enable)
 	    pthread_mutex_unlock(&bufmgr_gem->lock);
 	    return ret;
 	}
-	bo_gem->virtual = (void *)(uintptr_t)mmap_arg.addr_ptr;
+	bo_gem->mem_virtual = (void *)(uintptr_t)mmap_arg.addr_ptr;
 	bo_gem->swrast = 0;
     }
     DBG("bo_map: %d (%s) -> %p\n", bo_gem->gem_handle, bo_gem->name,
-	bo_gem->virtual);
-    bo->virtual = bo_gem->virtual;
+	bo_gem->mem_virtual);
+    bo->virtual = bo_gem->mem_virtual;
 
     if (bo_gem->global_name != 0 || !bo_gem->swrast) {
 	set_domain.handle = bo_gem->gem_handle;
@@ -669,7 +673,7 @@ drm_intel_gem_bo_map_gtt(drm_intel_bo *bo)
     pthread_mutex_lock(&bufmgr_gem->lock);
 
     /* Get a mapping of the buffer if we haven't before. */
-    if (bo_gem->virtual == NULL) {
+    if (bo_gem->gtt_virtual == NULL) {
 	struct drm_i915_gem_mmap_gtt mmap_arg;
 
 	DBG("bo_map_gtt: %d (%s)\n", bo_gem->gem_handle, bo_gem->name);
@@ -690,10 +694,10 @@ drm_intel_gem_bo_map_gtt(drm_intel_bo *bo)
 	}
 
 	/* and mmap it */
-	bo_gem->virtual = mmap(0, bo->size, PROT_READ | PROT_WRITE,
-			       MAP_SHARED, bufmgr_gem->fd,
-			       mmap_arg.offset);
-	if (bo_gem->virtual == MAP_FAILED) {
+	bo_gem->gtt_virtual = mmap(0, bo->size, PROT_READ | PROT_WRITE,
+				   MAP_SHARED, bufmgr_gem->fd,
+				   mmap_arg.offset);
+	if (bo_gem->gtt_virtual == MAP_FAILED) {
 	    fprintf(stderr,
 		    "%s:%d: Error mapping buffer %d (%s): %s .\n",
 		    __FILE__, __LINE__,
@@ -704,10 +708,10 @@ drm_intel_gem_bo_map_gtt(drm_intel_bo *bo)
 	}
     }
 
-    bo->virtual = bo_gem->virtual;
+    bo->virtual = bo_gem->gtt_virtual;
 
     DBG("bo_map: %d (%s) -> %p\n", bo_gem->gem_handle, bo_gem->name,
-	bo_gem->virtual);
+	bo_gem->gtt_virtual);
 
     /* Now move it to the GTT domain so that the CPU caches are flushed */
     set_domain.handle = bo_gem->gem_handle;
@@ -719,13 +723,33 @@ drm_intel_gem_bo_map_gtt(drm_intel_bo *bo)
     } while (ret == -1 && errno == EINTR);
 
     if (ret != 0) {
-	    fprintf (stderr, "%s:%d: Error setting swrast %d: %s\n",
+	    fprintf (stderr, "%s:%d: Error setting domain %d: %s\n",
 		     __FILE__, __LINE__, bo_gem->gem_handle, strerror (errno));
     }
 
     pthread_mutex_unlock(&bufmgr_gem->lock);
 
     return 0;
+}
+
+int
+drm_intel_gem_bo_unmap_gtt(drm_intel_bo *bo)
+{
+    drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *)bo->bufmgr;
+    drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *)bo;
+    struct drm_i915_gem_sw_finish sw_finish;
+    int ret = 0;
+
+    if (bo == NULL)
+	return 0;
+
+    assert(bo_gem->gtt_virtual != NULL);
+
+    pthread_mutex_lock(&bufmgr_gem->lock);
+    bo->virtual = NULL;
+    pthread_mutex_unlock(&bufmgr_gem->lock);
+
+    return ret;
 }
 
 static int
@@ -739,7 +763,7 @@ drm_intel_gem_bo_unmap(drm_intel_bo *bo)
     if (bo == NULL)
 	return 0;
 
-    assert(bo_gem->virtual != NULL);
+    assert(bo_gem->mem_virtual != NULL);
 
     pthread_mutex_lock(&bufmgr_gem->lock);
     if (bo_gem->swrast) {
@@ -750,6 +774,7 @@ drm_intel_gem_bo_unmap(drm_intel_bo *bo)
 	} while (ret == -1 && errno == EINTR);
 	bo_gem->swrast = 0;
     }
+    bo->virtual = NULL;
     pthread_mutex_unlock(&bufmgr_gem->lock);
     return 0;
 }
@@ -1260,8 +1285,21 @@ drm_intel_gem_compute_batch_space(drm_intel_bo **bo_array, int count)
     int i;
     unsigned int total = 0;
 
-    for (i = 0; i < count; i++)
+    for (i = 0; i < count; i++) {
 	total += drm_intel_gem_bo_get_aperture_space(bo_array[i]);
+	/* For the first buffer object in the array, we get an accurate count
+	 * back for its reloc_tree size (since nothing had been flagged as
+	 * being counted yet).  We can save that value out as a more
+	 * conservative reloc_tree_size that avoids double-counting target
+	 * buffers.  Since the first buffer happens to usually be the batch
+	 * buffer in our callers, this can pull us back from doing the tree
+	 * walk on every new batch emit.
+	 */
+	if (i == 0) {
+	    drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *)bo_array[i];
+	    bo_gem->reloc_tree_size = total;
+	}
+    }
 
     for (i = 0; i < count; i++)
 	drm_intel_gem_bo_clear_aperture_space_flag(bo_array[i]);

@@ -2,7 +2,7 @@ Source: libdrm
 Priority: optional
 Maintainer: Ubuntu X-SWAT <ubuntu-x@lists.ubuntu.com>
 XSBC-Original-Maintainer: Debian X Strike Force <debian-x@lists.debian.org>
-Uploaders: Thierry Reding <thierry@gilfi.de>, Julien Cristau <jcristau@debian.org>, David Nusinow <dnusinow@debian.org>
+Uploaders: Thierry Reding <thierry@gilfi.de>, Julien Cristau <jcristau@debian.org>, David Nusinow <dnusinow@debian.org>, Brice Goglin <bgoglin@debian.org>
 Build-Depends: debhelper (>= 5.0.0), libx11-dev, dpkg-dev (>= 1.13.19), quilt (>= 0.40), automake, libtool, pkg-config, libpthread-stubs0-dev
 Standards-Version: 3.7.3
 Section: libs
@@ -40,7 +40,7 @@ Description: Userspace interface to kernel DRM services -- runtime
  This package provides the runtime environment for libdrm.
 
 Package: libdrm2-dbg
-Section: libdevel
+Section: debug
 Priority: extra
 Architecture: any
 Depends: libdrm2 (= ${binary:Version})
@@ -65,7 +65,7 @@ Description: Userspace interface to intel-specific kernel DRM services -- runtim
  currently used on Linux to provide hardware-accelerated OpenGL drivers.
 
 Package: libdrm-intel1-dbg
-Section: libdevel
+Section: debug
 Priority: extra
 Architecture: any
 Depends: libdrm-intel1 (= ${binary:Version}), ${misc:Depends}

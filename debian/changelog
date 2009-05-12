@@ -1,3 +1,29 @@
+libdrm (2.4.9-2) unstable; urgency=low
+
+  * Ship all drm headers on kfreebsd, again.
+  * Move -dbg packages to new debug section.
+
+ -- Julien Cristau <jcristau@debian.org>  Sun, 03 May 2009 18:55:42 +0200
+
+libdrm (2.4.9-1) unstable; urgency=low
+
+  [ Brice Goglin ]
+  * New upstream release.
+    + Remove buggy symlinks for the upstream tarball.
+  * Add myself to Uploaders.
+
+  [ Julien Cristau ]
+  * Make the linux-libc-dev dependency linux-only (closes: #521253).  Thanks,
+    Petr Salinger!
+
+ -- Brice Goglin <bgoglin@debian.org>  Sat, 11 Apr 2009 23:12:49 +0200
+
+libdrm (2.4.5-2) unstable; urgency=low
+
+  * Add drm_mode.h to the list of headers we don't ship.
+
+ -- Julien Cristau <jcristau@debian.org>  Wed, 25 Mar 2009 10:56:53 +0100
+
 libdrm (2.4.5-0ubuntu5) jaunty; urgency=low
 
   * debian/patches/02_libdrm_nouveau_update.patch:
@@ -70,7 +96,9 @@ libdrm (2.4.5-0ubuntu1) jaunty; urgency=low
 
  -- Bryce Harrington <bryce@ubuntu.com>  Mon, 09 Mar 2009 16:43:00 -0700
 
-libdrm (2.4.5-1) UNRELEASED; urgency=low
+libdrm (2.4.5-1) unstable; urgency=low
+
+  * New upstream release. (closes: #505740)
 
   [ Timo Aaltonen ]
   * New upstream release. (closes: #505740)
@@ -88,7 +116,7 @@ libdrm (2.4.5-1) UNRELEASED; urgency=low
   * Make libdrm-dev depend on libdrm-intel1 on x86.
   * On Linux, let udev create the device files.
 
- -- Timo Aaltonen <tepsipakki@ubuntu.com>  Thu, 27 Nov 2008 09:33:05 +0200
+ -- Julien Cristau <jcristau@debian.org>  Tue, 24 Mar 2009 22:20:50 +0100
 
 libdrm (2.4.4-0ubuntu6) jaunty; urgency=low
 

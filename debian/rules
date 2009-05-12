@@ -80,10 +80,12 @@ install: build
 	dh_installdirs
 
 	cd obj-$(DEB_BUILD_GNU_TYPE) && $(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
+ifeq (linux, $(DEB_HOST_ARCH_OS))
 	# remove files provided by linux-libc-dev
-	for file in drm_sarea.h drm.h i915_drm.h mga_drm.h r128_drm.h radeon_drm.h savage_drm.h sis_drm.h via_drm.h; do \
+	for file in drm_mode.h drm_sarea.h drm.h i915_drm.h mga_drm.h r128_drm.h radeon_drm.h savage_drm.h sis_drm.h via_drm.h; do \
 		rm -f debian/tmp/usr/include/drm/$$file; \
 	done
+endif
 
 # Build architecture-independent files here.
 binary-indep: build install
@@ -104,8 +106,8 @@ binary-arch: build install
 	dh_strip
 	dh_compress
 	dh_fixperms
-	dh_makeshlibs -plibdrm2 -V'libdrm2 (>= 2.4.5)' -- -c4
-	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.5)' -- -c4
+	dh_makeshlibs -plibdrm2 -V'libdrm2 (>= 2.4.3)' -- -c4
+	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.9)' -- -c4
 	dh_makeshlibs -plibdrm-nouveau1 -V'libdrm-nouveau1 (>= 2.4.5)' -- -c4
 	dh_installdeb
 	dh_shlibdeps

@@ -19,7 +19,7 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 AC_PREREQ(2.57)
-AC_INIT([libdrm], 2.4.5, [dri-devel@lists.sourceforge.net], libdrm)
+AC_INIT([libdrm], 2.4.9, [dri-devel@lists.sourceforge.net], libdrm)
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_INIT_AUTOMAKE([dist-bzip2])
 
@@ -130,6 +130,13 @@ if test "x$HAVE_CAIRO" = xyes; then
 	AC_DEFINE(HAVE_CAIRO, 1, [Have cairo support])
 fi
 AM_CONDITIONAL(HAVE_CAIRO, [test "x$HAVE_CAIRO" = xyes])
+
+# For enumerating devices in test case
+PKG_CHECK_MODULES(LIBUDEV, libudev, [HAVE_LIBUDEV=yes], [HAVE_LIBUDEV=no])
+if test "x$HAVE_LIBUDEV" = xyes; then
+   	AC_DEFINE(HAVE_LIBUDEV, 1, [Have libudev support])
+fi
+AM_CONDITIONAL(HAVE_LIBUDEV, [test "x$HAVE_LIBUDEV" = xyes])
 
 
 AC_SUBST(WARN_CFLAGS)
