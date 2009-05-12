@@ -1,3 +1,25 @@
+libdrm (2.4.9-2ubuntu1) karmic; urgency=low
+
+  * Merge from debian unstable, remaining changes:
+    - control:
+      + libdrm-intel1 Replaces libdrm2 (<= 2.4.1-0ubuntu5)
+      + libdrm-dev depends on linux-libc-dev => 2.6.28-5.15 on
+        [amd64 armel i386] only, and >= 2.6.28-2.4 on lpia
+      + Remove scary 'built from DRM snapshot' warning from long description of
+        libdrm-intel1{,-dbg}
+      + libdrm-dev depends on libdrm-nouveau1
+      + add libdrm-nouveau1{,-dbg} source packages
+    - rules:
+      + Add libdrm-nouveau1 and libdrm-nouveau1-dbg package
+      + Enable nouveau experimental api
+    - copyright:
+      + Update to include new files from add_libdrm-nouveau.patch
+    - libdrm-dev.install: Also install r300_reg.h, via_3d_reg.h,
+      xgi_drm.h, the nouveau headers, and other headers not provided by
+      the kernel.
+
+ -- Bryce Harrington <bryce@ubuntu.com>  Mon, 11 May 2009 18:56:10 -0700
+
 libdrm (2.4.9-2) unstable; urgency=low
 
   * Ship all drm headers on kfreebsd, again.
