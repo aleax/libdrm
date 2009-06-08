@@ -1,4 +1,4 @@
-libdrm (2.4.11-1) UNRELEASED; urgency=low
+libdrm (2.4.11-1) unstable; urgency=low
 
   * New upstream release.
   * Also pull in additional fix for libdrm-intel: Only do BO caching up to
@@ -8,7 +8,7 @@ libdrm (2.4.11-1) UNRELEASED; urgency=low
   * Remove Thierry Reding from Uploaders, he doesn't seem to be around anymore
     :(
 
- -- Julien Cristau <jcristau@debian.org>  Mon, 08 Jun 2009 16:04:56 +0200
+ -- Julien Cristau <jcristau@debian.org>  Mon, 08 Jun 2009 16:22:04 +0200
 
 libdrm (2.4.9-2) unstable; urgency=low
 
