@@ -3,6 +3,7 @@ libdrm (2.4.11-1) UNRELEASED; urgency=low
   * New upstream release.
   * Also pull in additional fix for libdrm-intel: Only do BO caching up to
     64MB objects.
+  * Update libdrm-intel1.symbols and bump shlibs.
 
  -- Julien Cristau <jcristau@debian.org>  Mon, 08 Jun 2009 16:04:56 +0200
 
