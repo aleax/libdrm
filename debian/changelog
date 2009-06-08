@@ -1,3 +1,11 @@
+libdrm (2.4.11-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+  * Also pull in additional fix for libdrm-intel: Only do BO caching up to
+    64MB objects.
+
+ -- Julien Cristau <jcristau@debian.org>  Mon, 08 Jun 2009 16:04:56 +0200
+
 libdrm (2.4.9-2) unstable; urgency=low
 
   * Ship all drm headers on kfreebsd, again.
