@@ -3,7 +3,7 @@ Priority: optional
 Maintainer: Debian X Strike Force <debian-x@lists.debian.org>
 Uploaders: Thierry Reding <thierry@gilfi.de>, Julien Cristau <jcristau@debian.org>, David Nusinow <dnusinow@debian.org>, Brice Goglin <bgoglin@debian.org>
 Build-Depends: debhelper (>= 5.0.0), libx11-dev, dpkg-dev (>= 1.13.19), quilt (>= 0.40), automake, libtool, pkg-config, libpthread-stubs0-dev
-Standards-Version: 3.7.3
+Standards-Version: 3.8.1
 Section: libs
 Vcs-Git: git://git.debian.org/git/pkg-xorg/lib/libdrm
 Vcs-Browser: http://git.debian.org/?p=pkg-xorg/lib/libdrm.git
