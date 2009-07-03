@@ -1,3 +1,145 @@
+commit f355ad89431c49355e626613e6fc29ef2e183dab
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue May 19 10:07:16 2009 -0700
+
+    intel: quiet a warning.
+
+commit 469655fab7a56eb32ff8cdefb33992813342353a
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon May 18 16:07:45 2009 -0700
+
+    intel: Only do BO caching up to 64MB objects.
+    
+    This avoids making objects significantly bigger than they would be
+    otherwise, which would result in some failing at binding to the GTT.
+    Found from firefox hanging on:
+    http://upload.wikimedia.org/wikipedia/commons/b/b7/Singapore_port_panorama.jpg
+    due to a software fallback trying to do a GTT-mapped copy between two 73MB
+    BOs that were instead each 128MB, and failing because both couldn't fit
+    simultaneously.
+    
+    The cost here is that we get no opportunity to cache these objects and
+    avoid the mapping.  But since the objects are a significant percentage
+    of the aperture size, each mapped access is likely having to fault and rebind
+    the object most of the time anyway.
+    
+    Bug #20152 (2/3)
+
+commit f57d7f4b0b14972f92a83f155ae8033478aa7729
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu May 14 16:58:14 2009 -0700
+
+    libdrm/intel: Make get_pipe_from_crtc_id per-bufmgr. Return -1 on failure.
+    
+    The convention is that all APIs are per-bufmgr, so make this one the same.
+    Then, have it return -1 on failure so that the application can know what's
+    going on and do something sensible.
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit afd245dd7fd85cf3ffd3e6d5fe9711252aa2ed7f
+Author: Carl Worth <cworth@cworth.org>
+Date:   Wed Apr 29 14:43:55 2009 -0700
+
+    Add new drm_intel_get_pipe_from_crtc_id function.
+    
+    This wraps the new DRM_IOCTL_I915_GET_PIPE_FROM_CRTC_ID ioctl,
+    allowing applications to discover the pipe number corresponding
+    to a given CRTC ID. This is necessary for doing pipe-specific
+    operations such as waiting for vblank on a given CRTC.
+
+commit 8b8e20e0f9900fae23baee55a91533a739c1a3ec
+Author: Keith Packard <keithp@keithp.com>
+Date:   Tue May 12 15:33:28 2009 -0700
+
+    Bump to version 2.4.10 to mark addition of drm_intel_bo_disable_reuse
+    
+    New API, new version.
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+    Reviewed-by: Eric Anholt <eric@anholt.net>
+
+commit 5b5ce301287fb8ef74b45fad3c10b2d4ac3a9cc6
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon May 11 13:42:12 2009 -0700
+
+    libdrm/intel: add drm_intel_bo_disable_reuse api
+    
+    Scanout buffers need to be freed through the kernel as it holds a reference
+    to them; exposing this API allows applications allocating scanout buffers to
+    flag them as not reusable.
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+    Reviewed-by: Eric Anholt <eric@anholt.net>
+
+commit 628dc48a16ec6796ec5a81428e695837c51463d0
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Mon Jun 9 17:03:28 2008 -0700
+
+    Use C99 versions of __FUNCTION__ & __volatile__ when not building with gcc
+
+commit 1bae8844cafd70f6196116f6e84b0f36c069e976
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Sat May 9 17:21:29 2009 -0700
+
+    Delete extra libdrm_lists.h line after libdrm_la_SOURCES in libdrm/Makefile.am
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 94d48d038502097ebfa2e33e4a75b9e0e675231d
+Author: Stuart Bennett <stuart@freedesktop.org>
+Date:   Wed May 6 23:56:51 2009 +0100
+
+    nouveau: backlight compat fix
+    
+    Avoid failure to build on old kernels with CONFIG_BACKLIGHT_CLASS_DEVICE set
+
+commit e2b5fde7f6ff412cadd9cad35ad051a028cf7fae
+Author: Danny Tholen <moondrake@gmail.com>
+Date:   Wed May 6 23:41:09 2009 +0100
+
+    nouveau: fix ppc for swab changes in Linux 2.6.29
+
+commit 68103b2758029b3c1fbfcf995baa758bfd2676de
+Author: Keith Packard <keithp@keithp.com>
+Date:   Fri May 1 18:47:04 2009 -0700
+
+    libdrm/intel: assert that clients are using bo refcounting correctly
+    
+    Add assertions to drm_intel_gem_bo_reference,
+    drm_intel_gem_bo_reference_locked and drm_intel_gem_bo_unreference_locked
+    that the object has not been freed (refcount > 0). Mistakes in refcounting
+    lead to attempts to insert a bo into a free list more than once which causes
+    application failure as empty free lists are dereferenced as buffer objects.
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 11b60973bca1bc9bbda44be4c695e22d28d8ca4a
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Tue Apr 21 17:13:16 2009 -0700
+
+    intel: NULL fake bo block when freeing in evict_all
+    
+    Fixes assertion failures on later use of the object.
+
+commit 412d370b9ae4b2882691863a1c5e13a507574e92
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Wed Apr 22 20:25:40 2009 +1000
+
+    libdrm/mode: align subpixel results
+
+commit a1e3ab9e55047c08a4006ec389c1a99b72bc672c
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Fri Apr 17 09:29:19 2009 +1000
+
+    nouveau: write posting got lost somewhere, bring it back
+
+commit 78e753d03314e3aa92af8ec601e9dbb869a938d5
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Wed Apr 15 12:44:21 2009 +1000
+
+    nouveau: store bo handle in public struct in bo_ref_handle
+
 commit 07646002c6835537c6ae44ef9b3f8480762279b8
 Author: Jesse Barnes <jbarnes@virtuousgeek.org>
 Date:   Fri Apr 10 15:34:24 2009 -0700
