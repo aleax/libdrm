@@ -10,6 +10,20 @@ libdrm (2.4.11-1) unstable; urgency=low
 
  -- Julien Cristau <jcristau@debian.org>  Mon, 08 Jun 2009 16:22:04 +0200
 
+libdrm (2.4.11-0ubuntu1) karmic; urgency=low
+
+  * New upstream release
+  * Add 100_bo_cache_up_to_64mb.patch.  Cherrypick from upstream.
+    This avoids making objects significantly bigger than they would be
+    otherwise, which would result in some failing at binding to the GTT.
+    Fixes issue with hangs viewing large images.
+    (LP: #330460)
+  * libdrm-intel1.symbols: Add drm_intel_bo_disable_reuse and
+    drm_intel_get_pipe_from_crtc_id
+  * Don't try to install ChangeLog since not included in upstream release.
+
+ -- Bryce Harrington <bryce@ubuntu.com>  Tue, 02 Jun 2009 17:31:34 -0700
+
 libdrm (2.4.9-2ubuntu1) karmic; urgency=low
 
   * Merge from debian unstable, remaining changes:
