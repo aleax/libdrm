@@ -1,8 +1,17 @@
 libdrm (2.4.11-1ubuntu1) UNRELEASED; urgency=low
 
+  [ Timo Aaltonen ]
   * Merge from Debian unstable.
 
- -- Timo Aaltonen <tjaalton@ubuntu.com>  Fri, 03 Jul 2009 12:04:01 +0300
+  [ Christopher James Halse Rogers ]
+  * Add 101_update_libdrm-nouveau_interface.patch.  Backport several
+    libdrm-nouveau commits from upstream which are needed to interface with
+    the new 0.0.14 nouveau kernel interface provided by recent nouveau.ko
+    (LP: #395700)
+  * debian/libdrm-nouveau1.symbols: Add new symbols introduced in 
+    101_update_libdrm-nouveau_interface
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Mon, 06 Jul 2009 14:12:42 +1000
 
 libdrm (2.4.11-1) unstable; urgency=low
 
