@@ -10,6 +10,9 @@ libdrm (2.4.11-1ubuntu1) UNRELEASED; urgency=low
     (LP: #395700)
   * debian/libdrm-nouveau1.symbols: Add new symbols introduced in 
     101_update_libdrm-nouveau_interface
+  * debian/libdrm-dev.install:
+    + Remove drm_mode.h from libdrm-dev again; this is shipped in 
+      linux-libc-dev.
 
  -- Christopher James Halse Rogers <raof@ubuntu.com>  Mon, 06 Jul 2009 14:12:42 +1000
 
