@@ -1,4 +1,4 @@
-libdrm (2.4.11-1ubuntu1) UNRELEASED; urgency=low
+libdrm (2.4.11-1ubuntu1) karmic; urgency=low
 
   [ Timo Aaltonen ]
   * Merge from Debian unstable.
@@ -14,7 +14,7 @@ libdrm (2.4.11-1ubuntu1) UNRELEASED; urgency=low
     + Remove drm_mode.h from libdrm-dev again; this is shipped in 
       linux-libc-dev.
 
- -- Christopher James Halse Rogers <raof@ubuntu.com>  Mon, 06 Jul 2009 14:12:42 +1000
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Wed, 08 Jul 2009 14:52:50 +0300
 
 libdrm (2.4.11-1) unstable; urgency=low
 
