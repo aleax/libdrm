@@ -78,6 +78,7 @@ struct drm_intel_gem_bo_bucket {
     */
    int max_entries;
    int num_entries;
+   unsigned long size;
 };
 
 /* Only cache objects up to 64MB.  Bigger than that, and the rounding of the
@@ -137,6 +138,8 @@ struct _drm_intel_bo_gem {
      */
     uint32_t tiling_mode;
     uint32_t swizzle_mode;
+
+    time_t free_time;
 
     /** Array passed to the DRM containing relocation information. */
     struct drm_i915_gem_relocation_entry *relocs;
@@ -203,41 +206,21 @@ drm_intel_gem_bo_set_tiling(drm_intel_bo *bo, uint32_t *tiling_mode,
 static void
 drm_intel_gem_bo_unreference(drm_intel_bo *bo);
 
-static int
-logbase2(int n)
-{
-   int i = 1;
-   int log2 = 0;
-
-   while (n > i) {
-      i *= 2;
-      log2++;
-   }
-
-   return log2;
-}
-
 static struct drm_intel_gem_bo_bucket *
 drm_intel_gem_bo_bucket_for_size(drm_intel_bufmgr_gem *bufmgr_gem,
 				 unsigned long size)
 {
     int i;
 
-    /* We only do buckets in power of two increments */
-    if ((size & (size - 1)) != 0)
-	return NULL;
+    for (i = 0; i < DRM_INTEL_GEM_BO_BUCKETS; i++) {
+	struct drm_intel_gem_bo_bucket *bucket = &bufmgr_gem->cache_bucket[i];
+	if (bucket->size >= size) {
+	    return bucket;
+	}
+    }
 
-    /* We should only see sizes rounded to pages. */
-    assert((size % 4096) == 0);
-
-    /* We always allocate in units of pages */
-    i = ffs(size / 4096) - 1;
-    if (i >= DRM_INTEL_GEM_BO_BUCKETS)
-	return NULL;
-
-    return &bufmgr_gem->cache_bucket[i];
+    return NULL;
 }
-
 
 static void drm_intel_gem_dump_validation_list(drm_intel_bufmgr_gem *bufmgr_gem)
 {
@@ -345,10 +328,7 @@ drm_intel_gem_bo_alloc_internal(drm_intel_bufmgr *bufmgr, const char *name,
     unsigned long bo_size;
 
     /* Round the allocated size up to a power of two number of pages. */
-    bo_size = 1 << logbase2(size);
-    if (bo_size < page_size)
-	bo_size = page_size;
-    bucket = drm_intel_gem_bo_bucket_for_size(bufmgr_gem, bo_size);
+    bucket = drm_intel_gem_bo_bucket_for_size(bufmgr_gem, size);
 
     /* If we don't have caching at this size, don't actually round the
      * allocation up.
@@ -357,6 +337,8 @@ drm_intel_gem_bo_alloc_internal(drm_intel_bufmgr *bufmgr, const char *name,
 	bo_size = size;
 	if (bo_size < page_size)
 	    bo_size = page_size;
+    } else {
+	bo_size = bucket->size;
     }
 
     pthread_mutex_lock(&bufmgr_gem->lock);
@@ -552,6 +534,30 @@ drm_intel_gem_bo_free(drm_intel_bo *bo)
     free(bo);
 }
 
+/** Frees all cached buffers significantly older than @time. */
+static void
+drm_intel_gem_cleanup_bo_cache(drm_intel_bufmgr_gem *bufmgr_gem, time_t time)
+{
+    int i;
+
+    for (i = 0; i < DRM_INTEL_GEM_BO_BUCKETS; i++) {
+	struct drm_intel_gem_bo_bucket *bucket = &bufmgr_gem->cache_bucket[i];
+
+	while (!DRMLISTEMPTY(&bucket->head)) {
+	    drm_intel_bo_gem *bo_gem;
+
+	    bo_gem = DRMLISTENTRY(drm_intel_bo_gem, bucket->head.next, head);
+	    if (time - bo_gem->free_time <= 1)
+		break;
+
+	    DRMLISTDEL(&bo_gem->head);
+	    bucket->num_entries--;
+
+	    drm_intel_gem_bo_free(&bo_gem->bo);
+	}
+    }
+}
+
 static void
 drm_intel_gem_bo_unreference_locked(drm_intel_bo *bo)
 {
@@ -586,6 +592,11 @@ drm_intel_gem_bo_unreference_locked(drm_intel_bo *bo)
 	      bucket->num_entries < bucket->max_entries)) &&
 	    drm_intel_gem_bo_set_tiling(bo, &tiling_mode, 0) == 0)
 	{
+	    struct timespec time;
+
+	    clock_gettime(CLOCK_MONOTONIC, &time);
+	    bo_gem->free_time = time.tv_sec;
+
 	    bo_gem->name = NULL;
 	    bo_gem->validate_index = -1;
 	    bo_gem->relocs = NULL;
@@ -594,6 +605,8 @@ drm_intel_gem_bo_unreference_locked(drm_intel_bo *bo)
 
 	    DRMLISTADDTAIL(&bo_gem->head, &bucket->head);
 	    bucket->num_entries++;
+
+	    drm_intel_gem_cleanup_bo_cache(bufmgr_gem, time.tv_sec);
 	} else {
 	    drm_intel_gem_bo_free(bo);
 	}
@@ -867,7 +880,7 @@ drm_intel_gem_bo_get_subdata (drm_intel_bo *bo, unsigned long offset,
 static void
 drm_intel_gem_bo_wait_rendering(drm_intel_bo *bo)
 {
-    return drm_intel_gem_bo_start_gtt_access(bo, 0);
+    drm_intel_gem_bo_start_gtt_access(bo, 0);
 }
 
 /**
@@ -1412,6 +1425,7 @@ drm_intel_bufmgr_gem_init(int fd, int batch_size)
     struct drm_i915_gem_get_aperture aperture;
     drm_i915_getparam_t gp;
     int ret, i;
+    unsigned long size;
 
     bufmgr_gem = calloc(1, sizeof(*bufmgr_gem));
     bufmgr_gem->fd = fd;
@@ -1483,8 +1497,10 @@ drm_intel_bufmgr_gem_init(int fd, int batch_size)
     bufmgr_gem->bufmgr.bo_disable_reuse = drm_intel_gem_bo_disable_reuse;
     bufmgr_gem->bufmgr.get_pipe_from_crtc_id = drm_intel_gem_get_pipe_from_crtc_id;
     /* Initialize the linked lists for BO reuse cache. */
-    for (i = 0; i < DRM_INTEL_GEM_BO_BUCKETS; i++)
+    for (i = 0, size = 4096; i < DRM_INTEL_GEM_BO_BUCKETS; i++, size *= 2) {
 	DRMINITLISTHEAD(&bufmgr_gem->cache_bucket[i].head);
+	bufmgr_gem->cache_bucket[i].size = size;
+    }
 
     return &bufmgr_gem->bufmgr;
 }
