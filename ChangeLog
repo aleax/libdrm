@@ -1,3 +1,273 @@
+commit eea95ed8af24300e5a5d2489dfe0d73c24300651
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jul 15 10:04:44 2009 -0700
+
+    Bump to version 2.4.12 for release.
+
+commit 3f3c5be6f908272199ccf53f108b1124bfe0a00e
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Jul 9 17:49:46 2009 -0700
+
+    intel: Free buffers in the BO cache that haven't been reused in a while.
+    
+    The goal of the BO cache is to keep buffers on hand for fast continuous use,
+    as in every frame of a game or every batchbuffer of the X Server.  Keeping
+    older buffers on hand not only doesn't serve this purpose, it may hurt
+    performance by resulting in disk cache getting kicked out, or even driving
+    the system to swap.
+    
+    Bug #20766.
+
+commit 80179df5f85a2fd39b2544f1b7aae61102800f0f
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Fri Jul 10 02:38:13 2009 +1000
+
+    configure: move AC_USE_SYSTEM_EXTENSIONS up higher
+    
+    this was giving me a warning on automake 1.11
+
+commit f257201c11fd1aff9319aaf47556b184141ac7cb
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Thu Jul 9 11:41:47 2009 +1000
+
+    nouveau: fix pin for buffers created with bo_wrap
+
+commit 4179c5f0a69b452cf94a507c13021e4918a3e02d
+Author: Ian Romanick <ian.d.romanick@intel.com>
+Date:   Mon Jul 6 15:36:20 2009 -0700
+
+    s/AC_USE_SYSTEM_MACROS/AC_USE_SYSTEM_EXTENSIONS/
+    
+    Not sure what I was thinking.
+
+commit c5a5bbbe899400642795c1d95aef78deade9241f
+Author: Pauli Nieminen <suokkos@gmail.com>
+Date:   Mon Jul 6 23:37:20 2009 +0300
+
+    libdrm: Make chown check for return value
+    
+    If call was interrupted by signal we have to make call again.
+    
+    Reviewed-by: Ian Romanick <ian.d.romanick@intel.com>
+
+commit a953b3270cef52dd2de70cc6aa08687af9d57815
+Author: Ian Romanick <ian.d.romanick@intel.com>
+Date:   Mon Jul 6 13:23:46 2009 -0700
+
+    libdrm: Set _XOPEN_SOURCE and _GNU_SOURCE
+    
+    Several POSIX extensions are used in the libdrm code (e.g., mknod and ffs).
+    Set _XOPEN_SOURCE and _GNU_SOURCE to something reasonable to ensure that
+    prototypes for these functions are available.  This is done in configure.ac
+    using AC_USE_SYSTEM_MACROS.  This requires autoconf 2.60 or later.  Eventually
+    the code should check for the existance of these defines and do something
+    reasonable if they are not available.
+    
+    Inspired by a patch by Pauli Nieminen and suggestions from Julien Cristau.
+    Thanks.
+    
+    Signed-off-by: Ian Romanick <ian.d.romanick@intel.com>
+
+commit 78fa590a1d297f2e2fea98bd3f0cbf4cdb1e3a08
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jul 6 11:55:28 2009 -0700
+
+    intel: Fix up math errors when allocating very large BOs.
+    
+    The logbase2 would overflow and wrap the size around to 0, making the code
+    allocate a 4kb object instead.  By simplifying the code to just walk the
+    14-entry bucket array comparing sizes instead of indexing on
+    ffs(1 << logbase2(size)), we avoid silly math errors and have code of
+    approximately the same speed.
+    
+    Many thanks to Simon Farnsworth for debugging and providing a working patch.
+    Bug #27365.
+
+commit cea2d29ee49f23d560f0088a1a3dd01932a1eaf4
+Author: Edward O'Callaghan <eocallaghan@auroraux.org>
+Date:   Thu Jul 2 11:03:48 2009 -0700
+
+    intel: fix compiler warning about returning a void value.
+    
+    bug #21999
+
+commit 90ae0f2bb8d53500f5c9d06e2dc1a18d5a5d0cf5
+Author: Pauli Nieminen <suokkos@gmail.com>
+Date:   Sat Jul 4 02:18:51 2009 +0300
+
+    libdrm: Fix pci id numbers to unsigned so code won't mix signed/unsigned integers.
+
+commit 015efd1bfa72ab8b80cc45f11eb22d7f1a1085f7
+Author: Ian Romanick <ian.d.romanick@intel.com>
+Date:   Mon Jul 6 09:23:59 2009 -0700
+
+    strcasecmp is in strings.h.
+    
+    Based on patch by Pauli Nieminen.  Thanks.
+
+commit 3dda0050f16ddb4a64e66c80aebecea5383c72f1
+Author: Pauli Nieminen <suokkos@gmail.com>
+Date:   Sat Jul 4 02:18:49 2009 +0300
+
+    libdrm: Remove typedef for non-existing enum
+
+commit 39970c67b77014caac9a4c3a33765ac7a312b54e
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Jul 6 13:34:24 2009 +1000
+
+    radeon: move cs space checking code to libdrm_radeon.
+    
+    This ports a lot of the space checking code into a the common
+    library, so that the DDX and mesa can use it.
+
+commit 72a29340ea3225550db6b009f4e50c77c7b1f394
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Fri Jul 3 15:03:03 2009 +0200
+
+    radeon: fix cs buffer realloc padding
+    
+    We always realloc at least 0x1000 dwords (page on most system)
+    when growing the cs buffer this is to avoid having to realloc
+    at each cs_begin.
+
+commit af90222c4570ca07c6983f60ebe46c35bc980495
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Jul 3 21:13:22 2009 +1000
+
+    radeon: fix realloc of packets.
+    
+    This should use ndw not cdw, using cdw leads to realloc alignment going wrong
+
+commit fbac5891b91c795de61f4d7cbc1a6799474364ad
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Jul 2 15:42:01 2009 +1000
+
+    radeon: add buffer naming function
+
+commit de1ed01214874dcdd6116ff2587c8710d6ed4d2d
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Jun 30 12:19:28 2009 +1000
+
+    radeon: add support for write followed by read relocs.
+    
+    the DDX does this and used to handle it internally
+
+commit 790097c51330090b2b7b90429b9ab8ddf259fd8e
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Jun 23 09:51:05 2009 +1000
+
+    remove some old ttm bits
+
+commit 9a33f62be1c478334572ea9384af60c37d1644a0
+Author: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
+Date:   Mon Jun 22 23:07:26 2009 +0200
+
+    drm: Strip old ttm.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
+
+commit 81644198aeced288d26e17fadd8e5eb19798352f
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Mon Jun 22 12:27:49 2009 -0700
+
+    modetest: use gtt unmap for object
+    
+    Match gtt map/unmap for correctness.
+
+commit 2fa2db138ba989bfa1a8cd9ab66d83fb7369249e
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Wed Jun 17 17:47:42 2009 +1000
+
+    libdrm/radeon: add initial libdrm_radeon
+    
+    requires --enable-radeon-experimental-api for now
+
+commit 3d4bfe8c893d016ef43d1ebf28e4607aa1f540a4
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Wed Jun 3 13:54:43 2009 +1000
+
+    nouveau: 0.0.14 + extend bo interface to support subrange mapping
+    
+    Normal map() should operate as before, and map_range()/map_flush() should
+    give correct results but lacking any performance difference from map().
+    
+    Nothing exiting being done here yet, but the interface is a good start.
+
+commit 2cb4c64d7310904b354365c2cbc263211e9eb4a1
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Thu Jun 4 08:59:53 2009 +1000
+
+    nouveau: fix bo mapping issue
+
+commit d7c42ff4c445ed2cb23f4eb3a45858c110184773
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Wed Jun 3 22:26:43 2009 +0300
+
+    Fix build on kernels < 2.6.26
+    
+    The commit 651e3dc6dd58a79c90db7513ee2fb28360a4560d, "drm: Fix
+    compilation on 2.6.30" broke all builds on kernels before 2.6.26.
+    Variadic functions cannot be inlined.
+    
+    The variadic inline function is replaced with a variadic macro.
+    
+    Also, the function dev_name() added by that same commit is never used,
+    so it is removed.
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit 00fae87f96e1fc5198311feec81866bf9c53d0e1
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Wed Jun 3 10:24:30 2009 +1000
+
+    nouveau: fill in bo->tiled field for referenced buffers
+    
+    Fixes the dri1 gallium driver if the front buffer happens to be non-linear.
+
+commit dbffeadcfca7cb4e3905ec0b8573d10e0418295e
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Tue Jun 2 17:06:34 2009 +1000
+
+    nv50: magic fix for "3d busted without the binary driver first" issue
+    
+    No idea what this reg does.. NVIDIA put 0x802 into it on some chips, the
+    criteria aren't too clear on when they do that however.  Hopefully 0x800
+    will work everywhere...
+
+commit 651e3dc6dd58a79c90db7513ee2fb28360a4560d
+Author: Michael Buesch <mb@bu3sch.de>
+Date:   Mon May 11 00:21:14 2009 +0200
+
+    drm: Fix compilation on 2.6.30
+    
+    This fixes DRM compilation of nouveau.ko on kernel 2.6.30.
+    
+    Signed-off-by: Michael Buesch <mb@bu3sch.de>
+
+commit c65a343ed29c24f812ca919f40dfeee948b6f14a
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Tue May 26 14:14:04 2009 +1000
+
+    nouveau: bump for 0.0.13
+
+commit 85b9f737db0d2a845e4d7e2bbf9ad12ff9e2227c
+Author: Danny Tholen <moondrake@gmail.com>
+Date:   Thu May 7 00:11:34 2009 +0100
+
+    nouveau: backlight support for ppc laptops
+    
+    Patch allows the backlight to be manipulated under gnome on apple powerpc
+    based NV30 machines.  It works fine on my powerbook, and should also work
+    for older NV17/NV18 machines.
+    
+    Note that older powerpc specific tools (pbbuttonsd) have some problems with
+    this implementation (because the device is not yet there at the start time
+    of the daemon, and the code makes incorrect assumptions about the max
+    brightness values). However, IMHO these things can and should be addressed
+    in the daemon.
+    
+    Some style/warning fixes applied by Stuart Bennett <stuart@freedesktop.org>
+
 commit f355ad89431c49355e626613e6fc29ef2e183dab
 Author: Eric Anholt <eric@anholt.net>
 Date:   Tue May 19 10:07:16 2009 -0700
