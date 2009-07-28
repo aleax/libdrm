@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <strings.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -240,22 +241,22 @@ static int drmMatchBusID(const char *id1, const char *id2)
 
     /* Try to match old/new-style PCI bus IDs. */
     if (strncasecmp(id1, "pci", 3) == 0) {
-	int o1, b1, d1, f1;
-	int o2, b2, d2, f2;
+	unsigned int o1, b1, d1, f1;
+	unsigned int o2, b2, d2, f2;
 	int ret;
 
-	ret = sscanf(id1, "pci:%04x:%02x:%02x.%d", &o1, &b1, &d1, &f1);
+	ret = sscanf(id1, "pci:%04x:%02x:%02x.%u", &o1, &b1, &d1, &f1);
 	if (ret != 4) {
 	    o1 = 0;
-	    ret = sscanf(id1, "PCI:%d:%d:%d", &b1, &d1, &f1);
+	    ret = sscanf(id1, "PCI:%u:%u:%u", &b1, &d1, &f1);
 	    if (ret != 3)
 		return 0;
 	}
 
-	ret = sscanf(id2, "pci:%04x:%02x:%02x.%d", &o2, &b2, &d2, &f2);
+	ret = sscanf(id2, "pci:%04x:%02x:%02x.%u", &o2, &b2, &d2, &f2);
 	if (ret != 4) {
 	    o2 = 0;
-	    ret = sscanf(id2, "PCI:%d:%d:%d", &b2, &d2, &f2);
+	    ret = sscanf(id2, "PCI:%u:%u:%u", &b2, &d2, &f2);
 	    if (ret != 3)
 		return 0;
 	}
@@ -266,6 +267,36 @@ static int drmMatchBusID(const char *id1, const char *id2)
 	    return 1;
     }
     return 0;
+}
+
+/**
+ * Handles error checking for chown call.
+ *
+ * \param path to file.
+ * \param id of the new owner.
+ * \param id of the new group.
+ *
+ * \return zero if success or -1 if failure.
+ *
+ * \internal
+ * Checks for failure. If failure was caused by signal call chown again.
+ * If any other failure happened then it will output error mesage using
+ * drmMsg() call.
+ */
+static int chown_check_return(const char *path, uid_t owner, gid_t group)
+{
+	int rv;
+
+	do {
+		rv = chown(path, owner, group);
+	} while (rv != 0 && errno == EINTR);
+
+	if (rv == 0)
+		return 0;
+
+	drmMsg("Failed to change owner or group for file %s! %d: %s\n",
+			path, errno, strerror(errno));
+	return -1;
 }
 
 /**
@@ -306,7 +337,7 @@ static int drmOpenDevice(long dev, int minor, int type)
 	if (!isroot)
 	    return DRM_ERR_NOT_ROOT;
 	mkdir(DRM_DIR_NAME, DRM_DEV_DIRMODE);
-	chown(DRM_DIR_NAME, 0, 0); /* root:root */
+	chown_check_return(DRM_DIR_NAME, 0, 0); /* root:root */
 	chmod(DRM_DIR_NAME, DRM_DEV_DIRMODE);
     }
 
@@ -319,7 +350,7 @@ static int drmOpenDevice(long dev, int minor, int type)
     }
 
     if (drm_server_info) {
-	chown(buf, user, group);
+	chown_check_return(buf, user, group);
 	chmod(buf, devmode);
     }
 #else
@@ -362,7 +393,7 @@ wait_for_udev:
 	remove(buf);
 	mknod(buf, S_IFCHR | devmode, dev);
 	if (drm_server_info) {
-	    chown(buf, user, group);
+	    chown_check_return(buf, user, group);
 	    chmod(buf, devmode);
 	}
     }

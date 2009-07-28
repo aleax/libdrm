@@ -18,8 +18,9 @@
 #  IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-AC_PREREQ(2.57)
-AC_INIT([libdrm], 2.4.11, [dri-devel@lists.sourceforge.net], libdrm)
+AC_PREREQ(2.60)
+AC_INIT([libdrm], 2.4.12, [dri-devel@lists.sourceforge.net], libdrm)
+AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_INIT_AUTOMAKE([dist-bzip2])
 
@@ -46,6 +47,11 @@ AC_ARG_ENABLE(nouveau-experimental-api,
 	      AS_HELP_STRING([--enable-nouveau-experimental-api],
 	      [Enable support for nouveau's experimental API (default: disabled)]),
 	      [NOUVEAU=$enableval], [NOUVEAU=no])
+
+AC_ARG_ENABLE(radeon-experimental-api,
+	      AS_HELP_STRING([--enable-radeon-experimental-api],
+	      [Enable support for radeon's KMS API (default: disabled)]),
+	      [RADEON=$enableval], [RADEON=no])
 
 dnl ===========================================================================
 dnl check compiler flags
@@ -125,6 +131,8 @@ fi
 
 AM_CONDITIONAL(HAVE_NOUVEAU, [test "x$NOUVEAU" = xyes])
 
+AM_CONDITIONAL(HAVE_RADEON, [test "x$RADEON" = xyes])
+
 PKG_CHECK_MODULES(CAIRO, cairo, [HAVE_CAIRO=yes], [HAVE_CAIRO=no])
 if test "x$HAVE_CAIRO" = xyes; then
 	AC_DEFINE(HAVE_CAIRO, 1, [Have cairo support])
@@ -138,12 +146,13 @@ if test "x$HAVE_LIBUDEV" = xyes; then
 fi
 AM_CONDITIONAL(HAVE_LIBUDEV, [test "x$HAVE_LIBUDEV" = xyes])
 
-
 AC_SUBST(WARN_CFLAGS)
 AC_OUTPUT([
 	Makefile
 	libdrm/Makefile
 	libdrm/intel/Makefile
+	libdrm/radeon/Makefile
+	libdrm/radeon/libdrm_radeon.pc
 	libdrm/nouveau/Makefile
 	libdrm/nouveau/libdrm_nouveau.pc
 	shared-core/Makefile
