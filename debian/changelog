@@ -1,9 +1,9 @@
-libdrm (2.4.12-1ubuntu1) UNRELEASED; urgency=low
+libdrm (2.4.12-1ubuntu1) karmic; urgency=low
 
   * Merge from Debian unstable.
   * Drop 101_update_libdrm-nouveau_interface.patch, included upstream.
 
- -- Timo Aaltonen <tjaalton@ubuntu.com>  Tue, 28 Jul 2009 13:56:53 +0300
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Tue, 28 Jul 2009 14:13:58 +0300
 
 libdrm (2.4.12-1) unstable; urgency=low
 
