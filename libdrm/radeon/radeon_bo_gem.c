@@ -49,11 +49,14 @@ struct radeon_bo_gem {
     struct radeon_bo    base;
     uint32_t            name;
     int                 map_count;
+    void *priv_ptr;
 };
 
 struct bo_manager_gem {
     struct radeon_bo_manager    base;
 };
+
+static int bo_wait(struct radeon_bo *bo);
 
 static struct radeon_bo *bo_open(struct radeon_bo_manager *bom,
                                  uint32_t handle,
@@ -130,8 +133,8 @@ static struct radeon_bo *bo_unref(struct radeon_bo *bo)
     if (bo->cref) {
         return bo;
     }
-    if (bo_gem->map_count) {
-        munmap(bo->ptr, bo->size);
+    if (bo_gem->priv_ptr) {
+        munmap(bo_gem->priv_ptr, bo->size);
     }
 
     /* close object */
@@ -152,6 +155,10 @@ static int bo_map(struct radeon_bo *bo, int write)
     if (bo_gem->map_count++ != 0) {
         return 0;
     }
+    if (bo_gem->priv_ptr) {
+	goto wait;
+    }
+
     bo->ptr = NULL;
     args.handle = bo->handle;
     args.offset = 0;
@@ -168,9 +175,13 @@ static int bo_map(struct radeon_bo *bo, int write)
     ptr = mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED, bo->bom->fd, args.addr_ptr);
     if (ptr == MAP_FAILED)
         return -errno;
-    bo->ptr = ptr;
-
-    return r;
+    bo_gem->priv_ptr = ptr;
+wait:
+    bo->ptr = bo_gem->priv_ptr;
+    r = bo_wait(bo);
+    if (r)
+	return r;
+    return 0;
 }
 
 static int bo_unmap(struct radeon_bo *bo)
@@ -180,7 +191,7 @@ static int bo_unmap(struct radeon_bo *bo)
     if (--bo_gem->map_count > 0) {
         return 0;
     }
-    munmap(bo->ptr, bo->size);
+    //munmap(bo->ptr, bo->size);
     bo->ptr = NULL;
     return 0;
 }
@@ -198,6 +209,59 @@ static int bo_wait(struct radeon_bo *bo)
     return ret;
 }
 
+static int bo_is_busy(struct radeon_bo *bo, uint32_t *domain)
+{
+    struct drm_radeon_gem_busy args;
+    int ret;
+
+    args.handle = bo->handle;
+    args.domain = 0;
+
+    ret = drmCommandWriteRead(bo->bom->fd, DRM_RADEON_GEM_BUSY,
+	    &args, sizeof(args));
+
+    *domain = args.domain;
+    return ret;
+}
+
+static int bo_set_tiling(struct radeon_bo *bo, uint32_t tiling_flags,
+				 uint32_t pitch)
+{
+    struct drm_radeon_gem_set_tiling args;
+    int r;
+
+    args.handle = bo->handle;
+    args.tiling_flags = tiling_flags;
+    args.pitch = pitch;
+
+    r = drmCommandWriteRead(bo->bom->fd,
+			    DRM_RADEON_GEM_SET_TILING,
+			    &args,
+			    sizeof(args));
+    return r;
+}
+
+static int bo_get_tiling(struct radeon_bo *bo, uint32_t *tiling_flags,
+				 uint32_t *pitch)
+{
+    struct drm_radeon_gem_set_tiling args;
+    int r;
+
+    args.handle = bo->handle;
+
+    r = drmCommandWriteRead(bo->bom->fd,
+			    DRM_RADEON_GEM_GET_TILING,
+			    &args,
+			    sizeof(args));
+
+    if (r)
+	return r;
+
+    *tiling_flags = args.tiling_flags;
+    *pitch = args.pitch;
+    return r;
+}
+
 static struct radeon_bo_funcs bo_gem_funcs = {
     bo_open,
     bo_ref,
@@ -206,6 +270,9 @@ static struct radeon_bo_funcs bo_gem_funcs = {
     bo_unmap,
     bo_wait,
     NULL,
+    bo_set_tiling,
+    bo_get_tiling,
+    bo_is_busy,
 };
 
 struct radeon_bo_manager *radeon_bo_manager_gem_ctor(int fd)
@@ -239,7 +306,6 @@ uint32_t radeon_gem_name_bo(struct radeon_bo *bo)
 
 int radeon_gem_get_kernel_name(struct radeon_bo *bo, uint32_t *name)
 {
-    struct radeon_bo_gem *bo_gem = (struct radeon_bo_gem*)bo;
     struct drm_gem_flink flink;
     int r;
 
@@ -254,7 +320,6 @@ int radeon_gem_get_kernel_name(struct radeon_bo *bo, uint32_t *name)
 
 int radeon_gem_set_domain(struct radeon_bo *bo, uint32_t read_domains, uint32_t write_domain)
 {
-    struct radeon_bo_gem *bo_gem = (struct radeon_bo_gem*)bo;
     struct drm_radeon_gem_set_domain args;
     int r;
 

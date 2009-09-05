@@ -303,6 +303,7 @@ typedef union {
 #define RADEON_INDEX_PRIM_OFFSET	20
 
 #define RADEON_SCRATCH_REG_OFFSET	32
+#define R600_SCRATCH_REG_OFFSET         256
 
 #define RADEON_NR_SAREA_CLIPRECTS	12
 
@@ -502,6 +503,9 @@ typedef struct {
 #define DRM_RADEON_GEM_WAIT_IDLE	0x24
 #define DRM_RADEON_CS			0x26
 #define DRM_RADEON_INFO			0x27
+#define DRM_RADEON_GEM_SET_TILING	0x28
+#define DRM_RADEON_GEM_GET_TILING	0x29
+#define DRM_RADEON_GEM_BUSY		0x2a
 
 #define DRM_IOCTL_RADEON_CP_INIT    DRM_IOW( DRM_COMMAND_BASE + DRM_RADEON_CP_INIT, drm_radeon_init_t)
 #define DRM_IOCTL_RADEON_CP_START   DRM_IO(  DRM_COMMAND_BASE + DRM_RADEON_CP_START)
@@ -530,24 +534,27 @@ typedef struct {
 #define DRM_IOCTL_RADEON_SETPARAM   DRM_IOW( DRM_COMMAND_BASE + DRM_RADEON_SETPARAM, drm_radeon_setparam_t)
 #define DRM_IOCTL_RADEON_SURF_ALLOC DRM_IOW( DRM_COMMAND_BASE + DRM_RADEON_SURF_ALLOC, drm_radeon_surface_alloc_t)
 #define DRM_IOCTL_RADEON_SURF_FREE  DRM_IOW( DRM_COMMAND_BASE + DRM_RADEON_SURF_FREE, drm_radeon_surface_free_t)
-
-#define DRM_IOCTL_RADEON_GEM_INFO   DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_INFO, struct drm_radeon_gem_info)
-#define DRM_IOCTL_RADEON_GEM_CREATE   DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_CREATE, struct drm_radeon_gem_create)
-#define DRM_IOCTL_RADEON_GEM_MMAP   DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_MMAP, struct drm_radeon_gem_mmap)
-#define DRM_IOCTL_RADEON_GEM_PIN   DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_PIN, struct drm_radeon_gem_pin)
-#define DRM_IOCTL_RADEON_GEM_UNPIN   DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_UNPIN, struct drm_radeon_gem_unpin)
-#define DRM_IOCTL_RADEON_GEM_PREAD   DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_PREAD, struct drm_radeon_gem_pread)
-#define DRM_IOCTL_RADEON_GEM_PWRITE   DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_PWRITE, struct drm_radeon_gem_pwrite)
-#define DRM_IOCTL_RADEON_GEM_SET_DOMAIN  DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_SET_DOMAIN, struct drm_radeon_gem_set_domain)
-#define DRM_IOCTL_RADEON_GEM_WAIT_RENDERING DRM_IOW(DRM_COMMAND_BASE + DRM_RADEON_GEM_WAIT_RENDERING, struct drm_radeon_gem_wait_rendering) 
-#define DRM_IOCTL_RADEON_CS DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_CS, struct drm_radeon_cs)
+/* KMS */
+#define DRM_IOCTL_RADEON_GEM_INFO	DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_INFO, struct drm_radeon_gem_info)
+#define DRM_IOCTL_RADEON_GEM_CREATE	DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_CREATE, struct drm_radeon_gem_create)
+#define DRM_IOCTL_RADEON_GEM_MMAP	DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_MMAP, struct drm_radeon_gem_mmap)
+#define DRM_IOCTL_RADEON_GEM_PREAD	DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_PREAD, struct drm_radeon_gem_pread)
+#define DRM_IOCTL_RADEON_GEM_PWRITE	DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_PWRITE, struct drm_radeon_gem_pwrite)
+#define DRM_IOCTL_RADEON_GEM_SET_DOMAIN	DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_SET_DOMAIN, struct drm_radeon_gem_set_domain)
+#define DRM_IOCTL_RADEON_GEM_WAIT_IDLE	DRM_IOW(DRM_COMMAND_BASE + DRM_RADEON_GEM_WAIT_IDLE, struct drm_radeon_gem_wait_idle)
+#define DRM_IOCTL_RADEON_CS		DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_CS, struct drm_radeon_cs)
+#define DRM_IOCTL_RADEON_INFO		DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_INFO, struct drm_radeon_info)
+#define DRM_IOCTL_RADEON_SET_TILING	DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_SET_TILING, struct drm_radeon_gem_set_tiling)
+#define DRM_IOCTL_RADEON_GET_TILING	DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_GET_TILING, struct drm_radeon_gem_get_tiling)
+#define DRM_IOCTL_RADEON_GEM_BUSY  DRM_IOWR(DRM_COMMAND_BASE + DRM_RADEON_GEM_BUSY, struct drm_radeon_gem_busy)
 
 typedef struct drm_radeon_init {
 	enum {
 		RADEON_INIT_CP = 0x01,
 		RADEON_CLEANUP_CP = 0x02,
 		RADEON_INIT_R200_CP = 0x03,
-		RADEON_INIT_R300_CP = 0x04
+		RADEON_INIT_R300_CP = 0x04,
+		RADEON_INIT_R600_CP = 0x05
 	} func;
 	unsigned long sarea_priv_offset;
 	int is_pci; /* for overriding only */
@@ -699,6 +706,7 @@ typedef struct drm_radeon_indirect {
 #define RADEON_PARAM_FB_LOCATION           14   /* FB location */
 #define RADEON_PARAM_NUM_GB_PIPES          15   /* num GB pipes */
 #define RADEON_PARAM_DEVICE_ID             16
+#define RADEON_PARAM_NUM_Z_PIPES           17   /* num Z pipes */
 
 typedef struct drm_radeon_getparam {
 	int param;
@@ -791,6 +799,24 @@ struct drm_radeon_gem_create {
 	uint32_t	flags;
 };
 
+#define RADEON_TILING_MACRO 0x1
+#define RADEON_TILING_MICRO 0x2
+#define RADEON_TILING_SWAP  0x4
+#define RADEON_TILING_SURFACE  0x8 /* this object requires a surface
+				    * when mapped - i.e. front buffer */
+
+struct drm_radeon_gem_set_tiling {
+	uint32_t	handle;
+	uint32_t	tiling_flags;
+	uint32_t	pitch;
+};
+
+struct drm_radeon_gem_get_tiling {
+	uint32_t	handle;
+	uint32_t	tiling_flags;
+	uint32_t	pitch;
+};
+
 struct drm_radeon_gem_mmap {
 	uint32_t	handle;
 	uint32_t	pad;
@@ -801,8 +827,8 @@ struct drm_radeon_gem_mmap {
 
 struct drm_radeon_gem_set_domain {
 	uint32_t	handle;
-	uint32_t		read_domains;
-	uint32_t		write_domain;
+	uint32_t	read_domains;
+	uint32_t	write_domain;
 };
 
 struct drm_radeon_gem_wait_idle {
@@ -812,7 +838,7 @@ struct drm_radeon_gem_wait_idle {
 
 struct drm_radeon_gem_busy {
 	uint32_t	handle;
-	uint32_t	busy;
+	uint32_t	domain;
 };
 
 struct drm_radeon_gem_pread {
@@ -869,6 +895,7 @@ struct drm_radeon_cs {
 
 #define RADEON_INFO_DEVICE_ID		0x00
 #define RADEON_INFO_NUM_GB_PIPES	0x01
+#define RADEON_INFO_NUM_Z_PIPES 	0x02
 
 struct drm_radeon_info {
 	uint32_t		request;
