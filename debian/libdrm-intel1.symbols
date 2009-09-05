@@ -1,6 +1,7 @@
 libdrm_intel.so.1 libdrm-intel1 #MINVER#
  drm_intel_bo_alloc@Base 2.4.1
  drm_intel_bo_alloc_for_render@Base 2.4.5
+ drm_intel_bo_busy@Base 2.4.13
  drm_intel_bo_disable_reuse@Base 2.4.10
  drm_intel_bo_emit_reloc@Base 2.4.1
  drm_intel_bo_exec@Base 2.4.1

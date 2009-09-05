@@ -1,3 +1,200 @@
+commit 73b59c894380995a2889b98e79acadd2da0bb237
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Aug 28 15:20:22 2009 -0700
+
+    Bump to version 2.4.13 for release.
+
+commit 8214a65ad1f4ccd4966e0def0d43f0c4289e4bc6
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Aug 27 18:32:07 2009 -0700
+
+    Add drm_intel_bo_busy to query whether mapping a BO would block.
+
+commit 19d6fadfa29993b261ebac2869b2289f6d3091c3
+Author: Michel Dänzer <daenzer@vmware.com>
+Date:   Fri Aug 28 11:42:07 2009 +0200
+
+    Revert "libdrm_radeon: Always wait for BO idle in bo_map."
+    
+    This reverts commit 0a732983f059c353b267b6bf877e1f0eea4e033f.
+    
+    Paul Nieminen and Dave Airlie pointed out on IRC that this shouldn't be
+    necessary. I was seeing visual corruption in X before I made this change, but
+    I can't reproduce that anymore so it was probably an unrelated issue.
+
+commit 0a732983f059c353b267b6bf877e1f0eea4e033f
+Author: Michel Dänzer <daenzer@vmware.com>
+Date:   Thu Aug 27 08:36:58 2009 +0200
+
+    libdrm_radeon: Always wait for BO idle in bo_map.
+    
+    This allows users to eliminate explicit bo_wait calls before bo_map calls.
+
+commit ce6c68dc8a893ed8673f49d381a8500c2ee3c29f
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Fri Aug 21 14:06:51 2009 +0200
+
+    Kill last remnant of replacefb ioctl
+    
+    	Kenrels doesn't expose this ioctl
+
+commit 02a4d22e95de863fe3e01a9f5658ef81417c28cd
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Aug 24 18:15:03 2009 -0400
+
+    radeon: pull in z pipe changes from kernel
+
+commit caad8d85559709301c00760b9e8707d57f8c6c67
+Author: Pauli Nieminen <suokkos@gmail.com>
+Date:   Sat Aug 22 13:16:18 2009 +1000
+
+    radeon: add support for busy/domain check interface.
+    
+    airlied: modified the interface to drop busy return value, just return
+    it normally, also fixed int->uint32_t for domain
+    
+    Signed-off-by: Pauli Nieminen <suokkos@gmail.com>
+
+commit cbb3ae3dab9dc82d95524726135b8d6ef86bcf27
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Wed Aug 19 15:55:05 2009 +1000
+
+    nouveau: fix a thinko in copyless pushbuf ioctl
+    
+    No idea why G80 doesn't hit this, but, this fixes at least one NV40 card.
+
+commit 8c43b79b21929e9e54e13e892f7787e222e73f39
+Author: Pauli Nieminen <suokkos@gmail.com>
+Date:   Tue Aug 18 18:51:38 2009 +0300
+
+    libdrm_radeon: Optimize copy of table to cs buffer with specialized call.
+    
+    Using this call in OUT_BATCH_TABLE reduces radeonEmitState cpu usage from
+    9% to 5% and emit_vpu goes from 7% to 1.5%. I did use calgrind to profile
+    gears for cpu hotspots with r500 card.
+    
+    Signed-off-by: Pauli Nieminen <suokkos@gmail.com>
+
+commit a474fd978c0dedbed21b5dff24126acb1c7effef
+Author: Pauli Nieminen <suokkos@gmail.com>
+Date:   Tue Aug 18 18:51:37 2009 +0300
+
+    libdrm_radeon: Fix loops so that compiler can optimize them.
+    
+    GCC did war about optimization not possible because possible forever loop.
+    
+    Signed-off-by: Pauli Nieminen <suokkos@gmail.com>
+
+commit 64cef1e46554fbf82388acfcfc8051ce956a3dc2
+Author: Pauli Nieminen <suokkos@gmail.com>
+Date:   Fri Aug 7 20:03:26 2009 +0300
+
+    libdrm/radeon: Update head of linked list not to point freed memory.
+    
+    Signed-off-by: Pauli Nieminen <suokkos@gmail.com>
+
+commit 28f4bfa04b8ad4dfcc55027f4b2385f4dd6c23c5
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Wed Aug 12 14:21:00 2009 +1000
+
+    nouveau: support for copy-less pushbuf ioctl
+
+commit 250ab3a38eb6ef18d747717cabd0195ad04a82e0
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Tue Aug 18 14:25:50 2009 +1000
+
+    nouveau: for the moment, assert if we exceed some reloc limits
+    
+    Nasty, but nicer than silently not writing into the pushbuf
+
+commit 1978f6d8d1215a9501882eb074901bcd0dfc0775
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Aug 17 21:21:02 2009 +1000
+
+    radeon: fix bo wait at map time.
+
+commit f7996165fffe0a835752e8b9bb6b4d81bba5c91d
+Author: Christoph Brill <egore911@egore911.de>
+Date:   Sun Aug 16 08:26:25 2009 +0200
+
+    Filter radeon pkgconfig file as do intel and nouveau
+
+commit 1d465178fbab77a9c0e830ea8c47bf61735def71
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Sat Aug 15 21:32:35 2009 +1000
+
+    radeon: fix GTT writing space check
+    
+    Noticed by vehemens on irc.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit d74c67fb13d8c3e8c2e5968d827285d147a5dfc0
+Author: Anssi Hannula <anssi@mandriva.org>
+Date:   Fri Jul 24 21:58:43 2009 +0300
+
+    link libdrm_intel with -lrt for new use of clock_gettime().
+    
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+
+commit 4507863058a10d00c982975daf396f83caee0fe2
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Sat Aug 1 17:19:43 2009 +1000
+
+    libdrm_radeon: add tiling support
+
+commit 322cf6cf736b22b62656ac0431936b3cdb784038
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Sat Aug 1 16:47:24 2009 +1000
+
+    radeon: don't map/unmap explicitly.
+    
+    This caches the mapping and just use mapping as a sync point
+
+commit 5a73f066ba149816cc0fc2de4b97ec4714cf8ebc
+Author: Ben Skeggs <skeggsb@beleth.keine.ath.cx>
+Date:   Tue Jul 28 08:12:21 2009 +1000
+
+    nouveau: don't overwrite user-specified bo size needlessly
+
+commit 0bf8fb3bce6b4d9b4820d38d37e1ac1e73e22d23
+Author: Ben Skeggs <skeggsb@beleth.keine.ath.cx>
+Date:   Tue Jul 28 07:46:20 2009 +1000
+
+    nouveau: user buffers need to be mappable
+
+commit 001331f4f1f094ef02497aa618ae5eeb2febedfb
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Mon Jul 27 07:23:09 2009 +1000
+
+    nouveau: drm api 0.0.15, update object header, remove fake bo support
+
+commit 30449829c0347dc7dbe29acb13e49e2f2cb72ae9
+Author: Maarten Maathuis <madman2003@gmail.com>
+Date:   Mon Jul 27 19:24:13 2009 +0200
+
+    libdrm/nouveau: unmap before ufree means nvbo->sysmem != NULL, which inbalances cpu_prep/cpu_finish
+    
+    - The bo was mapped with sysmem == NULL, so this means cpu prep is called.
+    - The bo was unmapped with sysmem != NULL, so this means cpu finish is not called.
+    - This can lead to a non-zero "cpu writers" count in ttm_bo.
+
+commit 9aed44beeac4f250a58c792d64a4dee1dde3d086
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Jul 15 14:51:38 2009 -0400
+
+    Add RADEON_INIT_R600_CP too
+    
+    this rounds out the r6xx/r7xx stuff in radeon_drm.h
+
+commit 0411c37409102c71e8ba980f9afb2d4a8c64189d
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Jul 15 14:40:41 2009 -0400
+
+    Add R600_SCRATCH_REG_OFFSET to radeon_drm.h
+    
+    This lets us libdrm from master for r6xx/r7xx 3d
+
 commit eea95ed8af24300e5a5d2489dfe0d73c24300651
 Author: Eric Anholt <eric@anholt.net>
 Date:   Wed Jul 15 10:04:44 2009 -0700
