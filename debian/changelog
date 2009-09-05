@@ -1,4 +1,4 @@
-libdrm (2.4.13-1) UNRELEASED; urgency=low
+libdrm (2.4.13-1) unstable; urgency=low
 
   [ Christopher James Halse Rogers ]
   * debian/control:
@@ -9,7 +9,7 @@ libdrm (2.4.13-1) UNRELEASED; urgency=low
   * New upstream release.
   * Update libdrm-intel1.symbols.
 
- -- Christopher James Halse Rogers <raof@ubuntu.com>  Wed, 11 Feb 2009 18:12:41 +1100
+ -- Julien Cristau <jcristau@debian.org>  Sat, 05 Sep 2009 13:15:36 +0200
 
 libdrm (2.4.12-1) unstable; urgency=low
 
