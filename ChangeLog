@@ -1,3 +1,68 @@
+commit ac71f0849928f4b2fbb69c01304ac6f9df8916a1
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Sep 21 15:29:58 2009 -0700
+
+    Bump to 2.4.14 for release.
+
+commit 51b89733c53458b6827f0db99eb46a20fa1c7020
+Author: Eric Anholt <eric@anholt.net>
+Date:   Sun Sep 6 23:17:14 2009 -0700
+
+    intel: Remove the max_entries stuff that complicated bo reuse.
+    
+    I thought I was going to do all sorts of crazy experiments with it.  I never
+    did, and it turned out the free-after-a-few-seconds plan is working out fine.
+
+commit 456a358b9ade5c90ff86b2322a79648c69cddcdc
+Author: Eric Anholt <eric@anholt.net>
+Date:   Sun Sep 6 23:02:21 2009 -0700
+
+    intel: Remove the old swrast flag for reducing cache flushing.
+    
+    It hasn't been doing anything effective since
+    52e5d24fae4af6f2f4a5304a516c8c5ab347a11b, and we pretty much don't bo_map
+    pinned buffers any more anyway.
+
+commit 0a24654129847cf5cd61b5e8fb54c8f9c7441c55
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu Sep 17 17:28:08 2009 -0700
+
+    drmModeFreeConnector: free encoders and properties
+    
+    These were leaking.
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit cdd325b59a17a614b90fc2f8b388175e6d79e3cf
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Tue Sep 15 07:29:02 2009 +1000
+
+    radeon: fix 32/64 bit issue with sign extension
+    
+    Not sure what intptr_t was up to here.
+    
+    Reported and tested by: Kevin DeKorte
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 67e4172394a88d4922fb8d9c7c3d96ce7e02c5a6
+Author: Zhenyu Wang <zhenyuw@linux.intel.com>
+Date:   Mon Sep 7 16:17:04 2009 +0800
+
+    libdrm_intel: include B43 chipset check
+    
+    Signed-off-by: Zhenyu Wang <zhenyuw@linux.intel.com>
+
+commit 121b9648f846d900e67818869974ee82046e9b25
+Author: Zhenyu Wang <zhenyuw@linux.intel.com>
+Date:   Fri Sep 4 09:24:23 2009 +0800
+
+    libdrm_intel: add new pci ids
+    
+    New ids for G41, Clarkdale and Arrandale.
+    Make sure we don't need to count fence also on new chips.
+    
+    Signed-off-by: Zhenyu Wang <zhenyuw@linux.intel.com>
+
 commit 73b59c894380995a2889b98e79acadd2da0bb237
 Author: Eric Anholt <eric@anholt.net>
 Date:   Fri Aug 28 15:20:22 2009 -0700

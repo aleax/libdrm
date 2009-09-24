@@ -1,6 +1,7 @@
-libdrm (2.4.13-2) UNRELEASED; urgency=low
+libdrm (2.4.14-1) UNRELEASED; urgency=low
 
   * Parse space-separated DEB_BUILD_OPTIONS, and handle parallel=N.
+  * New upstream release.
 
  -- Julien Cristau <jcristau@debian.org>  Sat, 05 Sep 2009 14:14:29 +0200
 
