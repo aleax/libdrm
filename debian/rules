@@ -30,10 +30,14 @@ endif
 
 CFLAGS = -Wall -g
 
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+ifneq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
 	CFLAGS += -O0
 else
 	CFLAGS += -O2
+endif
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+	NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+	MAKEFLAGS += -j$(NUMJOBS)
 endif
 
 configure: $(STAMP_DIR)/patch
@@ -107,7 +111,7 @@ binary-arch: build install
 	dh_compress
 	dh_fixperms
 	dh_makeshlibs -plibdrm2 -V'libdrm2 (>= 2.4.3)' -- -c4
-	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.11)' -- -c4
+	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.13)' -- -c4
 	dh_makeshlibs -plibdrm-nouveau1 -V'libdrm-nouveau1 (>= 2.4.5)' -- -c4
 	dh_installdeb
 	dh_shlibdeps

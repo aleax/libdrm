@@ -100,10 +100,10 @@ static struct radeon_cs *cs_gem_create(struct radeon_cs_manager *csm,
     }
     csg->chunks[0].chunk_id = RADEON_CHUNK_ID_IB;
     csg->chunks[0].length_dw = 0;
-    csg->chunks[0].chunk_data = (uint64_t)(intptr_t)csg->base.packets;
+    csg->chunks[0].chunk_data = (uint64_t)(uintptr_t)csg->base.packets;
     csg->chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
     csg->chunks[1].length_dw = 0;
-    csg->chunks[1].chunk_data = (uint64_t)(intptr_t)csg->relocs;
+    csg->chunks[1].chunk_data = (uint64_t)(uintptr_t)csg->relocs;
     return (struct radeon_cs*)csg;
 }
 
@@ -184,7 +184,7 @@ static int cs_gem_write_reloc(struct radeon_cs *cs,
         }
         cs->relocs = csg->relocs = tmp;
         csg->nrelocs += 1;
-        csg->chunks[1].chunk_data = (uint64_t)(intptr_t)csg->relocs;
+        csg->chunks[1].chunk_data = (uint64_t)(uintptr_t)csg->relocs;
     }
     csg->relocs_bo[csg->base.crelocs] = bo;
     idx = (csg->base.crelocs++) * RELOC_SIZE;
@@ -269,11 +269,11 @@ static int cs_gem_emit(struct radeon_cs *cs)
 
     csg->chunks[0].length_dw = cs->cdw;
 
-    chunk_array[0] = (uint64_t)(intptr_t)&csg->chunks[0];
-    chunk_array[1] = (uint64_t)(intptr_t)&csg->chunks[1];
+    chunk_array[0] = (uint64_t)(uintptr_t)&csg->chunks[0];
+    chunk_array[1] = (uint64_t)(uintptr_t)&csg->chunks[1];
 
     csg->cs.num_chunks = 2;
-    csg->cs.chunks = (uint64_t)(intptr_t)chunk_array;
+    csg->cs.chunks = (uint64_t)(uintptr_t)chunk_array;
 
     r = drmCommandWriteRead(cs->csm->fd, DRM_RADEON_CS,
                             &csg->cs, sizeof(struct drm_radeon_cs));
@@ -354,21 +354,21 @@ static void cs_gem_print(struct radeon_cs *cs, FILE *file)
     unsigned opcode;
     unsigned reg;
     unsigned cnt;
-    int i, j;
+    unsigned int i, j;
 
     for (i = 0; i < cs->cdw;) {
-        cnt = CP_PACKET_GET_COUNT(cs->packets[i]);
+        cnt = CP_PACKET_GET_COUNT(cs->packets[i]) + 1;
         switch (CP_PACKET_GET_TYPE(cs->packets[i])) {
         case PACKET_TYPE0:
-            fprintf(file, "Pkt0 at %d (%d dwords):\n", i, cnt + 1);
+            fprintf(file, "Pkt0 at %d (%d dwords):\n", i, cnt);
             reg = CP_PACKET0_GET_REG(cs->packets[i]);
             if (CP_PACKET0_GET_ONE_REG_WR(cs->packets[i++])) {
-                for (j = 0; j <= cnt; j++) {
+                for (j = 0; j < cnt; j++) {
                     fprintf(file, "    0x%08X -> 0x%04X\n",
                             cs->packets[i++], reg);
                 }
             } else {
-                for (j = 0; j <= cnt; j++) {
+                for (j = 0; j < cnt; j++) {
                     fprintf(file, "    0x%08X -> 0x%04X\n",
                             cs->packets[i++], reg);
                     reg += 4;
@@ -410,7 +410,7 @@ static void cs_gem_print(struct radeon_cs *cs, FILE *file)
                 fprintf(file, "Unknow opcode 0x%02X at %d\n", opcode, i);
                 return;
             }
-            for (j = 0; j <= cnt; j++) {
+            for (j = 0; j < cnt; j++) {
                 fprintf(file, "        0x%08X\n", cs->packets[i++]);
             }
             break;

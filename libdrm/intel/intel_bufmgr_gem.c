@@ -69,15 +69,6 @@ typedef struct _drm_intel_bo_gem drm_intel_bo_gem;
 
 struct drm_intel_gem_bo_bucket {
    drmMMListHead head;
-
-   /**
-    * Limit on the number of entries in this bucket.
-    *
-    * 0 means that this caching at this bucket size is disabled.
-    * -1 means that there is no limit to caching at this size.
-    */
-   int max_entries;
-   int num_entries;
    unsigned long size;
 };
 
@@ -105,6 +96,7 @@ typedef struct _drm_intel_bufmgr_gem {
     uint64_t gtt_size;
     int available_fences;
     int pci_device;
+    char bo_reuse;
 } drm_intel_bufmgr_gem;
 
 struct _drm_intel_bo_gem {
@@ -125,13 +117,6 @@ struct _drm_intel_bo_gem {
      * batchbuffer execution.
      */
     int validate_index;
-
-    /**
-     * Boolean whether we've started swrast
-     * Set when the buffer has been mapped
-     * Cleared when the buffer is unmapped
-     */
-    int swrast;
 
     /**
      * Current tiling mode
@@ -314,6 +299,22 @@ drm_intel_setup_reloc_list(drm_intel_bo *bo)
     return 0;
 }
 
+static int
+drm_intel_gem_bo_busy(drm_intel_bo *bo)
+{
+    drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *)bo->bufmgr;
+    drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *)bo;
+    struct drm_i915_gem_busy busy;
+    int ret;
+
+    memset(&busy, 0, sizeof(busy));
+    busy.handle = bo_gem->gem_handle;
+
+    ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_BUSY, &busy);
+
+    return (ret == 0 && busy.busy);
+}
+
 static drm_intel_bo *
 drm_intel_gem_bo_alloc_internal(drm_intel_bufmgr *bufmgr, const char *name,
 				unsigned long size, unsigned int alignment,
@@ -333,7 +334,7 @@ drm_intel_gem_bo_alloc_internal(drm_intel_bufmgr *bufmgr, const char *name,
     /* If we don't have caching at this size, don't actually round the
      * allocation up.
      */
-    if (bucket == NULL || bucket->max_entries == 0) {
+    if (bucket == NULL) {
 	bo_size = size;
 	if (bo_size < page_size)
 	    bo_size = page_size;
@@ -343,9 +344,7 @@ drm_intel_gem_bo_alloc_internal(drm_intel_bufmgr *bufmgr, const char *name,
 
     pthread_mutex_lock(&bufmgr_gem->lock);
     /* Get a buffer out of the cache if available */
-    if (bucket != NULL && bucket->num_entries > 0) {
-	struct drm_i915_gem_busy busy;
-
+    if (bucket != NULL && !DRMLISTEMPTY(&bucket->head)) {
 	if (for_render) {
 	    /* Allocate new render-target BOs from the tail (MRU)
 	     * of the list, as it will likely be hot in the GPU cache
@@ -353,7 +352,6 @@ drm_intel_gem_bo_alloc_internal(drm_intel_bufmgr *bufmgr, const char *name,
 	     */
 	    bo_gem = DRMLISTENTRY(drm_intel_bo_gem, bucket->head.prev, head);
 	    DRMLISTDEL(&bo_gem->head);
-	    bucket->num_entries--;
 	    alloc_from_cache = 1;
 	} else {
 	    /* For non-render-target BOs (where we're probably going to map it
@@ -364,15 +362,9 @@ drm_intel_gem_bo_alloc_internal(drm_intel_bufmgr *bufmgr, const char *name,
 	     */
 	    bo_gem = DRMLISTENTRY(drm_intel_bo_gem, bucket->head.next, head);
 
-	    memset(&busy, 0, sizeof(busy));
-	    busy.handle = bo_gem->gem_handle;
-
-	    ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_BUSY, &busy);
-	    alloc_from_cache = (ret == 0 && busy.busy == 0);
-
-	    if (alloc_from_cache) {
+	    if (!drm_intel_gem_bo_busy(&bo_gem->bo)) {
+		alloc_from_cache = 1;
 		DRMLISTDEL(&bo_gem->head);
-		bucket->num_entries--;
 	    }
 	}
     }
@@ -551,7 +543,6 @@ drm_intel_gem_cleanup_bo_cache(drm_intel_bufmgr_gem *bufmgr_gem, time_t time)
 		break;
 
 	    DRMLISTDEL(&bo_gem->head);
-	    bucket->num_entries--;
 
 	    drm_intel_gem_bo_free(&bo_gem->bo);
 	}
@@ -585,11 +576,7 @@ drm_intel_gem_bo_unreference_locked(drm_intel_bo *bo)
 	bucket = drm_intel_gem_bo_bucket_for_size(bufmgr_gem, bo->size);
 	/* Put the buffer into our internal cache for reuse if we can. */
 	tiling_mode = I915_TILING_NONE;
-	if (bo_gem->reusable &&
-	    bucket != NULL &&
-	    (bucket->max_entries == -1 ||
-	     (bucket->max_entries > 0 &&
-	      bucket->num_entries < bucket->max_entries)) &&
+	if (bufmgr_gem->bo_reuse && bo_gem->reusable && bucket != NULL &&
 	    drm_intel_gem_bo_set_tiling(bo, &tiling_mode, 0) == 0)
 	{
 	    struct timespec time;
@@ -604,7 +591,6 @@ drm_intel_gem_bo_unreference_locked(drm_intel_bo *bo)
 	    bo_gem->reloc_count = 0;
 
 	    DRMLISTADDTAIL(&bo_gem->head, &bucket->head);
-	    bucket->num_entries++;
 
 	    drm_intel_gem_cleanup_bo_cache(bufmgr_gem, time.tv_sec);
 	} else {
@@ -654,30 +640,26 @@ drm_intel_gem_bo_map(drm_intel_bo *bo, int write_enable)
 	    return ret;
 	}
 	bo_gem->mem_virtual = (void *)(uintptr_t)mmap_arg.addr_ptr;
-	bo_gem->swrast = 0;
     }
     DBG("bo_map: %d (%s) -> %p\n", bo_gem->gem_handle, bo_gem->name,
 	bo_gem->mem_virtual);
     bo->virtual = bo_gem->mem_virtual;
 
-    if (bo_gem->global_name != 0 || !bo_gem->swrast) {
-	set_domain.handle = bo_gem->gem_handle;
-	set_domain.read_domains = I915_GEM_DOMAIN_CPU;
-	if (write_enable)
-	    set_domain.write_domain = I915_GEM_DOMAIN_CPU;
-	else
-	    set_domain.write_domain = 0;
-	do {
-	    ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_SET_DOMAIN,
-			&set_domain);
-	} while (ret == -1 && errno == EINTR);
-	if (ret != 0) {
-	    fprintf (stderr, "%s:%d: Error setting swrast %d: %s\n",
-		     __FILE__, __LINE__, bo_gem->gem_handle, strerror (errno));
-	    pthread_mutex_unlock(&bufmgr_gem->lock);
-	    return ret;
-	}
-	bo_gem->swrast = 1;
+    set_domain.handle = bo_gem->gem_handle;
+    set_domain.read_domains = I915_GEM_DOMAIN_CPU;
+    if (write_enable)
+	set_domain.write_domain = I915_GEM_DOMAIN_CPU;
+    else
+	set_domain.write_domain = 0;
+    do {
+	ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_SET_DOMAIN,
+		    &set_domain);
+    } while (ret == -1 && errno == EINTR);
+    if (ret != 0) {
+	fprintf (stderr, "%s:%d: Error setting to CPU domain %d: %s\n",
+		 __FILE__, __LINE__, bo_gem->gem_handle, strerror (errno));
+	pthread_mutex_unlock(&bufmgr_gem->lock);
+	return ret;
     }
 
     pthread_mutex_unlock(&bufmgr_gem->lock);
@@ -788,14 +770,16 @@ drm_intel_gem_bo_unmap(drm_intel_bo *bo)
     assert(bo_gem->mem_virtual != NULL);
 
     pthread_mutex_lock(&bufmgr_gem->lock);
-    if (bo_gem->swrast) {
-	sw_finish.handle = bo_gem->gem_handle;
-	do {
-	    ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_SW_FINISH,
-			&sw_finish);
-	} while (ret == -1 && errno == EINTR);
-	bo_gem->swrast = 0;
-    }
+
+    /* Cause a flush to happen if the buffer's pinned for scanout, so the
+     * results show up in a timely manner.
+     */
+    sw_finish.handle = bo_gem->gem_handle;
+    do {
+	ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_SW_FINISH,
+		    &sw_finish);
+    } while (ret == -1 && errno == EINTR);
+
     bo->virtual = NULL;
     pthread_mutex_unlock(&bufmgr_gem->lock);
     return 0;
@@ -931,7 +915,6 @@ drm_intel_bufmgr_gem_destroy(drm_intel_bufmgr *bufmgr)
 	while (!DRMLISTEMPTY(&bucket->head)) {
 	    bo_gem = DRMLISTENTRY(drm_intel_bo_gem, bucket->head.next, head);
 	    DRMLISTDEL(&bo_gem->head);
-	    bucket->num_entries--;
 
 	    drm_intel_gem_bo_free(&bo_gem->bo);
 	}
@@ -1091,9 +1074,6 @@ drm_intel_gem_bo_exec(drm_intel_bo *bo, int used,
 	drm_intel_bo *bo = bufmgr_gem->exec_bos[i];
 	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *)bo;
 
-	/* Need to call swrast on next bo_map */
-	bo_gem->swrast = 0;
-
 	/* Disconnect the buffer from the validate list */
 	bo_gem->validate_index = -1;
 	drm_intel_gem_bo_unreference_locked(bo);
@@ -1228,11 +1208,8 @@ void
 drm_intel_bufmgr_gem_enable_reuse(drm_intel_bufmgr *bufmgr)
 {
     drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *)bufmgr;
-    int i;
 
-    for (i = 0; i < DRM_INTEL_GEM_BO_BUCKETS; i++) {
-	bufmgr_gem->cache_bucket[i].max_entries = -1;
-    }
+    bufmgr_gem->bo_reuse = 1;
 }
 
 /**
@@ -1491,6 +1468,7 @@ drm_intel_bufmgr_gem_init(int fd, int batch_size)
     bufmgr_gem->bufmgr.bo_set_tiling = drm_intel_gem_bo_set_tiling;
     bufmgr_gem->bufmgr.bo_flink = drm_intel_gem_bo_flink;
     bufmgr_gem->bufmgr.bo_exec = drm_intel_gem_bo_exec;
+    bufmgr_gem->bufmgr.bo_busy = drm_intel_gem_bo_busy;
     bufmgr_gem->bufmgr.destroy = drm_intel_bufmgr_gem_destroy;
     bufmgr_gem->bufmgr.debug = 0;
     bufmgr_gem->bufmgr.check_aperture_space = drm_intel_gem_check_aperture_space;
