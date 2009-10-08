@@ -6,6 +6,34 @@ libdrm (2.4.14-1) unstable; urgency=low
 
  -- Julien Cristau <jcristau@debian.org>  Thu, 24 Sep 2009 21:53:09 +0200
 
+libdrm (2.4.13-1ubuntu1) karmic; urgency=low
+
+  * Merge with Debian. (LP: #420803)
+    + Included fixes:
+      - radeon: fix GTT writing space check
+        (LP: #411115)
+    + Remaining Ubuntu changes:
+      - control:
+        + libdrm-intel1 Replaces libdrm2 (<= 2.4.1-0ubuntu5)
+        + libdrm-dev depends on newer linux-libc-dev on !lpia
+        + libdrm-dev depends on libdrm-{radeon1,nouveau1}
+        + add libdrm-{radeon1,nouveau1}{,-dbg} source packages
+      - rules:
+        + Add libdrm-nouveau1 and libdrm-nouveau1-dbg package
+        + Enable radeon and nouveau experimental apis
+      - copyright:
+        + Update to include new files from add_libdrm-nouveau.patch
+      - libdrm-dev.install: Also install r300_reg.h, via_3d_reg.h,
+        xgi_drm.h, the nouveau headers, and other headers not provided by
+        the kernel.
+      - libdrm-{radeon1,nouveau1}.{install,symbols}:  Add nouveau and
+        radeon
+  * control:
+    + Increase linux-libc-dev version dependency to 2.6.30-2.4 for !lpia
+    + Drop Replaces on linux-libc-dev
+
+ -- Bryce Harrington <bryce@ubuntu.com>  Tue, 08 Sep 2009 15:18:34 -0700
+
 libdrm (2.4.13-1) unstable; urgency=low
 
   [ Christopher James Halse Rogers ]

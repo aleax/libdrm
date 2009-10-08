@@ -1,13 +1,4 @@
-usr/include/nouveau/*
-usr/include/drm/mach64_drm.h
-usr/include/drm/nouveau_drm.h
-usr/include/drm/nouveau_drmif.h
-usr/include/drm/r300_reg.h
-usr/include/drm/via_3d_reg.h
-usr/include/drm/xgi_drm.h
-usr/include/intel_bufmgr.h
-usr/include/xf86drm.h
-usr/include/xf86drmMode.h
+usr/include/*
 usr/lib/lib*.a
 usr/lib/lib*.so
 usr/lib/pkgconfig/*
