@@ -15,8 +15,9 @@ Architecture: any
 Depends: libdrm2 (= ${binary:Version}),
  libdrm-intel1 (= ${binary:Version}) [amd64 i386 kfreebsd-amd64 kfreebsd-i386],
  libdrm-nouveau1 (= ${binary:Version}),
- linux-libc-dev (>= 2.6.28-5.15) [amd64 armel i386], linux-libc-dev (>= 2.6.28-2.4) [lpia]
-Replaces: linux-libc-dev (<= 2.6.28-3.4)
+ libdrm-radeon1 (= ${binary:Version}),
+ linux-libc-dev (>= 2.6.30-2.4) [amd64 armel i386],
+ linux-libc-dev (>= 2.6.28-2.4) [lpia]
 Description: Userspace interface to kernel DRM services -- development files
  This library implements the userspace interface to the kernel DRM
  services.  DRM stands for "Direct Rendering Manager", which is the
@@ -99,3 +100,34 @@ Description: Userspace interface to nouveau-specific kernel DRM services -- debu
  Linux to provide hardware-accelerated OpenGL drivers.
  .
  This package provides the debugging symbols for the libdrm-nouveau1 package.
+
+Package: libdrm-radeon1
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Userspace interface to radeon-specific kernel rendering services -- runtime
+ This library implements the userspace interface to the radeon-specific kernel
+ DRM services. DRM stands for "Direct Rendering Manager", which is the
+ kernelspace portion of the "Direct Rendering Infrastructure" (DRI). The DRI is
+ currently used on Linux to provide hardware-accelerated OpenGL drivers.
+ .
+ This package is built from a snapshot of DRM development code, to provide the
+ features necessary for testing new X.org drivers. Do NOT expect this package
+ to be stable!
+
+Package: libdrm-radeon1-dbg
+Section: debug
+Priority: extra
+Architecture: any
+Depends: libdrm-radeon1 (= ${binary:Version}), ${misc:Depends}
+Description: Userspace interface to radeon-specific kernel rendering -- debugging symbols
+ This library implements the userspace interface to the kernel DRM services.
+ DRM stands for "Direct Rendering Manager", which is the kernelspace portion
+ of the "Direct Rendering Infrastructure" (DRI). The DRI is currently used on
+ Linux to provide hardware-accelerated OpenGL drivers.
+ .
+ This package is built from a snapshot of DRM development code, to provide the
+ features necessary for testing new X.org drivers. Do NOT expect this package
+ to be stable!
+ .
+ This package provides the debugging symbols for the libdrm-radeon1 package.
+

@@ -52,6 +52,7 @@ obj-$(DEB_BUILD_GNU_TYPE)/config.status: configure
 		--infodir=\$${prefix}/share/info \
 		--enable-static=yes $(confflags) \
 		--enable-nouveau-experimental-api=yes \
+		--enable-radeon-experimental-api=yes \
 		CFLAGS="$(CFLAGS)"
 
 build: build-stamp
@@ -107,12 +108,14 @@ binary-arch: build install
 	dh_strip -plibdrm2 --dbg-package=libdrm2-dbg
 	dh_strip -plibdrm-intel1 --dbg-package=libdrm-intel1-dbg
 	dh_strip -plibdrm-nouveau1 --dbg-package=libdrm-nouveau1-dbg
+	dh_strip -plibdrm-radeon1 --dbg-package=libdrm-radeon1-dbg
 	dh_strip
 	dh_compress
 	dh_fixperms
 	dh_makeshlibs -plibdrm2 -V'libdrm2 (>= 2.4.3)' -- -c4
 	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.13)' -- -c4
-	dh_makeshlibs -plibdrm-nouveau1 -V'libdrm-nouveau1 (>= 2.4.5)' -- -c4
+	dh_makeshlibs -plibdrm-nouveau1 -V'libdrm-nouveau1 (>= 2.4.13)' -- -c4
+	dh_makeshlibs -plibdrm-radeon1 -V'libdrm-radeon1 (>= 2.4.13)' -- -c4
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol
