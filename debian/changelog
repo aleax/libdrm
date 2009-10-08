@@ -1,3 +1,9 @@
+libdrm (2.4.14-1ubuntu1) karmic; urgency=low
+
+  * Merge from Debian unstable. (LP: #446080)
+
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Thu, 08 Oct 2009 16:35:53 +0300
+
 libdrm (2.4.14-1) unstable; urgency=low
 
   * Parse space-separated DEB_BUILD_OPTIONS, and handle parallel=N.
