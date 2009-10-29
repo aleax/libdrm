@@ -125,7 +125,7 @@ endif
 	dh_fixperms -s
 	dh_makeshlibs -plibdrm2 -V'libdrm2 (>= 2.4.3)' -- -c4
 ifeq ($(INTEL), yes)
-	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.13)' -- -c4
+	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.15)' -- -c4
 endif
 	dh_installdeb -s
 	dh_shlibdeps -s
