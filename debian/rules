@@ -28,6 +28,19 @@ else
 	confflags += --disable-udev
 endif
 
+# only build libdrm-intel on x86
+ifneq (,$(filter amd64 i386,$(DEB_HOST_ARCH_CPU)))
+ifneq (,$(filter linux kfreebsd,$(DEB_HOST_ARCH_OS)))
+	INTEL = yes
+endif
+endif
+
+ifeq ($(INTEL), yes)
+	confflags += --enable-intel
+else
+	confflags += --disable-intel
+endif
+
 CFLAGS = -Wall -g
 
 ifneq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
@@ -96,25 +109,29 @@ binary-indep: build install
 
 # Build architecture-dependent files here.
 binary-arch: build install
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs ChangeLog
-	dh_installdocs
-	dh_installexamples
+	dh_testdir -s
+	dh_testroot -s
+	dh_installchangelogs -s ChangeLog
+	dh_installdocs -s
+	dh_installexamples -s
 	dh_install -s --sourcedir=debian/tmp -X.la --fail-missing
-	dh_link
+	dh_link -s
 	dh_strip -plibdrm2 --dbg-package=libdrm2-dbg
+ifeq ($(INTEL), yes)
 	dh_strip -plibdrm-intel1 --dbg-package=libdrm-intel1-dbg
-	dh_strip
-	dh_compress
-	dh_fixperms
+endif
+	dh_strip -s --remaining-packages
+	dh_compress -s
+	dh_fixperms -s
 	dh_makeshlibs -plibdrm2 -V'libdrm2 (>= 2.4.3)' -- -c4
+ifeq ($(INTEL), yes)
 	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.13)' -- -c4
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
+endif
+	dh_installdeb -s
+	dh_shlibdeps -s
+	dh_gencontrol -s
+	dh_md5sums -s
+	dh_builddeb -s
 
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary install 
