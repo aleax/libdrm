@@ -19,7 +19,7 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 AC_PREREQ(2.60)
-AC_INIT([libdrm], 2.4.14, [dri-devel@lists.sourceforge.net], libdrm)
+AC_INIT([libdrm], 2.4.15, [dri-devel@lists.sourceforge.net], libdrm)
 AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_INIT_AUTOMAKE([dist-bzip2])
@@ -42,6 +42,11 @@ AC_SUBST(pkgconfigdir)
 AC_ARG_ENABLE(udev,	AS_HELP_STRING([--enable-udev],
 				[Enable support for using udev instead of mknod (default: disabled)]),
 				[UDEV=$enableval], [UDEV=no])
+
+AC_ARG_ENABLE(intel,
+	      AS_HELP_STRING([--disable-intel],
+	      [Enable support for intel's KMS API (default: enabled)]),
+	      [INTEL=$enableval], [INTEL=yes])
 
 AC_ARG_ENABLE(nouveau-experimental-api,
 	      AS_HELP_STRING([--enable-nouveau-experimental-api],
@@ -145,6 +150,27 @@ if test "x$HAVE_LIBUDEV" = xyes; then
    	AC_DEFINE(HAVE_LIBUDEV, 1, [Have libudev support])
 fi
 AM_CONDITIONAL(HAVE_LIBUDEV, [test "x$HAVE_LIBUDEV" = xyes])
+
+AM_CONDITIONAL(HAVE_INTEL, [test "x$INTEL" = xyes])
+
+if test "x$INTEL" = xyes; then
+    # Check for atomic intrinsics
+    AC_CACHE_CHECK([for native atomic primitives], drm_cv_atomic_primitives,
+    [
+	    drm_cv_atomic_primitives="none"
+
+	    AC_TRY_LINK([
+    int atomic_add(int i) { return __sync_fetch_and_add (&i, 1); }
+    int atomic_cmpxchg(int i, int j, int k) { return __sync_val_compare_and_swap (&i, j, k); }
+    ], [],
+	      drm_cv_atomic_primitives="Intel"
+	      )
+    ])
+    if test "x$drm_cv_atomic_primitives" = xIntel; then
+	    AC_DEFINE(HAVE_INTEL_ATOMIC_PRIMITIVES, 1,
+		      [Enable if your compiler supports the Intel __sync_* atomic primitives])
+    fi
+fi
 
 AC_SUBST(WARN_CFLAGS)
 AC_OUTPUT([
