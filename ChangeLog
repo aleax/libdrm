@@ -1,3 +1,154 @@
+commit a107e5b12960f64722bff424502a4fc0ad33dc8f
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Oct 8 16:59:17 2009 -0700
+
+    Bump to 2.4.15 for release.
+
+commit 9764061ab1b02e4b7bde1494b121604c5c4d4df8
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Oct 8 15:39:27 2009 -0700
+
+    intel: Remove the asserts about the ignored alignment parameter.
+    
+    I slipped it in with the alloc_tiled changes, since we were explicitly
+    throwing the parameter away.  It caught some bogus released code, which
+    we've now fixed, so remove the asserts to keep old drivers working.
+
+commit 3a7dfcdfafdd6ac83a4d3e7b4c1c52fd901b93ae
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Tue Oct 6 14:34:06 2009 -0700
+
+    intel: Add a bo_alloc function for tiled BOs.
+    
+    This simplifies driver code in handling object allocation, and also gives us
+    an opportunity to possibly cache tiled buffers if it turns out to be a win.
+    
+    [anholt: This is chopped out of the execbuf2 patch, as it seems to be useful
+    separately and cleans up the execbuf2 changes to be more obvious]
+
+commit 02c775fc750b48ae25b6a4af51afbfe090ebada4
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Oct 6 15:25:21 2009 -0700
+
+    intel: Fix up some stale doxygen comments.
+
+commit d70d60529f77ec73322be7b887fd6a3faf133bce
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Oct 6 12:40:42 2009 -0700
+
+    intel: Reformat to the kernel coding style.  Welcome to the 8-space future.
+    
+    This is done with:
+    Lindent *.[ch]
+    perl -pi -e 's|drm_intel_bo \* |drm_intel_bo *|g' *.[ch]
+    perl -pi -e 's|drm_intel_bufmgr \* |drm_intel_bufmgr *|g' *.[ch]
+    perl -pi -e 's|drm_intel_bo_gem \* |drm_intel_bo_gem *|g' *.[ch]
+    perl -pi -e 's|drm_intel_bufmgr_gem \* |drm_intel_bufmgr_gem *|g' *.[ch]
+    perl -pi -e 's|_fake \* |_fake *|g' *.[ch]
+    hand-editing to whack indented comments into line and other touchups.
+
+commit 3c9bd068e0aa8069f71e8193b82b231d6513ce35
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Oct 5 16:35:32 2009 -0700
+
+    intel: Don't allocate more relocation entries than the BO could support.
+    
+    This saves 32k of relocation entry storage for many 965 state buffers.  No
+    noticeable impact on performance for cairo-gl firefox.
+
+commit ac34f599eabcfc414d4d3300063988d4749813f4
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Oct 3 23:17:57 2009 +0100
+
+    tests: Disable intel-specific tests with --disable-intel
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit ab3300c5816ee26e2d74ac99e2d84c3dfd7cdf82
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Oct 3 22:56:04 2009 +0100
+
+    intel: Add a configure option to *disable* building libdrm-intel
+    
+    In conjunction with the atomic operation patch, it may be more
+    convenient for some people to disable building libdrm-intel and its
+    dependencies upon the atomic intrinsics then it is for them to use a
+    supported compiler.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 61bddf8504461fad3e45fbf0d32956a76e0dd343
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Sep 20 03:11:59 2009 +0100
+
+    intel: report errno
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 11f0e450dd7d711eb69aa9c27ed4aa72d913d697
+Author: Michel Dänzer <daenzer@vmware.com>
+Date:   Sat Oct 3 17:37:07 2009 +0200
+
+    libdrm_radeon: Update RADEON_TILING_* flags to what's in current kernels.
+
+commit a5fb264257651d50afe84be7e20f91df41242aa8
+Author: Nicolai Hähnle <nhaehnle@gmail.com>
+Date:   Sat Oct 3 13:43:42 2009 +0200
+
+    libdrm_radeon: Zero-initialize structures to silence valgrind warnings
+    
+    Signed-off-by: Nicolai Hähnle <nhaehnle@gmail.com>
+
+commit 04495eeec2f053be17a10cc82e646a1e23ed3830
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Oct 2 04:39:22 2009 +0100
+
+    intel: Use atomic refcounters
+    
+    As the target architecture for Intel GPUs is the x86, we can presume to
+    have reasonable compiler support for Intel atomic intrinsics, i.e. gcc,
+    and so use those in preference to pulling in a complicated mess of
+    fragile assembly.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+    [anholt: hand-resolved against my previous commit.  This brings cairo-gl
+    firefox-talos-gfx time from 65 seconds back down to 62 seconds.]
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+
+commit 0fb215ae3199b5be0c9a9474e5941f8d8998c11a
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Oct 2 04:31:34 2009 +0100
+
+    intel: Mark cached bo as purgeable
+    
+    Set the DONTNEED flag on cached buffers so that the kernel is free to
+    discard those when under memory pressure.
+    
+    [anholt: This takes firefox-talos-gfx time from ~62 seconds to ~65 seconds
+    on my GM965, but it seems like a hit worth taking for the improved
+    functionality from saving memory]
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+
+commit 12d9b7cc8550c1999e5c39a38b1b14e654f49065
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Oct 2 11:11:31 2009 -0700
+
+    intel: Don't free the reloc list when putting a freed BO in the cache.
+    
+    This takes firefox-talos-gfx from 74 seconds to 70 seconds on my GM965.
+
+commit 769b10578083aa7bbee0052246d8ea6000435ae8
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Oct 1 19:09:26 2009 -0700
+
+    intel: Add a new function to check if a BO's reloc tree references some BO.
+    
+    There are a bunch of places in GL where if we can't do this we have to
+    flush the batchbuffer, and the cost of lookups here is outweighed by flush
+    savings.
+
 commit ac71f0849928f4b2fbb69c01304ac6f9df8916a1
 Author: Eric Anholt <eric@anholt.net>
 Date:   Mon Sep 21 15:29:58 2009 -0700

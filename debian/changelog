@@ -1,3 +1,9 @@
+libdrm (2.4.15-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+
+ -- Julien Cristau <jcristau@debian.org>  Tue, 13 Oct 2009 20:49:10 +0200
+
 libdrm (2.4.14-1) unstable; urgency=low
 
   * Parse space-separated DEB_BUILD_OPTIONS, and handle parallel=N.
