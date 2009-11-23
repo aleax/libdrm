@@ -1,10 +1,10 @@
-libdrm (2.4.15-1) UNRELEASED; urgency=low
+libdrm (2.4.15-1) unstable; urgency=low
 
   * New upstream release.
     + update libdrm-intel1 symbols and shlibs
   * Only build libdrm-intel on x86 (linux and kfreebsd).
 
- -- Julien Cristau <jcristau@debian.org>  Tue, 13 Oct 2009 20:49:10 +0200
+ -- Julien Cristau <jcristau@debian.org>  Mon, 23 Nov 2009 17:00:57 +0100
 
 libdrm (2.4.14-1) unstable; urgency=low
 
