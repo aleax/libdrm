@@ -1,10 +1,10 @@
 NULL:=#
 
 AM_CPPFLAGS = \
-	-I $(top_srcdir)/shared-core \
-	-I $(top_srcdir)/libdrm
+	-I $(top_srcdir)/include/drm \
+	-I $(top_srcdir)
 
-LDADD = $(top_builddir)/libdrm/libdrm.la
+LDADD = $(top_builddir)/libdrm.la
 
 noinst_PROGRAMS = \
 	dristat \
@@ -24,7 +24,7 @@ libdrmtest_la_SOURCES = \
 	drmtest.h
 
 libdrmtest_la_LIBADD = \
-	$(top_builddir)/libdrm/libdrm.la \
+	$(top_builddir)/libdrm.la \
 	$(LIBUDEV_LIBS)
 
 LDADD += libdrmtest.la
@@ -40,6 +40,7 @@ TESTS =						\
 	getstats				\
 	setversion				\
 	updatedraw				\
+	name_from_fd				\
 	$(NULL)
 
 if HAVE_INTEL
