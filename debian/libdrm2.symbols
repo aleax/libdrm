@@ -51,6 +51,7 @@ libdrm.so.2 libdrm2 #MINVER#
  drmGetContextFlags@Base 2.3.1
  drmGetContextPrivateMapping@Base 2.3.1
  drmGetContextTag@Base 2.3.1
+ drmGetDeviceNameFromFd@Base 2.4.16
  drmGetEntry@Base 2.3.1
  drmGetHashTable@Base 2.3.1
  drmGetInterruptFromBusID@Base 2.3.1
@@ -61,6 +62,7 @@ libdrm.so.2 libdrm2 #MINVER#
  drmGetReservedContextList@Base 2.3.1
  drmGetStats@Base 2.3.1
  drmGetVersion@Base 2.3.1
+ drmHandleEvent@Base 2.4.16
  drmHashCreate@Base 2.3.1
  drmHashDelete@Base 2.3.1
  drmHashDestroy@Base 2.3.1
