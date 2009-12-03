@@ -7,6 +7,8 @@ libdrm (2.4.16-1) UNRELEASED; urgency=low
   * Update libdrm-intel1.symbols and shlibs.
   * Bump debhelper build-dep, we use dh_strip --remaining-packages (closes:
     #558443).  Thanks, Sergio Gelato!
+  * Enable libdrm_radeon, interface to kernel graphics memory management on
+    radeon (closes: #558786).
 
  -- Julien Cristau <jcristau@debian.org>  Thu, 03 Dec 2009 22:40:20 +0100
 
