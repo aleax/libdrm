@@ -3,7 +3,7 @@ Priority: optional
 Maintainer: Debian X Strike Force <debian-x@lists.debian.org>
 Uploaders: Julien Cristau <jcristau@debian.org>, David Nusinow <dnusinow@debian.org>, Brice Goglin <bgoglin@debian.org>
 Build-Depends:
- debhelper (>= 5.0.0),
+ debhelper (>= 7.2.7),
  libx11-dev,
  dpkg-dev (>= 1.13.19),
  quilt (>= 0.40),

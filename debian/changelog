@@ -5,6 +5,8 @@ libdrm (2.4.16-1) UNRELEASED; urgency=low
     to toplevel.
   * Update libdrm2.symbols and shlibs.
   * Update libdrm-intel1.symbols and shlibs.
+  * Bump debhelper build-dep, we use dh_strip --remaining-packages (closes:
+    #558443).  Thanks, Sergio Gelato!
 
  -- Julien Cristau <jcristau@debian.org>  Thu, 03 Dec 2009 22:40:20 +0100
 
