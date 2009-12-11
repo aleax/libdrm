@@ -1,4 +1,4 @@
-libdrm (2.4.16-1) UNRELEASED; urgency=low
+libdrm (2.4.16-1) unstable; urgency=low
 
   [ Julien Cristau ]
   * New upstream release, closes: #560434.
@@ -11,7 +11,7 @@ libdrm (2.4.16-1) UNRELEASED; urgency=low
   * Enable libdrm_radeon, interface to kernel graphics memory management on
     radeon (closes: #558786).
 
- -- Julien Cristau <jcristau@debian.org>  Thu, 03 Dec 2009 22:40:20 +0100
+ -- Brice Goglin <bgoglin@debian.org>  Fri, 11 Dec 2009 22:37:48 +0100
 
 libdrm (2.4.15-1) unstable; urgency=low
 
