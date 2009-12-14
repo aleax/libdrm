@@ -1,3 +1,13 @@
+libdrm (2.4.14-1ubuntu2) lucid; urgency=low
+
+  * debian/patches/02_silent_master.diff:
+    - The library noisily writes to stderr every time the drm master
+      is set or dropped; this can have the side-effect that the kernel
+      repaints all of the console messages over top of whatever you
+      left on the screen.  That's fugly.
+
+ -- Scott James Remnant <scott@ubuntu.com>  Fri, 11 Dec 2009 04:24:50 +0000
+
 libdrm (2.4.14-1ubuntu1) karmic; urgency=low
 
   * Merge from Debian unstable. (LP: #446080)
