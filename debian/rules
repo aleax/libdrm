@@ -24,8 +24,29 @@ else
 endif
 ifeq (linux, $(DEB_HOST_ARCH_OS))
 	confflags += --enable-udev
+	confflags += --enable-nouveau-experimental-api
+	NOUVEAU = yes
+	confflags += --enable-radeon-experimental-api
+	RADEON = yes
 else
 	confflags += --disable-udev
+	confflags += --disable-nouveau-experimental-api
+	NOUVEAU = no
+	confflags += --disable-radeon-experimental-api
+	RADEON = no
+endif
+
+# only build libdrm-intel on x86
+ifneq (,$(filter amd64 i386,$(DEB_HOST_ARCH_CPU)))
+ifneq (,$(filter linux kfreebsd,$(DEB_HOST_ARCH_OS)))
+	INTEL = yes
+endif
+endif
+
+ifeq ($(INTEL), yes)
+	confflags += --enable-intel
+else
+	confflags += --disable-intel
 endif
 
 CFLAGS = -Wall -g
@@ -48,11 +69,12 @@ obj-$(DEB_BUILD_GNU_TYPE)/config.status: configure
 	dh_testdir
 	test -d obj-$(DEB_BUILD_GNU_TYPE) || mkdir obj-$(DEB_BUILD_GNU_TYPE)
 	cd obj-$(DEB_BUILD_GNU_TYPE) && \
-	../configure --prefix=/usr --mandir=\$${prefix}/share/man \
+	../configure \
+		--prefix=/usr \
+		--mandir=\$${prefix}/share/man \
 		--infodir=\$${prefix}/share/info \
-		--enable-static=yes $(confflags) \
-		--enable-nouveau-experimental-api=yes \
-		--enable-radeon-experimental-api=yes \
+		--enable-static=yes \
+		$(confflags) \
 		CFLAGS="$(CFLAGS)"
 
 build: build-stamp
@@ -98,29 +120,41 @@ binary-indep: build install
 
 # Build architecture-dependent files here.
 binary-arch: build install
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs ChangeLog
-	dh_installdocs
-	dh_installexamples
+	dh_testdir -s
+	dh_testroot -s
+	dh_installchangelogs -s ChangeLog
+	dh_installdocs -s
+	dh_installexamples -s
 	dh_install -s --sourcedir=debian/tmp -X.la --fail-missing
-	dh_link
+	dh_link -s
 	dh_strip -plibdrm2 --dbg-package=libdrm2-dbg
+ifeq ($(INTEL), yes)
 	dh_strip -plibdrm-intel1 --dbg-package=libdrm-intel1-dbg
+endif
+ifeq ($(NOUVEAU), yes)
 	dh_strip -plibdrm-nouveau1 --dbg-package=libdrm-nouveau1-dbg
+endif
+ifeq ($(RADEON), yes)
 	dh_strip -plibdrm-radeon1 --dbg-package=libdrm-radeon1-dbg
-	dh_strip
-	dh_compress
-	dh_fixperms
-	dh_makeshlibs -plibdrm2 -V'libdrm2 (>= 2.4.3)' -- -c4
-	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.13)' -- -c4
+endif
+	dh_strip -s --remaining-packages
+	dh_compress -s
+	dh_fixperms -s
+	dh_makeshlibs -plibdrm2 -V'libdrm2 (>= 2.4.16)' -- -c4
+ifeq ($(INTEL), yes)
+	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.16)' -- -c4
+endif
+ifeq ($(NOUVEAU), yes)
 	dh_makeshlibs -plibdrm-nouveau1 -V'libdrm-nouveau1 (>= 2.4.13)' -- -c4
+endif
+ifeq ($(RADEON), yes)
 	dh_makeshlibs -plibdrm-radeon1 -V'libdrm-radeon1 (>= 2.4.13)' -- -c4
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
+endif
+	dh_installdeb -s
+	dh_shlibdeps -s
+	dh_gencontrol -s
+	dh_md5sums -s
+	dh_builddeb -s
 
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary install 

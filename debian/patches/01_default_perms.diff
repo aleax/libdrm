@@ -1,8 +1,8 @@
-Index: libdrm/libdrm/xf86drm.h
+Index: libdrm/xf86drm.h
 ===================================================================
---- libdrm.orig/libdrm/xf86drm.h
-+++ libdrm/libdrm/xf86drm.h
-@@ -45,7 +45,7 @@
+--- libdrm.orig/xf86drm.h
++++ libdrm/xf86drm.h
+@@ -70,7 +70,7 @@
  /* Default /dev/dri directory permissions 0755 */
  #define DRM_DEV_DIRMODE	 	\
  	(S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)

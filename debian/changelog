@@ -1,3 +1,26 @@
+libdrm (2.4.16-1) unstable; urgency=low
+
+  [ Julien Cristau ]
+  * New upstream release, closes: #560434.
+  * Update patch 01_default_perms.diff to account for upstream move of libdrm
+    to toplevel.
+  * Update libdrm2.symbols and shlibs.
+  * Update libdrm-intel1.symbols and shlibs.
+  * Bump debhelper build-dep, we use dh_strip --remaining-packages (closes:
+    #558443).  Thanks, Sergio Gelato!
+  * Enable libdrm_radeon, interface to kernel graphics memory management on
+    radeon (closes: #558786).
+
+ -- Brice Goglin <bgoglin@debian.org>  Fri, 11 Dec 2009 22:37:48 +0100
+
+libdrm (2.4.15-1) unstable; urgency=low
+
+  * New upstream release.
+    + update libdrm-intel1 symbols and shlibs
+  * Only build libdrm-intel on x86 (linux and kfreebsd).
+
+ -- Julien Cristau <jcristau@debian.org>  Mon, 23 Nov 2009 17:00:57 +0100
+
 libdrm (2.4.14-1ubuntu2) lucid; urgency=low
 
   * debian/patches/02_silent_master.diff:

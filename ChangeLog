@@ -1,3 +1,650 @@
+commit db50f5127421ac8f4e3ce4eb7c27d27475781488
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Thu Dec 3 11:31:27 2009 -0500
+
+    Bump to 2.4.16 for release
+
+commit bef7f88de9a1f40ec82cfd4d80c73802c640e5ed
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Thu Dec 3 11:27:16 2009 -0500
+
+    Enable experimental APIs for distcheck
+
+commit 57473c7f523f476ffa54c34e0c6312ffa66dcc5c
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Dec 2 13:36:22 2009 +0000
+
+    intel: Free memory before inserting bo into cache.
+    
+    This has the unfortunate behaviour of releasing our malloc cache, but
+    the alternative is for X to consume a couple of gigabytes of ram and
+    die during testing. Fortunately the extra mallocs have little impact on
+    performance whereas avoiding swap and death, lots.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 792fed1e2460f96459141b5a628dd5ab4fbb87db
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Dec 2 13:12:39 2009 +0000
+
+    intel: Check and propagate errors from building reloc-tree
+    
+    Instead of forcing the caller to check after every emit_reloc(), we can
+    flag the object as being in error, propagating that error upwards through
+    the relocation tree, and failing the eventual batch buffer execution.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit b73612e4fd69565aa2c5c2e9677f3e0af1945f7d
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Dec 2 12:58:00 2009 +0000
+
+    intel: Repeat execbuffer after EINTR
+    
+    EAGAIN cannot be raised by the current code, but the system call maybe
+    interrupted and so return EINTR.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit acb4aa671507aa181b3ff50ccf26a1c0d705a309
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Dec 2 12:40:26 2009 +0000
+
+    intel: Review use of errno.
+    
+    Hitting this error lead to a segfault:
+    
+      intel_bufmgr_gem.c:919: Error mapping buffer 48607 (pixmap):
+                              Cannot allocate memory.
+    
+    because the errno was reused as the function return value after being
+    reset by the fprintf(), so caller thought the mapping had succeeded. The
+    convention established by libdrm is that the return value is the
+    negative errno and that uses of libdrm cannot trust the value of errno
+    afterwards, but must use the return code.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 9fec2a8cb28d814da4fdd97b25e9cc5c10768c87
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Dec 2 10:42:51 2009 +0000
+
+    intel: Make bo_reference() inline for internal use.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 9c8ad05e8bb1c954b804e40f2f975fed23c24550
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Dec 2 10:41:39 2009 +0000
+
+    intel: Remove the extra reference while validating the reloc tree
+    
+    Buffers on the relocation tree are guarded by the reference to the batch
+    object and so do not need an extra reference whilst constructing the
+    list of execution buffer objects.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 8ffd2e142e38d19326a40ff66dc99d052ce22100
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Dec 1 13:08:04 2009 +0000
+
+    intel: Wrap a few more syscalls with EINTR protection
+    
+    Having been bitten by a missing EINTR check during mmap_gtt(), I thought
+    it prudent to add some more protection around the ioctls.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit b666f4151ab934d3083fa8b5f14ce19bbf999b15
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Nov 30 23:07:19 2009 +0000
+
+    intel: Clear bo->used_as_reloc_target flag on destroy
+    
+    This allows us to keep the assert added in the previous commit that we do
+    not modify the tree_reloc_size after inserting the buffer into a relocation
+    tree, which was being hit here:
+    
+      #0  0xb78c2424 in __kernel_vsyscall ()
+      #1  0xb74f6401 in raise () from /lib/libc.so.6
+      #2  0xb74f7b42 in abort () from /lib/libc.so.6
+      #3  0xb74ef5a8 in __assert_fail () from /lib/libc.so.6
+      #4  0xb737e78b in drm_intel_bo_gem_set_in_aperture_size (bufmgr_gem=<value optimized out>, bo_gem=0x6) at intel_bufmgr_gem.c:373
+      #5  0xb737f519 in drm_intel_gem_bo_set_tiling (bo=0xa1030a0, tiling_mode=0xbff6c85c, stride=0) at intel_bufmgr_gem.c:1386
+      #6  0xb737f67f in drm_intel_gem_bo_unreference_final (bo=0xa1030a0, time=<value optimized out>) at intel_bufmgr_gem.c:768
+      #7  0xb737f5e3 in drm_intel_gem_bo_unreference_locked_timed (bo=0xa1e50d0, time=<value optimized out>) at intel_bufmgr_gem.c:805
+      #8  drm_intel_gem_bo_unreference_final (bo=0xa1e50d0, time=<value optimized out>) at intel_bufmgr_gem.c:756
+      #9  0xb737fcbb in drm_intel_gem_bo_unreference (bo=0xa1e50d0) at intel_bufmgr_gem.c:821
+      #10 0xb737b4e6 in drm_intel_bo_unreference (bo=0x0) at intel_bufmgr.c:80
+      #11 0xb7325625 in intel_batch_flush (scrn=0x9d91f78, flush=1) at i830_batchbuffer.c:200
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit e22fb797728c07fd05b195bd345fdf91bab47855
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Nov 30 22:14:30 2009 +0000
+
+    intel: Apply pessimistic alignment to in-aperture buffer size
+    
+    For the older chipsets, i.e. pre-i965, which have severe alignment
+    restrictions for tiled buffers we need to pessimistically assume that we
+    will waste the size of buffer to meet those alignment constraints.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 60aa803dc76bbdfac72da4de4cdc3018717b0884
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Nov 30 20:02:05 2009 +0000
+
+    intel: Only store a buffer in the cache if it is retained.
+    
+    If the kernel immediately frees the backing store for a buffer when
+    marking it purgeable, then there is not point adding to the cache. Free
+    it immediately, instead.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 6f66de982ad6ee6967ec61a7399e600bdd9e5887
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Wed Nov 25 15:09:24 2009 -0600
+
+    Correctly set DRM_MAX_MINOR for all platforms.
+    
+    DRM_MAJOR is platform specific, but not used outside of xf86drm.c
+    that I can find.
+
+commit 9558f6377ffee680d6bec0808bc113b3139b0d5f
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Tue Nov 24 15:03:32 2009 -0500
+
+    Add missing DRM_MAX_MINOR define
+    
+    lost in 500f5b524000ed5930301f4303744cb4c0a19b75
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 82bf52fbcdf1e71840c2024bb2bc05a8daeaafad
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Tue Nov 24 10:31:41 2009 -0600
+
+    More fixups to allow mesa to build
+
+commit 170674a606f6d7869b5fa4457c07e10dd27f2771
+Author: Robert Noland <rnoland@2hip.net>
+Date:   Tue Nov 24 09:27:29 2009 -0600
+
+    Finish fixing the build on FreeBSD
+
+commit 22d46669043d38fcd16efca773f5ed5693c0fb58
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Mon Nov 23 20:51:34 2009 -0500
+
+    Add drmGetDeviceNameFromFd function
+    
+    Determines the /dev filename of the drm fd argument.
+
+commit 500f5b524000ed5930301f4303744cb4c0a19b75
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Mon Nov 23 18:25:08 2009 -0500
+
+    Fix build on *BSD
+    
+    This adds a minimal #ifdef clause to drm.h that we'll push upstream.
+    Once that goes in we can share drm.h between linux, libdrm, and
+    the bsd's.
+
+commit 863e39b56eea0ef95f9bde648fe4868d0b8e3f11
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Mon Nov 23 12:38:40 2009 -0500
+
+    Don't hardcore 'yes', use  in configure.ac output
+    
+    Oops, I assumed intel was always enable, but it just defaults to on.
+
+commit 696fdb11f447b1e77803c4a15ad7062bfb79f0f0
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Mon Nov 23 11:41:15 2009 -0500
+
+    Output summary of enabled features at the end of configure.ac
+
+commit dd6cbe7acb1708a1aa8e101c6ddb80205bd1f63b
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Mon Nov 23 11:25:46 2009 -0500
+
+    Drop duplicated radeon_*.h files in include/drm
+    
+    These files are userspace headers and live in radeon/
+
+commit 6b3cbe7655ee7746c4418e1fb8af136774420dbd
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Fri Nov 20 20:17:26 2009 -0500
+
+    Put mach64_drm.h back in to avoid breaking mesa build
+    
+    We may want to drop mach64 from mesa instead, but that's a different
+    discussion.
+
+commit 4f070d593cfc60b18c6ccb85af785b00ffb51db4
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Fri Nov 20 19:42:59 2009 -0500
+
+    Install kernel headers in ${includedir}/drm
+
+commit 3a87b1f497cc201a6c37fcd779019560ab7746ae
+Author: Pekka Paalanen <pq@iki.fi>
+Date:   Sat Nov 21 01:00:36 2009 +0200
+
+    nouveau: fix DRM headers
+    
+    The nouveau_drmif.h is not the Nouveau DRM kernel ABI file, but purely
+    user space stuff. Remove it, it does not belong in include/drm/.
+    
+    Copy the right header from Nouveau kernel v2.6.31-rc9-757-gaca551c.
+    
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit 10ce0ec18806ae32a5d615c693626a085b0dd7b8
+Merge: 1b064cc b4312b6
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Fri Nov 20 17:09:03 2009 -0500
+
+    Merge remote branch 'origin/master' into libdrm
+
+commit 1b064cc428f03f753699d4d9fbe60453891a8529
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Fri Nov 20 17:08:28 2009 -0500
+
+    Update README
+
+commit b4312b639d56a6cad78953af0fd4f863182007e3
+Author: Maciej Cencora <m.cencora@gmail.com>
+Date:   Wed Nov 18 16:07:13 2009 -0500
+
+    libdrm_radeon: add radeon_bo_is_referenced_by_cs function
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit e8523e087fc5dfe15b0e1af9b30d1ddac5d0314c
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Tue Nov 17 11:15:56 2009 -0500
+
+    Drop stale TODO and unused ChangeLog
+
+commit 4f57abfe66091281c9f59c14e6ea27b524b55d5b
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Tue Nov 17 11:14:54 2009 -0500
+
+    Move libdrm/ up one level
+
+commit 9dd3613073aa2491cef440725fdfa0cf1e8f1a42
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Tue Nov 17 09:46:56 2009 -0500
+
+    Drop shared-core, bsd-core, linux-core and scripts subdirs
+
+commit a66cf9ce68bdf9bd887f91a38ced4b59c129b3c7
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Tue Nov 17 09:46:39 2009 -0500
+
+    Use headers copied from kernel instead of shared-core
+
+commit ba79b1a8c2ea354c89371b5e34e0077f6ecaaa63
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Tue Nov 17 09:39:23 2009 -0500
+
+    Fix typo in i915 pipe_from_crtc_id ioctl struct name
+
+commit 2b42af9a2fd8e35e920d61a212ce6b9c85354289
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Tue Nov 17 09:23:59 2009 -0500
+
+    Copy headers from kernel v2.6.32-rc6-130-g5b8f0be
+
+commit a99680384ad3daaceee05b3b40dc492cf0e52a0f
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Tue Nov 17 09:23:52 2009 -0500
+
+    Add makefile rule to copy headers from kernel tree
+
+commit c20706ffe56cc658a4814f89e391c14f6065ec57
+Author: Francisco Jerez <currojerez@riseup.net>
+Date:   Sun Nov 15 04:10:02 2009 +0100
+
+    nouveau: Update some nouveau_class.h definitions from renouveau.xml.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+    Signed-off-by: Pekka Paalanen <pq@iki.fi>
+
+commit 83a35b68f45cebc70152e55ed3f99db485c9a7cd
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Nov 11 13:04:38 2009 +0000
+
+    intel: Export madvise
+    
+    Wrap the madvise ioctl for use in APPLE_object_purgeable.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+    Acked-by: Jesse Barnes <jbarnes@virtuousgeek.org>
+
+commit 89cc98c0d5c1b43a883f13210c472339dde1a4cf
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Sat Oct 31 02:25:44 2009 +0100
+
+    Only install libdrm_intel.pc if we build libdrm_intel
+
+commit b7ed162d2912d53d03d94f9ceaebf7d96d570c04
+Author: Ben Skeggs <skeggsb@beleth.(none)>
+Date:   Wed Nov 4 17:31:18 2009 +1000
+
+    nouveau: turn another assertion into an error
+    
+    Signed-off-by: Ben Skeggs <skeggsb@beleth.(none)>
+
+commit f4c50630269df4201b89a538cbf8e11646f17d82
+Author: Ben Skeggs <skeggsb@beleth.(none)>
+Date:   Wed Nov 4 15:23:53 2009 +1000
+
+    nouveau: modify api slightly to allow caller to handle reloc failures
+    
+    Signed-off-by: Ben Skeggs <skeggsb@beleth.(none)>
+
+commit a8bdf0e00c0653fd343fd7fd64b5f2e8437bb130
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Tue Oct 27 14:32:40 2009 +1000
+
+    nouveau: add reloc refcnt to pending bo list
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 63910f8aa624be5f2eaa78e08a318d388a22f829
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Tue Nov 3 13:14:32 2009 +1000
+
+    nouveau: drop rendering on the floor rather than asserting if flush fails
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 68c2ac9640a59881d18e2d55f666c2cd4c21e00b
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Mon Nov 2 18:49:40 2009 +1000
+
+    nouveau: update view of available aperture space after each flush
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 6eafd1cf386d93bb9e34660227ca6f26aadfeb32
+Author: Mathias Fröhlich <Mathias.Froehlich@gmx.net>
+Date:   Tue Nov 3 11:41:26 2009 -0500
+
+    radeon: fix allocation
+    
+    The old code increments the command stream size by another kbyte, but does
+    not make sure that the requested packet size fits into the stream. The patch
+    ensures that the whole next packet fits there and rounds the allocated size to
+    a power of two.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit b0b96636dbf93445dd532b09b21fa4fc5ce6bdc7
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Fri Sep 11 13:27:35 2009 -0400
+
+    Add support for vblank events
+    
+    The kernel will now write data to the DRM fd for various event types if
+    requested.  Currently, the only supported event is a vblank event: it contains
+    the vblank count for the event as well as a timestamp from when the event
+    ocurred.  Since the DRM fd is now pollable, it's easy to integrate into
+    existing event loops.
+
+commit 0d7ad7e43ca212b1e9f16cd18f36493cab455e61
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Oct 20 14:19:38 2009 -0700
+
+    intel: Only call clock_gettime once per unreference_final.
+    
+    Notably when freeing a batchbuffer, we often end up freeing many of the
+    buffers it points at as well.  Avoiding repeated calls brings us a 9% CPU
+    win for cairo-gl.
+    
+    [ # ]  backend                         test   min(s) median(s) stddev. count
+    before:
+    [  0]       gl            firefox-talos-gfx   58.941   58.966   0.75%    3/3
+    after:
+    [  0]       gl            firefox-talos-gfx   54.186   54.195   0.49%    3/3
+
+commit 66d2714f5435944a26685be4210e0e0d7138f3db
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Oct 20 13:20:55 2009 -0700
+
+    intel: Improve bo_references performance by skipping the tree walk.
+    
+    If the target we're asking about hasn't ever been used as a relocation
+    target, then it obviously hasn't been used as a target by the batch's reloc
+    tree.  This is the common case for good GL programming where you only map
+    fresh buffers, and gives us a 5% win in cairo-gl.
+    
+    [ # ]  backend                         test   min(s) median(s) stddev. count
+    before:
+    [  0]       gl            firefox-talos-gfx   64.680   64.756   0.06%    3/3
+    after:
+    [  0]       gl            firefox-talos-gfx   60.816   60.970   0.29%    3/3
+
+commit 67628aa39dd74807989492af5451a3a5c0232e39
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Tue Oct 20 12:57:46 2009 +1000
+
+    nouveau: retry if pushbuf ioctl interrupted by signal
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit fdd960a95cca00b19d912a437a2ca3e69fee017e
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Mon Oct 19 09:04:37 2009 +1000
+
+    nouveau: function to return status of bo being referenced in pushbuf
+    
+    Will be used to implement gallium's is_{texture,buffer}_referenced()
+    callbacks properly.
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 3a387a983ec40cd443e22c1f8d9a6b5b5a8fa0d1
+Author: Patrice Mandin <patmandin@gmail.com>
+Date:   Tue Oct 13 22:50:46 2009 +0200
+
+    nouveau: nv30: add render target logbase2 width,height
+
+commit a221e4fd929f77e1851fb0089338f1cd5001ddde
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Oct 13 11:35:05 2009 -0700
+
+    intel: Add the defines for the kernel overlay support landing in 2.6.33.
+
+commit 901bacd29cb5b242f68302b8384de6e193413a49
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Oct 13 15:13:00 2009 +0100
+
+    intel: Fallback to atomic-ops.h [libatomic-ops-dev]
+    
+    Use the external implementation for atomic operations across a wide
+    range of architectures.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 24c905f84120a7b0bcd7c5e86c58e908b9e850f9
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Oct 13 14:25:54 2009 +0100
+
+    configure: Typo in error message.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit fc8f6be5a9bd84e10149770b76ff9353d25ce2a7
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Oct 12 23:58:47 2009 +0100
+
+    configure: Conditionally build libdrm_intel
+    
+    Only build libdrm_intel automatically if we have support for atomic
+    operations. To force configure to build drm pass --enable-intel, which
+    will cause the configure to error if no support is found. Or pass
+    --disable-intel to explicitly prevent libdrm_intel from being built.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit a107e5b12960f64722bff424502a4fc0ad33dc8f
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Oct 8 16:59:17 2009 -0700
+
+    Bump to 2.4.15 for release.
+
+commit 9764061ab1b02e4b7bde1494b121604c5c4d4df8
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Oct 8 15:39:27 2009 -0700
+
+    intel: Remove the asserts about the ignored alignment parameter.
+    
+    I slipped it in with the alloc_tiled changes, since we were explicitly
+    throwing the parameter away.  It caught some bogus released code, which
+    we've now fixed, so remove the asserts to keep old drivers working.
+
+commit 3a7dfcdfafdd6ac83a4d3e7b4c1c52fd901b93ae
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Tue Oct 6 14:34:06 2009 -0700
+
+    intel: Add a bo_alloc function for tiled BOs.
+    
+    This simplifies driver code in handling object allocation, and also gives us
+    an opportunity to possibly cache tiled buffers if it turns out to be a win.
+    
+    [anholt: This is chopped out of the execbuf2 patch, as it seems to be useful
+    separately and cleans up the execbuf2 changes to be more obvious]
+
+commit 02c775fc750b48ae25b6a4af51afbfe090ebada4
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Oct 6 15:25:21 2009 -0700
+
+    intel: Fix up some stale doxygen comments.
+
+commit d70d60529f77ec73322be7b887fd6a3faf133bce
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Oct 6 12:40:42 2009 -0700
+
+    intel: Reformat to the kernel coding style.  Welcome to the 8-space future.
+    
+    This is done with:
+    Lindent *.[ch]
+    perl -pi -e 's|drm_intel_bo \* |drm_intel_bo *|g' *.[ch]
+    perl -pi -e 's|drm_intel_bufmgr \* |drm_intel_bufmgr *|g' *.[ch]
+    perl -pi -e 's|drm_intel_bo_gem \* |drm_intel_bo_gem *|g' *.[ch]
+    perl -pi -e 's|drm_intel_bufmgr_gem \* |drm_intel_bufmgr_gem *|g' *.[ch]
+    perl -pi -e 's|_fake \* |_fake *|g' *.[ch]
+    hand-editing to whack indented comments into line and other touchups.
+
+commit 3c9bd068e0aa8069f71e8193b82b231d6513ce35
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Oct 5 16:35:32 2009 -0700
+
+    intel: Don't allocate more relocation entries than the BO could support.
+    
+    This saves 32k of relocation entry storage for many 965 state buffers.  No
+    noticeable impact on performance for cairo-gl firefox.
+
+commit ac34f599eabcfc414d4d3300063988d4749813f4
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Oct 3 23:17:57 2009 +0100
+
+    tests: Disable intel-specific tests with --disable-intel
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit ab3300c5816ee26e2d74ac99e2d84c3dfd7cdf82
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Oct 3 22:56:04 2009 +0100
+
+    intel: Add a configure option to *disable* building libdrm-intel
+    
+    In conjunction with the atomic operation patch, it may be more
+    convenient for some people to disable building libdrm-intel and its
+    dependencies upon the atomic intrinsics then it is for them to use a
+    supported compiler.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 61bddf8504461fad3e45fbf0d32956a76e0dd343
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Sep 20 03:11:59 2009 +0100
+
+    intel: report errno
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 11f0e450dd7d711eb69aa9c27ed4aa72d913d697
+Author: Michel Dänzer <daenzer@vmware.com>
+Date:   Sat Oct 3 17:37:07 2009 +0200
+
+    libdrm_radeon: Update RADEON_TILING_* flags to what's in current kernels.
+
+commit a5fb264257651d50afe84be7e20f91df41242aa8
+Author: Nicolai Hähnle <nhaehnle@gmail.com>
+Date:   Sat Oct 3 13:43:42 2009 +0200
+
+    libdrm_radeon: Zero-initialize structures to silence valgrind warnings
+    
+    Signed-off-by: Nicolai Hähnle <nhaehnle@gmail.com>
+
+commit 04495eeec2f053be17a10cc82e646a1e23ed3830
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Oct 2 04:39:22 2009 +0100
+
+    intel: Use atomic refcounters
+    
+    As the target architecture for Intel GPUs is the x86, we can presume to
+    have reasonable compiler support for Intel atomic intrinsics, i.e. gcc,
+    and so use those in preference to pulling in a complicated mess of
+    fragile assembly.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+    [anholt: hand-resolved against my previous commit.  This brings cairo-gl
+    firefox-talos-gfx time from 65 seconds back down to 62 seconds.]
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+
+commit 0fb215ae3199b5be0c9a9474e5941f8d8998c11a
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Oct 2 04:31:34 2009 +0100
+
+    intel: Mark cached bo as purgeable
+    
+    Set the DONTNEED flag on cached buffers so that the kernel is free to
+    discard those when under memory pressure.
+    
+    [anholt: This takes firefox-talos-gfx time from ~62 seconds to ~65 seconds
+    on my GM965, but it seems like a hit worth taking for the improved
+    functionality from saving memory]
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+
+commit 12d9b7cc8550c1999e5c39a38b1b14e654f49065
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Oct 2 11:11:31 2009 -0700
+
+    intel: Don't free the reloc list when putting a freed BO in the cache.
+    
+    This takes firefox-talos-gfx from 74 seconds to 70 seconds on my GM965.
+
+commit 769b10578083aa7bbee0052246d8ea6000435ae8
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Oct 1 19:09:26 2009 -0700
+
+    intel: Add a new function to check if a BO's reloc tree references some BO.
+    
+    There are a bunch of places in GL where if we can't do this we have to
+    flush the batchbuffer, and the cost of lookups here is outweighed by flush
+    savings.
+
 commit ac71f0849928f4b2fbb69c01304ac6f9df8916a1
 Author: Eric Anholt <eric@anholt.net>
 Date:   Mon Sep 21 15:29:58 2009 -0700
