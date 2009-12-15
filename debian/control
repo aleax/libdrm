@@ -20,7 +20,7 @@ Package: libdrm-dev
 Section: libdevel
 Architecture: any
 Depends:
- linux-libc-dev (>= 2.6.28) [linux-any],
+ linux-libc-dev (>= 2.6.32) [linux-any],
  libdrm2 (= ${binary:Version}),
  libdrm-intel1 (= ${binary:Version}) [amd64 i386 kfreebsd-amd64 kfreebsd-i386],
  libdrm-radeon1 (= ${binary:Version}) [linux-any],

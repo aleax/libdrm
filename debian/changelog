@@ -11,6 +11,10 @@ libdrm (2.4.16-1) UNRELEASED; urgency=low
   * Enable libdrm_radeon, interface to kernel graphics memory management on
     radeon (closes: #558786).
 
+  [ Brice Goglin ]
+  * Bump linux-libc-dev dependency to 2.6.32, thanks Piotr Engelking,
+    closes: #561224.
+
  -- Brice Goglin <bgoglin@debian.org>  Fri, 11 Dec 2009 22:37:48 +0100
 
 libdrm (2.4.15-1) unstable; urgency=low
