@@ -50,8 +50,8 @@ libdrm_nouveau.so.1 libdrm-nouveau1 #MINVER#
  nouveau_pushbuf_emit_reloc@Base 2.4.4
  nouveau_pushbuf_flush@Base 2.4.4
  nouveau_pushbuf_init@Base 2.4.4
- nouveau_pushbuf_marker_emit@Base 2.4.16-1ubuntu1
- nouveau_pushbuf_marker_undo@Base 2.4.16-1ubuntu1
+ nouveau_pushbuf_marker_emit@Base 2.4.16
+ nouveau_pushbuf_marker_undo@Base 2.4.16
  nouveau_resource_alloc@Base 2.4.4
  nouveau_resource_free@Base 2.4.4
  nouveau_resource_init@Base 2.4.4
