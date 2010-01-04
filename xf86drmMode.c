@@ -241,6 +241,18 @@ drmModeFBPtr drmModeGetFB(int fd, uint32_t buf)
 	return r;
 }
 
+int drmModeDirtyFB(int fd, uint32_t bufferId,
+		   drmModeClipPtr clips, uint32_t num_clips)
+{
+	struct drm_mode_fb_dirty_cmd dirty = { 0 };
+
+	dirty.fb_id = bufferId;
+	dirty.clips_ptr = VOID2U64(clips);
+	dirty.num_clips = num_clips;
+
+	return drmIoctl(fd, DRM_IOCTL_MODE_DIRTYFB, &dirty);
+}
+
 
 /*
  * Crtc functions
@@ -700,7 +712,17 @@ int drmHandleEvent(int fd, drmEventContextPtr evctx)
 					      vblank->tv_usec,
 					      U642VOID (vblank->user_data));
 			break;
-			
+		case DRM_EVENT_FLIP_COMPLETE:
+			if (evctx->version < 2 ||
+			    evctx->page_flip_handler == NULL)
+				break;
+			vblank = (struct drm_event_vblank *) e;
+			evctx->page_flip_handler(fd,
+						 vblank->sequence,
+						 vblank->tv_sec,
+						 vblank->tv_usec,
+						 U642VOID (vblank->user_data));
+			break;
 		default:
 			break;
 		}
@@ -710,3 +732,16 @@ int drmHandleEvent(int fd, drmEventContextPtr evctx)
 	return 0;
 }
 
+int drmModePageFlip(int fd, uint32_t crtc_id, uint32_t fb_id,
+		    uint32_t flags, void *user_data)
+{
+	struct drm_mode_crtc_page_flip flip;
+
+	flip.fb_id = fb_id;
+	flip.crtc_id = crtc_id;
+	flip.user_data = VOID2U64(user_data);
+	flip.flags = flags;
+	flip.reserved = 0;
+
+	return drmIoctl(fd, DRM_IOCTL_MODE_PAGE_FLIP, &flip);
+}
