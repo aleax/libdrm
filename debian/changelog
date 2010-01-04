@@ -8,7 +8,7 @@ libdrm (2.4.16-1ubuntu1) UNRELEASED; urgency=low
 
  -- Timo Aaltonen <tjaalton@ubuntu.com>  Tue, 15 Dec 2009 21:09:25 +0200
 
-libdrm (2.4.16-1) UNRELEASED; urgency=low
+libdrm (2.4.17-1) UNRELEASED; urgency=low
 
   [ Julien Cristau ]
   * New upstream release, closes: #560434.
