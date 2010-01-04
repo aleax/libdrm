@@ -1,10 +1,9 @@
-libdrm (2.4.16-1ubuntu1) UNRELEASED; urgency=low
+libdrm (2.4.17-0ubuntu1) UNRELEASED; urgency=low
 
   * Merge with Debian unstable, remaining changes:
     + control, rules, libdrm-nouveau1.symbols: Enable libdrm_nouveau.
-    + patches/02_silent_master.diff: Don't write to stderr when the
-      drm master is set or dropped.
   * Update libdrm-nouveau1.symbols and shlibs.
+  * Drop 02_silent_master.diff, applied upstream.
 
  -- Timo Aaltonen <tjaalton@ubuntu.com>  Tue, 15 Dec 2009 21:09:25 +0200
 
