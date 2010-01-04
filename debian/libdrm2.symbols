@@ -81,6 +81,7 @@ libdrm.so.2 libdrm2 #MINVER#
  drmModeCrtcGetGamma@Base 2.4.3
  drmModeCrtcSetGamma@Base 2.4.3
  drmModeDetachMode@Base 2.4.3
+ drmModeDirtyFB@Base 2.4.17
  drmModeFreeConnector@Base 2.4.3
  drmModeFreeCrtc@Base 2.4.3
  drmModeFreeEncoder@Base 2.4.3
@@ -97,6 +98,7 @@ libdrm.so.2 libdrm2 #MINVER#
  drmModeGetPropertyBlob@Base 2.4.3
  drmModeGetResources@Base 2.4.3
  drmModeMoveCursor@Base 2.4.3
+ drmModePageFlip@Base 2.4.17
  drmModeRmFB@Base 2.4.3
  drmModeSetCrtc@Base 2.4.3
  drmModeSetCursor@Base 2.4.3
