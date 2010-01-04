@@ -1,4 +1,4 @@
-libdrm (2.4.16-1) UNRELEASED; urgency=low
+libdrm (2.4.17-1) UNRELEASED; urgency=low
 
   [ Julien Cristau ]
   * New upstream release, closes: #560434.

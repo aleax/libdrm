@@ -1,3 +1,152 @@
+commit fdb33d56de3edf27f24c6db0e6beaed823f7bc38
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Dec 21 15:03:31 2009 +1000
+
+    libdrm 2.4.17
+
+commit 6de39fc73050a386a39c53e522098a0a784e7ff8
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Dec 21 14:59:48 2009 +1000
+
+    radeon: fix BO null check, should be in higher level fn
+
+commit 125994ab30d4f0f126c62fa741ec62a52d69d7a8
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Dec 17 14:11:55 2009 +1000
+
+    radeon: straighten out the API insanity.
+    
+    as Michel pointed out we are exposing too much info for these object
+    for this to be maintainable going forward.
+    
+    This patch set minimises the exposed parts of the radeon_bo and
+    radeon_cs objects to the piece necessary for ddx/mesa to operate
+    at a decent speed.
+    
+    The major problem is mesa contains a legacy BO/CS managers which we still
+    need to expose functionality to, and we really cannot change the API
+    until we can drop the non-KMS codepaths.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit f1660c249198b5cc14ebbb75107da7bcb6972033
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Thu Dec 17 13:07:18 2009 +1000
+
+    nouveau: remove delayed kernel bo creation
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit fbc8b2d95f5da096ee771a3e2ef6f89306679e89
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Wed Dec 9 10:37:40 2009 -0500
+
+    Be less chatty in drmSetMaster/drmDropMaster
+
+commit 59d97e7d6807d9cd076d4e8374aca1d9e8027a6b
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Wed Dec 9 10:36:53 2009 -0500
+
+    modetest: Error out if pageflipping is requested but not available
+
+commit edc77dd291594e017ca0ee96a785412107ebff74
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Wed Dec 9 14:50:15 2009 +1000
+
+    nouveau: Use drmIoctl so we restart ioctl on EINTR or EAGAIN
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 7c82527b4fd4ec1642be20d8bba2d10f045c87ef
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Wed Dec 9 13:15:07 2009 +1000
+
+    nouveau: move reloc code down, nothing to see here
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 08371bc29013370558728dcbeeed6a23ad2f5a70
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Dec 8 22:35:24 2009 +0000
+
+    intel: Clear virtual after failing to mmap_gtt.
+    
+    Don't store the error return in bo_gem->gtt_virtual or else we will
+    attempt to use that as a valid pointer in future mappings.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 28eae30689610faa0fe043ab869587e7699e82bf
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Fri Dec 4 16:07:51 2009 +0100
+
+    Ignore config.h.in
+
+commit b84314a86ea4ad30e0f57a71b4ef0fa138fb24c6
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Mon Dec 7 18:30:52 2009 +0100
+
+    radeon: Use drmIoctl so we restart ioctl on EINTR or EAGAIN
+    
+    This is needed as change in kernel will lead to ioctl returning
+    EINTR if they are interrupted.
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 9707733a130098a7d9959e72ebd782d8119a23d3
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Dec 1 23:01:34 2009 +0000
+
+    intel: Expect caller to guarantee thread-safety of bo during reloc
+    
+    This removes the foremost prolific user of mutexes in libdrm_intel.so.
+    The other uses of the bufmgr_gem->mutex to serial access to individual
+    bos are currently required by Mesa, and are far less frequent.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+    [anholt: This chunk looks good...]
+    Acked-by: Eric Anholt <eric@anholt.net>
+
+commit 6f1eba0548cd6a96e91a4e8be7b91ba6a936eb98
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Fri Dec 4 09:09:19 2009 -0800
+
+    modetest: fix build error due to page_flip_handler name change
+    
+    Forgot to update this when pushing the pageflip bits.
+
+commit 3bd834a2178ee1273fd84628e87210a500f8fc84
+Merge: be957cc ac5595a
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Wed Dec 2 19:40:58 2009 +0100
+
+    Merge branch 'modesetting-dirty-libdrm'
+    
+    Conflicts:
+    	include/drm/drm.h
+
+commit be957cc219d0811e2d1ed2a56549a03cb64a0f4b
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Thu Dec 3 17:49:31 2009 -0500
+
+    Add RELEASING to document the release process
+
+commit 14f5958f7fd9ebe8a772ea931feb044d2d5d967b
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Thu Dec 3 14:20:51 2009 -0800
+
+    Bump event context structure version for page flipping
+
+commit 53addc5d6ef7406d9fab5ea481cf68fa011870f1
+Merge: db50f51 ee746a8
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Thu Dec 3 14:17:26 2009 -0800
+
+    Merge branch 'pageflip' of git://people.freedesktop.org/~jbarnes/drm
+    
+    Conflicts:
+    	include/drm/drm.h - RMFB had its signature changed to avoid uint32_t
+
 commit db50f5127421ac8f4e3ce4eb7c27d27475781488
 Author: Kristian Høgsberg <krh@bitplanet.net>
 Date:   Thu Dec 3 11:31:27 2009 -0500
@@ -9,6 +158,12 @@ Author: Kristian Høgsberg <krh@bitplanet.net>
 Date:   Thu Dec 3 11:27:16 2009 -0500
 
     Enable experimental APIs for distcheck
+
+commit ac5595abc1c28b2c10a1463143e83d17415736f1
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Wed Dec 2 19:39:16 2009 +0100
+
+    Change the number on the dirty ioctl to match upstream
 
 commit 57473c7f523f476ffa54c34e0c6312ffa66dcc5c
 Author: Chris Wilson <chris@chris-wilson.co.uk>
@@ -145,6 +300,18 @@ Date:   Mon Nov 30 20:02:05 2009 +0000
     
     Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
 
+commit 019a408a69896497ca728b703c349306efd1a225
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Mon Nov 30 00:40:51 2009 +0000
+
+    Change the dirty ioctl a bit and comment it
+
+commit 3e48613b482a8ca01ea5719e9cc342a9d4b28db0
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Tue Nov 24 18:00:12 2009 +0100
+
+    Bring dirty code from old branch
+
 commit 6f66de982ad6ee6967ec61a7399e600bdd9e5887
 Author: Robert Noland <rnoland@2hip.net>
 Date:   Wed Nov 25 15:09:24 2009 -0600
@@ -244,6 +411,24 @@ Date:   Sat Nov 21 01:00:36 2009 +0200
     
     Signed-off-by: Pekka Paalanen <pq@iki.fi>
 
+commit ee746a83cecd99d4c380fbc5d391399a6d9fde9e
+Author: Jesse Barnes <jbarnes@jbarnes-desktop.localdomain>
+Date:   Tue Nov 17 21:39:17 2009 +0000
+
+    Bump libdrm version to 2.4.16 for page flipping
+
+commit 1e1b3c0a93281ce8df42bbdddfe3e51dccc4d5ea
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Tue Nov 17 15:32:23 2009 -0500
+
+    modetest: add pageflip test case to modetest
+
+commit b80bcffba6175c53ebe1f1bd02730de0338cc039
+Author: Kristian Høgsberg <krh@sasori.(none)>
+Date:   Thu Nov 12 14:06:45 2009 -0500
+
+    libdrm: add libdrm support for page flip ioctl
+
 commit 10ce0ec18806ae32a5d615c693626a085b0dd7b8
 Merge: 1b064cc b4312b6
 Author: Kristian Høgsberg <krh@bitplanet.net>
@@ -264,6 +449,12 @@ Date:   Wed Nov 18 16:07:13 2009 -0500
     libdrm_radeon: add radeon_bo_is_referenced_by_cs function
     
     Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 2577764a5069ca9276e90154915797bcf873adab
+Author: Jesse Barnes <jbarnes@jbarnes-desktop.localdomain>
+Date:   Tue Nov 17 20:07:48 2009 +0000
+
+    drm/i915: add GETPARAM request for page flipping
 
 commit e8523e087fc5dfe15b0e1af9b30d1ddac5d0314c
 Author: Kristian Høgsberg <krh@bitplanet.net>
