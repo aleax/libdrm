@@ -1,11 +1,11 @@
-libdrm (2.4.17-0ubuntu1) UNRELEASED; urgency=low
+libdrm (2.4.17-0ubuntu1) lucid; urgency=low
 
   * Merge with Debian unstable, remaining changes:
     + control, rules, libdrm-nouveau1.symbols: Enable libdrm_nouveau.
   * Update libdrm-nouveau1.symbols and shlibs.
   * Drop 02_silent_master.diff, applied upstream.
 
- -- Timo Aaltonen <tjaalton@ubuntu.com>  Tue, 15 Dec 2009 21:09:25 +0200
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Sat, 09 Jan 2010 00:00:29 +0200
 
 libdrm (2.4.17-1) UNRELEASED; urgency=low
 
