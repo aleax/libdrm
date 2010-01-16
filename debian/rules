@@ -61,10 +61,10 @@ configure: $(STAMP_DIR)/patch
 	dh_testdir
 	autoreconf -vfi
 
-obj-$(DEB_BUILD_GNU_TYPE)/config.status: configure
+build/config.status: configure
 	dh_testdir
-	test -d obj-$(DEB_BUILD_GNU_TYPE) || mkdir obj-$(DEB_BUILD_GNU_TYPE)
-	cd obj-$(DEB_BUILD_GNU_TYPE) && \
+	test -d build || mkdir build
+	cd build && \
 	../configure \
 		--prefix=/usr \
 		--mandir=\$${prefix}/share/man \
@@ -74,9 +74,9 @@ obj-$(DEB_BUILD_GNU_TYPE)/config.status: configure
 		CFLAGS="$(CFLAGS)"
 
 build: build-stamp
-build-stamp: obj-$(DEB_BUILD_GNU_TYPE)/config.status
+build-stamp: build/config.status
 	dh_testdir
-	cd obj-$(DEB_BUILD_GNU_TYPE) && $(MAKE)
+	cd build && $(MAKE)
 	>$@
 
 clean: xsfclean
@@ -88,7 +88,7 @@ clean: xsfclean
 	rm -f */config.cache */config.log */config.status
 	rm -f conftest* */conftest*
 	rm -rf autom4te.cache */autom4te.cache
-	rm -rf obj-*
+	rm -rf build
 	rm -f $$(find -name Makefile.in)
 	rm -f compile config.guess config.sub configure depcomp install-sh
 	rm -f ltmain.sh missing INSTALL aclocal.m4 config.h.in mkinstalldirs
@@ -102,7 +102,7 @@ install: build
 	dh_clean -k
 	dh_installdirs
 
-	cd obj-$(DEB_BUILD_GNU_TYPE) && $(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
+	cd build && $(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
 ifeq (linux, $(DEB_HOST_ARCH_OS))
 	# remove files provided by linux-libc-dev
 	for file in drm_mode.h drm_sarea.h drm.h i915_drm.h mga_drm.h r128_drm.h radeon_drm.h savage_drm.h sis_drm.h via_drm.h; do \

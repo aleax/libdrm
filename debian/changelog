@@ -10,6 +10,8 @@ libdrm (2.4.17-1) UNRELEASED; urgency=low
     #558443).  Thanks, Sergio Gelato!
   * Enable libdrm_radeon, interface to kernel graphics memory management on
     radeon (closes: #558786).
+  * Rename the build directory to not include DEB_BUILD_GNU_TYPE for no
+    good reason.  Thanks, Colin Watson!
 
   [ Brice Goglin ]
   * Bump linux-libc-dev dependency to 2.6.32, thanks Piotr Engelking,
