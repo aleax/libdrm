@@ -1,4 +1,4 @@
-libdrm (2.4.17-1) UNRELEASED; urgency=low
+libdrm (2.4.17-1) unstable; urgency=low
 
   [ Julien Cristau ]
   * New upstream release, closes: #560434, #567831.
@@ -23,7 +23,7 @@ libdrm (2.4.17-1) UNRELEASED; urgency=low
   [ Timo Aaltonen ]
   * Update libdrm2.symbols and shlibs.
 
- -- Timo Aaltonen <tjaalton@ubuntu.com>  Mon, 04 Jan 2010 14:00:50 +0200
+ -- Brice Goglin <bgoglin@debian.org>  Sun, 31 Jan 2010 20:12:38 +0100
 
 libdrm (2.4.15-1) unstable; urgency=low
 
