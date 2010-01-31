@@ -32,8 +32,27 @@ License:
 
 ------------------------------------------------------------------------
 
- Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
- Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
+ Copyright (c) 1998-2003 VIA Technologies, Inc.
+ Copyright (c) 1999 Wittawat Yamwong
+ Copyright (c) 1999, 2000 Precision Insight, Inc., Cedar Park, Texas.
+ Copyright (c) 2000 VA Linux Systems, Inc., Sunnyvale, California.
+ Copyright (c) 2000 Gareth Hughes
+ Copyright (c) 2001-2003 S3 Graphics, Inc.
+ Copyright (c) 2002 Frank C. Earl
+ Copyright (c) 2002-2003 Leif Delgass
+ Copyright (c) 2002-2003, 2006-2008 Tungsten Graphics, Inc., Cedar Park, TX., USA
+ Copyright (c) 2004 Felix Kuehling
+ Copyright (c) 2005 Eric Anholt
+ Copyright (c) 2005 Stephane Marchesin.
+ Copyright (c) 2006-2008 Dmitry Baryshkov, Laurent Carlier, Matthieu Castet,
+   Dawid Gajownik, Jeremy Kolb, Stephane Loeuillet, Patrice Mandin,
+   Stephane Marchesin, Serge Martin, Sylvain Munaut, Simon Raffeiner,
+   Ben Skeggs, Erik Waling
+ Copyright (c) 2007 Nouveau Project
+ Copyright (c) 2007-2008 Dave Airlie <airlied@linux.ie>
+ Copyright (c) 2007-2008 Jakob Bornecrantz <wallbraker@gmail.com>
+ Copyright (c) 2007-2009 Intel Corporation
+ Copyright (c) 2008 Red Hat Inc.
  All Rights Reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining

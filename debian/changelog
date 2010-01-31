@@ -17,6 +17,7 @@ libdrm (2.4.17-1) UNRELEASED; urgency=low
   [ Brice Goglin ]
   * Bump linux-libc-dev dependency to 2.6.32, thanks Piotr Engelking,
     closes: #561224.
+  * Update debian/copyright.
 
   [ Timo Aaltonen ]
   * Update libdrm2.symbols and shlibs.
