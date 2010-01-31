@@ -1,7 +1,7 @@
 libdrm (2.4.17-1) UNRELEASED; urgency=low
 
   [ Julien Cristau ]
-  * New upstream release, closes: #560434.
+  * New upstream release, closes: #560434, #567831.
   * Update patch 01_default_perms.diff to account for upstream move of libdrm
     to toplevel.
   * Update libdrm2.symbols and shlibs.
