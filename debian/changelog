@@ -28,8 +28,11 @@ libdrm (2.4.17-1ubuntu1) UNRELEASED; urgency=low
   * debian/patches/08_nouveau_no_flush_notify_on_channel_free.diff:
     + Patch taken from git.  Avoid calling flush_notify when part of the 
       channel's context might be freed.
-  
- -- Christopher James Halse Rogers <raof@ubuntu.com>  Mon, 01 Feb 2010 12:50:59 +1100
+  * debian/patchs/09_add_BEGIN_RING_NI.diff:
+    + Patch taken from git.  Add BEGIN_RING_NI inline to nouveau_pushbuf.h.
+      Used in nv50 accel code.
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Mon, 01 Feb 2010 15:55:14 +1100
 
 libdrm (2.4.17-1) unstable; urgency=low
 

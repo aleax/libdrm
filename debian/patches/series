@@ -6,3 +6,4 @@
 06_nouveau_free_objects_on_channel_close.diff
 07_nouveau_fix_mem_leak_on_channel_free.diff
 08_nouveau_no_flush_notify_on_channel_free.diff
+09_add_BEGIN_RING_NI.diff
