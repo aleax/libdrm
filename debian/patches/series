@@ -1,2 +1,5 @@
 01_default_perms.diff
 02_fix_kms_detection_with_linux_backport_modules.diff
+03_update_nouveau_defines_1.diff
+04_update_nouveau_defines_2.diff
+05_update_nouveau_defines_3.diff

@@ -14,6 +14,10 @@ libdrm (2.4.17-1ubuntu1) UNRELEASED; urgency=low
       /sys/.../drm/.  linux-backport-modules-nouveau has the drm module renamed
       to lbm_drm to avoid conflicts with other modules' drm.  This fixes
       drmCheckModesettingAvailable when using linux-backports-modules-nouveau.
+  * debian/patches/03_update_nouveau_defines_1.diff:
+  * debian/patches/04_update_nouveau_defines_2.diff:
+  * debian/patches/05_update_nouveau_defines_3.diff:
+    + Update #defines in nouveau headers to make allow recent DDXs to build.
 
  -- Christopher James Halse Rogers <raof@ubuntu.com>  Mon, 01 Feb 2010 12:50:59 +1100
 
