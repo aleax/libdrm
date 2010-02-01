@@ -48,6 +48,7 @@ libdrm_nouveau.so.1 libdrm-nouveau1 #MINVER#
  nouveau_notifier_status@Base 2.4.4
  nouveau_notifier_wait_status@Base 2.4.4
  nouveau_pushbuf_emit_reloc@Base 2.4.4
+ nouveau_pushbuf_fini@Base 2.4.17-1ubuntu1~
  nouveau_pushbuf_flush@Base 2.4.4
  nouveau_pushbuf_init@Base 2.4.4
  nouveau_pushbuf_marker_emit@Base 2.4.16

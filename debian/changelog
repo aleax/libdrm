@@ -23,6 +23,8 @@ libdrm (2.4.17-1ubuntu1) UNRELEASED; urgency=low
   * debian/patches/07_nouveau_fix_mem_leak_on_channel_free.diff:
     + Patches taken from git.  Fix a couple of memory leaks when freeing
       channels
+  * debian/libdrm-nouveau1.symbols:
+    + Add new symbol added in 06_nouveau_free_objects_on_channel_close.
   * debian/patches/08_nouveau_no_flush_notify_on_channel_free.diff:
     + Patch taken from git.  Avoid calling flush_notify when part of the 
       channel's context might be freed.
