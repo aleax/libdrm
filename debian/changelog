@@ -9,8 +9,13 @@ libdrm (2.4.17-1ubuntu1) UNRELEASED; urgency=low
     + libdrm-dev: Only Depend on libdrm-nouveau1 on linux-any.
   * debian/copyright:
     + Remove copyright section for no-longer-shipped add_libdrm-nouveau.patch.
+  * debian/patches/02_fix_kms_detection_with_linux_backport_modules.diff:
+    + Add /sys/.../lbm-drm/ to search path for controlD* file, as well as
+      /sys/.../drm/.  linux-backport-modules-nouveau has the drm module renamed
+      to lbm_drm to avoid conflicts with other modules' drm.  This fixes
+      drmCheckModesettingAvailable when using linux-backports-modules-nouveau.
 
- -- Christopher James Halse Rogers <raof@ubuntu.com>  Mon, 01 Feb 2010 12:37:07 +1100
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Mon, 01 Feb 2010 12:50:59 +1100
 
 libdrm (2.4.17-1) unstable; urgency=low
 
