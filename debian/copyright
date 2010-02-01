@@ -32,8 +32,27 @@ License:
 
 ------------------------------------------------------------------------
 
- Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
- Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
+ Copyright (c) 1998-2003 VIA Technologies, Inc.
+ Copyright (c) 1999 Wittawat Yamwong
+ Copyright (c) 1999, 2000 Precision Insight, Inc., Cedar Park, Texas.
+ Copyright (c) 2000 VA Linux Systems, Inc., Sunnyvale, California.
+ Copyright (c) 2000 Gareth Hughes
+ Copyright (c) 2001-2003 S3 Graphics, Inc.
+ Copyright (c) 2002 Frank C. Earl
+ Copyright (c) 2002-2003 Leif Delgass
+ Copyright (c) 2002-2003, 2006-2008 Tungsten Graphics, Inc., Cedar Park, TX., USA
+ Copyright (c) 2004 Felix Kuehling
+ Copyright (c) 2005 Eric Anholt
+ Copyright (c) 2005 Stephane Marchesin.
+ Copyright (c) 2006-2008 Dmitry Baryshkov, Laurent Carlier, Matthieu Castet,
+   Dawid Gajownik, Jeremy Kolb, Stephane Loeuillet, Patrice Mandin,
+   Stephane Marchesin, Serge Martin, Sylvain Munaut, Simon Raffeiner,
+   Ben Skeggs, Erik Waling
+ Copyright (c) 2007 Nouveau Project
+ Copyright (c) 2007-2008 Dave Airlie <airlied@linux.ie>
+ Copyright (c) 2007-2008 Jakob Bornecrantz <wallbraker@gmail.com>
+ Copyright (c) 2007-2009 Intel Corporation
+ Copyright (c) 2008 Red Hat Inc.
  All Rights Reserved.
 
  Permission is hereby granted, free of charge, to any person obtaining
@@ -56,26 +75,3 @@ License:
  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  DEALINGS IN THE SOFTWARE.
-
-------------------------------------------------------------------------
-
-Files: debian/patches/02_add_libdrm-nouveau.patch
-Copyright: © 2007-2008 Nouveau Project
-License: BSD
-  Permission is hereby granted, free of charge, to any person obtaining a
-  copy of this software and associated documentation files (the "Software"),
-  to deal in the Software without restriction, including without limitation
-  the rights to use, copy, modify, merge, publish, distribute, sublicense,
-  and/or sell copies of the Software, and to permit persons to whom the
-  Software is furnished to do so, subject to the following conditions:
-  .
-  The above copyright notice and this permission notice shall be included in
-  all copies or substantial portions of the Software.
-  .
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
-  THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
-  OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-  SOFTWARE.

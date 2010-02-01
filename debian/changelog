@@ -1,3 +1,44 @@
+libdrm (2.4.17-1ubuntu1) UNRELEASED; urgency=low
+
+  * Merge from Debian unstable.  Previous merge was from the unreleased
+    2.4.17-1 in pkg-xorg git.  This merge picks up the finalised changelog
+    and few extra changes.  Remaining Ubuntu changes:
+    + rules, control, libdrm-nouveau1.symbols, libdrm-nouveau1.install:
+      Enable libdrm_nouveau
+  * debian/control:
+    + libdrm-dev: Only Depend on libdrm-nouveau1 on linux-any.
+  * debian/copyright:
+    + Remove copyright section for no-longer-shipped add_libdrm-nouveau.patch.
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Mon, 01 Feb 2010 12:37:07 +1100
+
+libdrm (2.4.17-1) unstable; urgency=low
+
+  [ Julien Cristau ]
+  * New upstream release, closes: #560434, #567831.
+  * Update patch 01_default_perms.diff to account for upstream move of libdrm
+    to toplevel.
+  * Update libdrm2.symbols and shlibs.
+  * Update libdrm-intel1.symbols and shlibs.
+  * Bump debhelper build-dep, we use dh_strip --remaining-packages (closes:
+    #558443).  Thanks, Sergio Gelato!
+  * Enable libdrm_radeon, interface to kernel graphics memory management on
+    radeon (closes: #558786).
+  * Rename the build directory to not include DEB_BUILD_GNU_TYPE for no
+    good reason.  Thanks, Colin Watson!
+  * Remove myself from Uploaders
+
+  [ Brice Goglin ]
+  * Bump linux-libc-dev dependency to 2.6.32, thanks Piotr Engelking,
+    closes: #561224.
+  * Add libdrm-radeon1 symbols and update shlibs.
+  * Update debian/copyright.
+
+  [ Timo Aaltonen ]
+  * Update libdrm2.symbols and shlibs.
+
+ -- Brice Goglin <bgoglin@debian.org>  Sun, 31 Jan 2010 20:12:38 +0100
+
 libdrm (2.4.17-0ubuntu1) lucid; urgency=low
 
   * Merge with Debian unstable, remaining changes:
