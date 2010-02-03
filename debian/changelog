@@ -34,6 +34,13 @@ libdrm (2.4.17-1ubuntu1) UNRELEASED; urgency=low
 
  -- Christopher James Halse Rogers <raof@ubuntu.com>  Mon, 01 Feb 2010 15:55:14 +1100
 
+libdrm (2.4.17-0ubuntu2) lucid; urgency=low
+
+  * Enable libdrm-intel for ports architectures (LP: #507765)
+  * Adjust libdrm-dev dependencies to reflect nouveau being linux-any
+
+ -- Emmet Hikory <persia@ubuntu.com>  Fri, 15 Jan 2010 12:31:40 +0900
+
 libdrm (2.4.17-1) unstable; urgency=low
 
   [ Julien Cristau ]

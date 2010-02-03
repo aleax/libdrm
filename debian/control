@@ -23,7 +23,7 @@ Architecture: any
 Depends:
  linux-libc-dev (>= 2.6.32) [linux-any],
  libdrm2 (= ${binary:Version}),
- libdrm-intel1 (= ${binary:Version}) [amd64 i386 kfreebsd-amd64 kfreebsd-i386],
+ libdrm-intel1 (= ${binary:Version}) [linux-any kfreebsd-any]
  libdrm-radeon1 (= ${binary:Version}) [linux-any],
  libdrm-nouveau1 (= ${binary:Version}) [linux-any]
 Description: Userspace interface to kernel DRM services -- development files
@@ -64,7 +64,7 @@ Description: Userspace interface to kernel DRM services -- debugging symbols
 
 Package: libdrm-intel1
 Section: libs
-Architecture: amd64 i386 kfreebsd-amd64 kfreebsd-i386
+Architecture: linux-any kfreebsd-any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Userspace interface to intel-specific kernel DRM services -- runtime
  This library implements the userspace interface to the intel-specific kernel
@@ -75,7 +75,7 @@ Description: Userspace interface to intel-specific kernel DRM services -- runtim
 Package: libdrm-intel1-dbg
 Section: debug
 Priority: extra
-Architecture: amd64 i386 kfreebsd-amd64 kfreebsd-i386
+Architecture: linux-any kfreebsd-any
 Depends: libdrm-intel1 (= ${binary:Version}), ${misc:Depends}
 Description: Userspace interface to intel-specific kernel DRM services -- debugging symbols
  This library implements the userspace interface to the kernel DRM services.

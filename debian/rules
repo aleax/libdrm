@@ -36,11 +36,8 @@ else
 	RADEON = no
 endif
 
-# only build libdrm-intel on x86
-ifneq (,$(filter amd64 i386,$(DEB_HOST_ARCH_CPU)))
 ifneq (,$(filter linux kfreebsd,$(DEB_HOST_ARCH_OS)))
 	INTEL = yes
-endif
 endif
 
 ifeq ($(INTEL), yes)
