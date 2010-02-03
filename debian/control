@@ -23,7 +23,7 @@ Architecture: any
 Depends:
  linux-libc-dev (>= 2.6.32) [linux-any],
  libdrm2 (= ${binary:Version}),
- libdrm-intel1 (= ${binary:Version}) [linux-any kfreebsd-any]
+ libdrm-intel1 (= ${binary:Version}) [linux-any kfreebsd-any],
  libdrm-radeon1 (= ${binary:Version}) [linux-any],
  libdrm-nouveau1 (= ${binary:Version}) [linux-any]
 Description: Userspace interface to kernel DRM services -- development files
