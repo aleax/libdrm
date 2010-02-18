@@ -1,3 +1,454 @@
+commit 2d9990c7e8020d28fec4f581493696087def904f
+Author: Carl Worth <cworth@cworth.org>
+Date:   Tue Feb 16 12:12:41 2010 -0800
+
+    Increment version to 2.4.18 for release.
+    
+    The primary motivation of the release is the bug fix in commit
+    4f0f871730b76730ca58209181d16725b0c40184
+
+commit 88e8a8bbaf026aa10225880001ab7ca1c392168a
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Tue Feb 16 15:42:00 2010 +1000
+
+    nouveau: bump MAX_PUSH to 512
+
+commit b496c63143e9a4ca02011582329bce2df99d9b7c
+Author: Luca Barbieri <luca@luca-barbieri.com>
+Date:   Fri Jan 29 09:53:24 2010 +0100
+
+    nouveau: interface changes for 0.0.16 DRM
+    
+    This commit encompasses the changes necessary to run on top of the 0.0.16
+    nouveau interface, additional APIs to support the new features of the
+    interface, as well as code from Luca Barbieri to improve the pushbuf
+    interface, which just happens to break nouveau's libdrm ABI so was delayed
+    until now.
+    
+    API changes as a result of 0.0.16 DRM interface:
+    
+    1. No more bo_pin()/bo_unpin(), these were only there for UMS and we no
+       longer support it.
+    
+    2. Any random nouveau_bo can be submitted to the GPU as a push buffer.
+    
+    3. Relocations can be applied on any nouveau_bo
+    
+    This patch changes the pushbuffer ABI to:
+    
+    1. No longer use/expose nouveau_pushbuffer. Everything is directly
+       in nouveau_channel. This saves the extra "pushbuf" pointer dereference.
+    
+    2. Use cur/end pointers instead of tracking the remaining size.
+       Pushing data now only needs to alter cur and not both cur and remaining.
+    
+    The goal is to make the *_RING macros faster and make the interface simpler
+    and cleaner in the process.
+    
+    The *_RING APIs are unchanged, but those are inlined and the ABI is changed.
+    
+    Also, anything accessing pushbuf->remaining instead of using AVAIL_RING
+    will need to be fixed.
+
+commit 4a17be4a86cde1065908576e44f3710f6d9d68af
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Feb 10 19:39:46 2010 -0500
+
+    drm: a some new connector types from the kernel
+    
+    Add eDP (embedded displayport) and generic TV
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 4f0f871730b76730ca58209181d16725b0c40184
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Feb 10 09:45:13 2010 +0000
+
+    intel: Handle resetting of input params after EINTR during SET_TILING
+    
+    The SET_TILING is pernicious in that it overwrites the input arguments
+    following an error in order to report the current tiling state of the
+    buffer. This caught us by surprise as we then fed those arguments back
+    into to the ioctl unmodified following an EINTR and so the kernel then
+    reported success for the no-op. We interpreted this success as meaning
+    that the tiling on the buffer had changed so updated our state and
+    started using the buffer incorrectly in the new tiled/untiled manner.
+    This lead to all sorts of random corruption and GPU hangs, even though
+    the batch buffers would look sane (when the GPU had not wandered off
+    into forbidden territory).
+    
+    References:
+    
+      Bug 25475 - [i915] Xorg crash / Execbuf while wedged
+      http://bugs.freedesktop.org/show_bug.cgi?id=25475
+    
+      Bug 25554 - i830_uxa_prepare_access: gtt bo map failed: Input/output error
+      http://bugs.freedesktop.org/show_bug.cgi?id=25554
+    
+    (And probably every other weird bug in the last few months.)
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit fdcde592c2c48e143251672cf2e82debb07606bd
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Feb 9 08:32:54 2010 +0000
+
+    intel: Account for potential pinned buffers hogging fences
+    
+    As the kernel reports the total number of fences, we must guess how many
+    fences are likely to be pinned. In the typical system these will be only
+    used by the scanout buffers, of which there may be one per pipe, and any
+    number of manually pinned fenced buffers. So take a conservative guess
+    and reserve two fences for use by the system.
+    
+    Note this reduces the number of fences to 3 for i915 and prior.
+    
+    Reference:
+      http://bugs.freedesktop.org/show_bug.cgi?id=25911
+      The latest intel driver 2.10.0 causes kernel oops and system hangs
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit e4a519635f75bde38aeb5b09f2ff4efbf73453e9
+Author: Matthew W. S. Bell <matthew@bells23.org.uk>
+Date:   Sat Jan 30 02:14:44 2010 +0000
+
+    Tidy up compile warnings by cleaning up types.
+
+commit 1802e1a4e747b5906d3af10c4a53fd457eddcbb4
+Author: Pauli Nieminen <suokkos@gmail.com>
+Date:   Mon Feb 1 20:19:33 2010 +0200
+
+    libdrm/radeon: Fix section size mismatch to reset the section.
+    
+    If there is section size mismatch reusing the section object
+    makes section start fail.
+    Reseting the object before doing error checking prevents the
+    possible flood of errors.
+
+commit 520c658706aa896d64f374cc74065394111f6122
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Feb 2 10:58:50 2010 +1000
+
+    radeon: enable by default now that kms is out of staging
+
+commit 973d8d6bd04230da801a8bc19af41dbc60e1918d
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Feb 2 10:57:12 2010 +1000
+
+    intel: check return value for calloc
+
+commit 53e261c01db9beae3648ec675513b7ed662735f5
+Author: Francisco Jerez <currojerez@riseup.net>
+Date:   Sun Jan 31 17:47:50 2010 +0100
+
+    nouveau: Regenerate nouveau_class.h.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+
+commit 55ba98fadfb8909d23d6f810285504abd173f0ad
+Author: Marcin Slusarz <marcin.slusarz@gmail.com>
+Date:   Tue Jan 12 15:31:28 2010 +0100
+
+    nouveau: add nouveau_resource_destroy
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+
+commit 44a0e0a099eeeb6501359f08449dcaa5e9899398
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Sat Jan 23 01:41:49 2010 +0000
+
+    libkms: Rework interface to not duplicate fields from kms and make formats explicit
+    
+    List of changes:
+    Fixes the cursor size to 64x64, you still need ti supply width and height
+    Explicitly make the cursor format A8R8G8B8
+    Explicitly make the scanout format X8R8G8B8
+
+commit f2730574f2d204eee62d6f37aa56567bd2d94a26
+Author: Marcin Kościelnicki <koriakin@0x04.net>
+Date:   Tue Jan 26 18:39:21 2010 +0000
+
+    nouveau: Update nouveau_drm.h
+
+commit dfa72978609d923ab6dfb76083c56b25e8a049df
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Sat Jan 23 01:38:18 2010 +0000
+
+    libkms: Fix return value in vmwgfx_bo_create
+
+commit 7b328122981a23f874105f333a5ec14ce887b0a8
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Thu Jan 21 15:17:26 2010 +1000
+
+    nouveau: fail channel creation if pushbuf init fails
+
+commit 9de34e2dbf5a4b3df6773460071944248cf4d571
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Jan 20 10:42:46 2010 +0000
+
+    intel: Add pkg-config dependency on libdrm.so using 'Requires'
+
+commit dc1ed9952e639f3d5fb41401598d28c4a97f5a1c
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Sat Jan 16 19:34:13 2010 -0800
+
+    Support gcc's __FUNCTION__ for people using other compilers
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit b1ce1e6bfbb65cca3230762cf99d4c0775561781
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Sat Jan 16 19:28:50 2010 -0800
+
+    Add support for Solaris libc atomic operations
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit fe7b93fb493b76ade13ad74438acbc4d34d2f3bd
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Wed Dec 16 15:03:58 2009 -0800
+
+    Include alloca.h in tests/drmstat.c when configure detects it
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 3d3d87f3a70089f645facb2bff5a0b93ec0a0efd
+Author: Marcin Slusarz <marcin.slusarz@gmail.com>
+Date:   Tue Jan 12 15:38:29 2010 +0100
+
+    nouveau: disable flush_notify on channel_free
+    
+    We don't want do call flush_notify when we will FIRE the RING
+    a couple of lines later, because grobj bound to this channel
+    might be already freed.
+
+commit a03dcc21040775e660afcfc3dc37a324d2dd2ed3
+Author: Marcin Slusarz <marcin.slusarz@gmail.com>
+Date:   Tue Jan 12 15:32:39 2010 +0100
+
+    nouveau: fix memory leak in nouveau_channel_free
+
+commit 2959266188dd564975503d74e24b55013f58f861
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Fri Jan 15 20:13:20 2010 +0000
+
+    libkms: Fix multiple map unmap in vmwgfx and add comment in intel
+
+commit 320811b282d7f57b364f8414e2e7b714f89b0503
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Thu Jan 14 20:01:55 2010 +0100
+
+    radeon: get device id from the kernel, use it in cs_print
+    
+    This allow external tools to know for which asics a cs
+    is destinated to.
+
+commit 2612371a626337452e598a3339355bf980f5be38
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Thu Jan 14 12:28:20 2010 +0100
+
+    radeon: simpler cs print function
+    
+    We don't intend libdrm-radeon to become clever enough to
+    decode cs for all GPU we support. Better to let an external
+    tool do the job. This will print raw cs in an easy to parse
+    way.
+
+commit 74937cda177363ff4ede9e2b4ea2bec04cda892e
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Thu Jan 14 11:28:25 2010 +0100
+
+    radeon: indentation + trailing space cleanup
+
+commit 6bf1ed2979ca56d3e8dd8938fc08e3810887ae8a
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Thu Jan 14 11:24:16 2010 +0100
+
+    radeon: indentation & trailing space cleanup
+
+commit b06cb754a1eee0746c40f62c51d4f0544c39c843
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Thu Jan 14 11:08:43 2010 +0100
+
+    radeon: indentation + trailing space cleanup
+
+commit 06a2d6567e5aadc2e109942f71afae76a8398969
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Tue Jan 12 22:35:28 2010 +0100
+
+    tests: Update kmstest a bit
+
+commit d920fa9d0b54873d53f03a006d0fe3df11136b74
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Tue Jan 12 17:53:49 2010 +0000
+
+    libkms: Use sysfs instead of udev to find driver
+    
+    Udev code is still there just commented out.
+
+commit d207a38701d664ac818829249d4d2566349bb359
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Fri Jan 8 15:34:44 2010 +0000
+
+    tests: Add a very small libkms test
+
+commit 8838bb1d63bdb8ffa808cd41b7e0ffd2e62ff7bc
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Fri Jan 8 15:19:44 2010 +0000
+
+    libkms/intel: Don't fail to create bo if we fail to tile
+
+commit 5963c023b84daaacb91ae0aa4cf841acff63fd1f
+Author: Francisco Jerez <currojerez@riseup.net>
+Date:   Fri Jan 8 04:34:39 2010 +0100
+
+    nouveau: Update nouveau_class.h.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+
+commit bfa44bb8610f51d84b8d23f8c5ce903689d239c6
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Fri Jan 8 03:00:56 2010 +0000
+
+    libkms: Add intel backend
+
+commit 9042d72109d8ae448b8e0f23b93067cc37deff23
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Fri Jan 8 02:51:04 2010 +0000
+
+    libkms: Pick driver backend via pci id that we get from udev
+
+commit 04f90a44709a48fb932ea954011cb551659bf246
+Author: Peter Clifton <pcjc2@cam.ac.uk>
+Date:   Wed Jan 6 20:44:11 2010 +0000
+
+    modes: Retry GETCONNECTOR if a hotplug event occurs between the two ioctls
+    
+    If the available modes changes between the two GETCONNECTOR ioctls, that
+    caused the kernel to skip filling one array and led to a crash (as the size
+    of the allocated and initialised block of memory differed from the reported
+    size, and might be NULL if no modes were present at first).
+    
+    This bug manifest its self on my machine due to spurious false positive
+    detections of a connected TV-out.
+    
+    Fixes: http://bugs.freedesktop.org/show_bug.cgi?id=25912
+           Crash whilst probing modes
+    
+    Based upon the similar fixes for the GETRESOURCES ioctls by Chris Wilson,
+    in the following commits:
+    
+        commit e6c136ca7a4c54457b48be1aec2be024b3e4a28d
+        commit 85fb3e55fdb7af9b5f59c1ec0f15d1950e601b05
+        commit d1308f4fe7f94aae51ca9f70947aea8e09597f37
+    
+    Signed-off-by: Peter Clifton <pcjc2@cam.ac.uk>
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit e6c136ca7a4c54457b48be1aec2be024b3e4a28d
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Jan 6 16:53:33 2010 +0000
+
+    modes: Fix previous commit for potential legal NULLs
+    
+    If the count is 0, then the malloc is permitted to return NULL, so don't
+    throw an error in that case.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 85fb3e55fdb7af9b5f59c1ec0f15d1950e601b05
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Jan 6 15:39:49 2010 +0000
+
+    modes: Free local resources after allocation failure in GETRESOURCES
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit d1308f4fe7f94aae51ca9f70947aea8e09597f37
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Jan 6 15:19:25 2010 +0000
+
+    modes: Retry GETRESOURCES if a hotplug event occurs between the two ioctls
+    
+    Peter Clifton hit an issue whereby he had a spurious TV hotplug event
+    that occurred between the two GETRESOURCES ioctls that caused the kernel
+    to skip filling one array and led to a crash (as the size of the
+    allocated and initialised block of memory differed from the reported
+    size).
+    
+    Fixes: http://bugs.freedesktop.org/show_bug.cgi?id=25912
+           Crash whilst probing modes
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+    Reported-by: Peter Clifton <pcjc2@cam.ac.uk>
+
+commit 5dbc1b333b85695735dc5b484372758b9979b693
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Tue Jan 5 20:55:02 2010 +0100
+
+    libkms: Make vmwgfx optional
+
+commit dfbaffea07ba785d5a2d5493282f416488e217cc
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Tue Jan 5 21:04:57 2010 +0100
+
+    libkms: Remove duped vmwgfx_drm.h header
+
+commit 2f7f7ceccab4176217c399502b3ff95df1517627
+Merge: d6059c3 6d3b8bb
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Tue Jan 5 20:59:24 2010 +0100
+
+    Merge branch 'master' into libkms-master
+    
+    Conflicts:
+    	configure.ac
+
+commit d6059c3dd1300662e941ccd5e55649534fbb9a63
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Tue Jan 5 20:58:37 2010 +0100
+
+    libkms: Disable by default
+
+commit 6d3b8bbddd44b42d89adb1aafb7645e7f802673a
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Tue Jan 5 19:53:10 2010 +0100
+
+    vmwgfx: Add experimental vmwgfx kernel header
+
+commit c5c503b519777fb9ebbaa22681a1ed81717c1d71
+Author: Marcin Slusarz <marcin.slusarz@gmail.com>
+Date:   Wed Dec 30 21:32:40 2009 +0100
+
+    nouveau: add BEGIN_RING_NI
+
+commit cd2e4ba9aac65d10cf790990a8b86feed1cdd774
+Author: Younes Manton <younes.m@gmail.com>
+Date:   Mon Dec 28 18:00:09 2009 -0500
+
+    nouveau: Unreference pushbuf objects on channel destruction.
+    
+    - unreference pushbuf objects on channel destruction
+    
+    Based on Krzysztof Smiechowicz's patch.
+
+commit cb1caaaa05ba96b98bf9af1190f6830d8b0608bc
+Author: Francisco Jerez <currojerez@riseup.net>
+Date:   Mon Dec 28 18:01:42 2009 +0100
+
+    nouveau: Update some object definitions from renouveau.xml.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+
+commit 5fd00ddc9f35ac99c93a40d34a5d5019b91e8750
+Author: Marcin Kościelnicki <koriakin@0x04.net>
+Date:   Tue Nov 24 17:23:54 2009 +0000
+
+    nouveau: Update nouveau_class.h with new renouveau.xml definitions.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+
 commit fdb33d56de3edf27f24c6db0e6beaed823f7bc38
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Mon Dec 21 15:03:31 2009 +1000
@@ -49,6 +500,12 @@ Date:   Wed Dec 9 10:36:53 2009 -0500
 
     modetest: Error out if pageflipping is requested but not available
 
+commit 77ddc785660c4ff73706758124744f80e1734812
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Mon Dec 14 22:53:10 2009 +0100
+
+    vmwgfx: Fetch the latest header
+
 commit edc77dd291594e017ca0ee96a785412107ebff74
 Author: Ben Skeggs <bskeggs@redhat.com>
 Date:   Wed Dec 9 14:50:15 2009 +1000
@@ -75,6 +532,18 @@ Date:   Tue Dec 8 22:35:24 2009 +0000
     attempt to use that as a valid pointer in future mappings.
     
     Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 201f5795a26ae7b5580a35b24f4e89e5cd3455b1
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Fri Dec 4 16:06:42 2009 +0100
+
+    libkms: Change destroy api a bit
+
+commit 8c0571a73399c372644c8d92a136a474f3e05d48
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Tue Nov 24 17:54:10 2009 +0100
+
+    libkms: Add libkms
 
 commit 28eae30689610faa0fe043ab869587e7699e82bf
 Author: Jakob Bornecrantz <jakob@vmware.com>
