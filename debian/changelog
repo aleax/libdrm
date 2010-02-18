@@ -1,4 +1,4 @@
-libdrm (2.4.17-1ubuntu1) UNRELEASED; urgency=low
+libdrm (2.4.17-1ubuntu1) lucid; urgency=low
 
   * Merge from Debian unstable.  Previous merge was from the unreleased
     2.4.17-1 in pkg-xorg git.  This merge picks up the finalised changelog
