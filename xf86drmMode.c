@@ -620,6 +620,28 @@ int drmCheckModesettingSupported(const char *busid)
 			return 0;
 	}
 
+	/* Ubuntu's linux-backports-modules renames the drm module to lbm-drm
+	   to avoid conflicting with existing drm modules.  We therefore need
+	   to search in $DIR/lbm-drm as well as $DIR/drm */
+	sprintf(pci_dev_dir, "/sys/bus/pci/devices/%04x:%02x:%02x.%d/lbm-drm",
+		domain, bus, dev, func);
+
+	sysdir = opendir(pci_dev_dir);
+	if (sysdir) {
+		dent = readdir(sysdir);
+		while (dent) {
+			if (!strncmp(dent->d_name, "controlD", 8)) {
+				found = 1;
+				break;
+			}
+
+			dent = readdir(sysdir);
+		}
+		closedir(sysdir);
+		if (found)
+			return 0;
+	}
+
 	sprintf(pci_dev_dir, "/sys/bus/pci/devices/%04x:%02x:%02x.%d/",
 		domain, bus, dev, func);
 

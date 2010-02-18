@@ -102,17 +102,23 @@ nouveau_channel_free(struct nouveau_channel **chan)
 	struct nouveau_channel_priv *nvchan;
 	struct nouveau_device_priv *nvdev;
 	struct drm_nouveau_channel_free cf;
+	int i;
 
 	if (!chan || !*chan)
 		return;
 	nvchan = nouveau_channel(*chan);
+	(*chan)->flush_notify = NULL;
 	*chan = NULL;
 	nvdev = nouveau_device(nvchan->base.device);
 
 	FIRE_RING(&nvchan->base);
 
+	nouveau_pushbuf_fini(&nvchan->base);
 	nouveau_bo_unmap(nvchan->notifier_bo);
 	nouveau_bo_ref(NULL, &nvchan->notifier_bo);
+
+	for (i = 0; i < nvchan->drm.nr_subchan; i++)
+		free(nvchan->base.subc[i].gr);
 
 	nouveau_grobj_free(&nvchan->base.vram);
 	nouveau_grobj_free(&nvchan->base.gart);
