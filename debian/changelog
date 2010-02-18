@@ -1,3 +1,9 @@
+libdrm (2.4.17-1ubuntu3) lucid; urgency=low
+
+  * Unapply patches in debian/patches from the source package.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 18 Feb 2010 06:48:37 -0800
+
 libdrm (2.4.17-1ubuntu2) lucid; urgency=low
 
   * Move runtime libraries to /lib (needed by plymouth)
