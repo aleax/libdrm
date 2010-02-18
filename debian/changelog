@@ -1,8 +1,8 @@
-libdrm (2.4.18-1) UNRELEASED; urgency=low
+libdrm (2.4.18-1) unstable; urgency=low
 
   * New upstream release.
 
- -- Brice Goglin <bgoglin@debian.org>  Thu, 18 Feb 2010 08:03:01 +0100
+ -- Brice Goglin <bgoglin@debian.org>  Thu, 18 Feb 2010 08:06:14 +0100
 
 libdrm (2.4.17-1) unstable; urgency=low
 
