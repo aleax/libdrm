@@ -136,35 +136,62 @@ void drmModeFreeEncoder(drmModeEncoderPtr ptr)
 
 drmModeResPtr drmModeGetResources(int fd)
 {
-	struct drm_mode_card_res res;
+	struct drm_mode_card_res res, counts;
 	drmModeResPtr r = 0;
 
+retry:
 	memset(&res, 0, sizeof(struct drm_mode_card_res));
-
 	if (drmIoctl(fd, DRM_IOCTL_MODE_GETRESOURCES, &res))
 		return 0;
 
-	if (res.count_fbs)
-		res.fb_id_ptr = VOID2U64(drmMalloc(res.count_fbs*sizeof(uint32_t)));
-	if (res.count_crtcs)
-		res.crtc_id_ptr = VOID2U64(drmMalloc(res.count_crtcs*sizeof(uint32_t)));
-	if (res.count_connectors)
-		res.connector_id_ptr = VOID2U64(drmMalloc(res.count_connectors*sizeof(uint32_t)));
-	if (res.count_encoders)
-		res.encoder_id_ptr = VOID2U64(drmMalloc(res.count_encoders*sizeof(uint32_t)));
+	counts = res;
 
-	if (drmIoctl(fd, DRM_IOCTL_MODE_GETRESOURCES, &res)) {
-		r = NULL;
+	if (res.count_fbs) {
+		res.fb_id_ptr = VOID2U64(drmMalloc(res.count_fbs*sizeof(uint32_t)));
+		if (!res.fb_id_ptr)
+			goto err_allocs;
+	}
+	if (res.count_crtcs) {
+		res.crtc_id_ptr = VOID2U64(drmMalloc(res.count_crtcs*sizeof(uint32_t)));
+		if (!res.crtc_id_ptr)
+			goto err_allocs;
+	}
+	if (res.count_connectors) {
+		res.connector_id_ptr = VOID2U64(drmMalloc(res.count_connectors*sizeof(uint32_t)));
+		if (!res.connector_id_ptr)
+			goto err_allocs;
+	}
+	if (res.count_encoders) {
+		res.encoder_id_ptr = VOID2U64(drmMalloc(res.count_encoders*sizeof(uint32_t)));
+		if (!res.encoder_id_ptr)
+			goto err_allocs;
+	}
+
+	if (drmIoctl(fd, DRM_IOCTL_MODE_GETRESOURCES, &res))
 		goto err_allocs;
+
+	/* The number of available connectors and etc may have changed with a
+	 * hotplug event in between the ioctls, in which case the field is
+	 * silently ignored by the kernel.
+	 */
+	if (counts.count_fbs < res.count_fbs ||
+	    counts.count_crtcs < res.count_crtcs ||
+	    counts.count_connectors < res.count_connectors ||
+	    counts.count_encoders < res.count_encoders)
+	{
+		drmFree(U642VOID(res.fb_id_ptr));
+		drmFree(U642VOID(res.crtc_id_ptr));
+		drmFree(U642VOID(res.connector_id_ptr));
+		drmFree(U642VOID(res.encoder_id_ptr));
+
+		goto retry;
 	}
 
 	/*
 	 * return
 	 */
-
-
 	if (!(r = drmMalloc(sizeof(*r))))
-		return 0;
+		goto err_allocs;
 
 	r->min_width     = res.min_width;
 	r->max_width     = res.max_width;
@@ -174,11 +201,23 @@ drmModeResPtr drmModeGetResources(int fd)
 	r->count_crtcs   = res.count_crtcs;
 	r->count_connectors = res.count_connectors;
 	r->count_encoders = res.count_encoders;
-	/* TODO we realy should test if these allocs fails. */
-	r->fbs           = drmAllocCpy(U642VOID(res.fb_id_ptr), res.count_fbs, sizeof(uint32_t));
-	r->crtcs         = drmAllocCpy(U642VOID(res.crtc_id_ptr), res.count_crtcs, sizeof(uint32_t));
-	r->connectors       = drmAllocCpy(U642VOID(res.connector_id_ptr), res.count_connectors, sizeof(uint32_t));
-	r->encoders      = drmAllocCpy(U642VOID(res.encoder_id_ptr), res.count_encoders, sizeof(uint32_t));
+
+	r->fbs        = drmAllocCpy(U642VOID(res.fb_id_ptr), res.count_fbs, sizeof(uint32_t));
+	r->crtcs      = drmAllocCpy(U642VOID(res.crtc_id_ptr), res.count_crtcs, sizeof(uint32_t));
+	r->connectors = drmAllocCpy(U642VOID(res.connector_id_ptr), res.count_connectors, sizeof(uint32_t));
+	r->encoders   = drmAllocCpy(U642VOID(res.encoder_id_ptr), res.count_encoders, sizeof(uint32_t));
+	if ((res.count_fbs && !r->fbs) ||
+	    (res.count_crtcs && !r->crtcs) ||
+	    (res.count_connectors && !r->connectors) ||
+	    (res.count_encoders && !r->encoders))
+	{
+		drmFree(r->fbs);
+		drmFree(r->crtcs);
+		drmFree(r->connectors);
+		drmFree(r->encoders);
+		drmFree(r);
+		r = 0;
+	}
 
 err_allocs:
 	drmFree(U642VOID(res.fb_id_ptr));
@@ -371,36 +410,56 @@ drmModeEncoderPtr drmModeGetEncoder(int fd, uint32_t encoder_id)
 
 drmModeConnectorPtr drmModeGetConnector(int fd, uint32_t connector_id)
 {
-	struct drm_mode_get_connector conn;
+	struct drm_mode_get_connector conn, counts;
 	drmModeConnectorPtr r = NULL;
 
+retry:
+	memset(&conn, 0, sizeof(struct drm_mode_get_connector));
 	conn.connector_id = connector_id;
-	conn.connector_type_id = 0;
-	conn.connector_type  = 0;
-	conn.count_modes  = 0;
-	conn.modes_ptr    = 0;
-	conn.count_props  = 0;
-	conn.props_ptr    = 0;
-	conn.prop_values_ptr = 0;
-	conn.count_encoders  = 0;
-	conn.encoders_ptr = 0;
 
 	if (drmIoctl(fd, DRM_IOCTL_MODE_GETCONNECTOR, &conn))
 		return 0;
 
+	counts = conn;
+
 	if (conn.count_props) {
 		conn.props_ptr = VOID2U64(drmMalloc(conn.count_props*sizeof(uint32_t)));
+		if (!conn.props_ptr)
+			goto err_allocs;
 		conn.prop_values_ptr = VOID2U64(drmMalloc(conn.count_props*sizeof(uint64_t)));
+		if (!conn.prop_values_ptr)
+			goto err_allocs;
 	}
 
-	if (conn.count_modes)
+	if (conn.count_modes) {
 		conn.modes_ptr = VOID2U64(drmMalloc(conn.count_modes*sizeof(struct drm_mode_modeinfo)));
+		if (!conn.modes_ptr)
+			goto err_allocs;
+	}
 
-	if (conn.count_encoders)
+	if (conn.count_encoders) {
 		conn.encoders_ptr = VOID2U64(drmMalloc(conn.count_encoders*sizeof(uint32_t)));
+		if (!conn.encoders_ptr)
+			goto err_allocs;
+	}
 
 	if (drmIoctl(fd, DRM_IOCTL_MODE_GETCONNECTOR, &conn))
 		goto err_allocs;
+
+	/* The number of available connectors and etc may have changed with a
+	 * hotplug event in between the ioctls, in which case the field is
+	 * silently ignored by the kernel.
+	 */
+	if (counts.count_props < conn.count_props ||
+	    counts.count_modes < conn.count_modes ||
+	    counts.count_encoders < conn.count_encoders) {
+		drmFree(U642VOID(conn.props_ptr));
+		drmFree(U642VOID(conn.prop_values_ptr));
+		drmFree(U642VOID(conn.modes_ptr));
+		drmFree(U642VOID(conn.encoders_ptr));
+
+		goto retry;
+	}
 
 	if(!(r = drmMalloc(sizeof(*r)))) {
 		goto err_allocs;
@@ -414,7 +473,6 @@ drmModeConnectorPtr drmModeGetConnector(int fd, uint32_t connector_id)
 	/* convert subpixel from kernel to userspace */
 	r->subpixel     = conn.subpixel + 1;
 	r->count_modes  = conn.count_modes;
-	/* TODO we should test if these alloc & cpy fails. */
 	r->count_props  = conn.count_props;
 	r->props        = drmAllocCpy(U642VOID(conn.props_ptr), conn.count_props, sizeof(uint32_t));
 	r->prop_values  = drmAllocCpy(U642VOID(conn.prop_values_ptr), conn.count_props, sizeof(uint64_t));
@@ -424,8 +482,17 @@ drmModeConnectorPtr drmModeGetConnector(int fd, uint32_t connector_id)
 	r->connector_type  = conn.connector_type;
 	r->connector_type_id = conn.connector_type_id;
 
-	if (!r->props || !r->prop_values || !r->modes || !r->encoders)
-		goto err_allocs;
+	if ((r->count_props && !r->props) ||
+	    (r->count_props && !r->prop_values) ||
+	    (r->count_modes && !r->modes) ||
+	    (r->count_encoders && !r->encoders)) {
+		drmFree(r->props);
+		drmFree(r->prop_values);
+		drmFree(r->modes);
+		drmFree(r->encoders);
+		drmFree(r);
+		r = 0;
+	}
 
 err_allocs:
 	drmFree(U642VOID(conn.prop_values_ptr));

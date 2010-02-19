@@ -19,7 +19,7 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 AC_PREREQ(2.60)
-AC_INIT([libdrm], 2.4.17, [dri-devel@lists.sourceforge.net], libdrm)
+AC_INIT([libdrm], 2.4.18, [dri-devel@lists.sourceforge.net], libdrm)
 AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_INIT_AUTOMAKE([dist-bzip2])
@@ -32,6 +32,7 @@ AC_PROG_CC
 
 AC_HEADER_STDC
 AC_SYS_LARGEFILE
+AC_FUNC_ALLOCA
 
 PKG_CHECK_MODULES(PTHREADSTUBS, pthread-stubs)
 AC_SUBST(PTHREADSTUBS_CFLAGS)
@@ -43,20 +44,31 @@ AC_ARG_ENABLE(udev,	AS_HELP_STRING([--enable-udev],
 				[Enable support for using udev instead of mknod (default: disabled)]),
 				[UDEV=$enableval], [UDEV=no])
 
+AC_ARG_ENABLE(libkms,
+	      AS_HELP_STRING([--enable-libkms],
+	      [Enable KMS mm abstraction library (default: disabled)]),
+	      [LIBKMS=$enableval], [LIBKMS=no])
+
 AC_ARG_ENABLE(intel,
 	      AS_HELP_STRING([--disable-intel],
 	      [Enable support for intel's KMS API (default: auto)]),
 	      [INTEL=$enableval], [INTEL=auto])
+
+AC_ARG_ENABLE(radeon,
+	      AS_HELP_STRING([--disable-radeon],
+	      [Enable support for radeon's KMS API (default: enabled)]),
+	      [RADEON=$enableval], [RADEON=yes])
+
+AC_ARG_ENABLE(vmwgfx-experimental-api,
+	      AS_HELP_STRING([--enable-vmwgfx-experimental-api],
+	      [Install vmwgfx's experimental kernel API header (default: disabled)]),
+	      [VMWGFX=$enableval], [VMWGFX=no])
 
 AC_ARG_ENABLE(nouveau-experimental-api,
 	      AS_HELP_STRING([--enable-nouveau-experimental-api],
 	      [Enable support for nouveau's experimental API (default: disabled)]),
 	      [NOUVEAU=$enableval], [NOUVEAU=no])
 
-AC_ARG_ENABLE(radeon-experimental-api,
-	      AS_HELP_STRING([--enable-radeon-experimental-api],
-	      [Enable support for radeon's KMS API (default: disabled)]),
-	      [RADEON=$enableval], [RADEON=no])
 
 dnl ===========================================================================
 dnl check compiler flags
@@ -134,6 +146,13 @@ if test "x$UDEV" = xyes; then
 	AC_DEFINE(UDEV, 1, [Have UDEV support])
 fi
 
+AM_CONDITIONAL(HAVE_LIBKMS, [test "x$LIBKMS" = xyes])
+
+AM_CONDITIONAL(HAVE_VMWGFX, [test "x$VMWGFX" = xyes])
+if test "x$VMWGFX" = xyes; then
+	AC_DEFINE(HAVE_VMWGFX, 1, [Have vmwgfx kernel headers])
+fi
+
 AM_CONDITIONAL(HAVE_NOUVEAU, [test "x$NOUVEAU" = xyes])
 
 AM_CONDITIONAL(HAVE_RADEON, [test "x$RADEON" = xyes])
@@ -168,6 +187,12 @@ if test "x$INTEL" != "xno"; then
 		    AC_CHECK_HEADER([atomic_ops.h], drm_cv_atomic_primitives="libatomic-ops")
 	    fi
 
+	    # atomic functions defined in <atomic.h> & libc on Solaris
+	    if test "x$drm_cv_atomic_primitives" = "xnone"; then
+		    AC_CHECK_FUNC([atomic_cas_uint],
+				  drm_cv_atomic_primitives="Solaris")
+	    fi
+
     ])
     if test "x$drm_cv_atomic_primitives" = xIntel; then
 	    AC_DEFINE(HAVE_INTEL_ATOMIC_PRIMITIVES, 1,
@@ -199,6 +224,8 @@ AC_SUBST(kernel_source)
 AC_SUBST(WARN_CFLAGS)
 AC_OUTPUT([
 	Makefile
+	libkms/Makefile
+	libkms/libkms.pc
 	intel/Makefile
 	intel/libdrm_intel.pc
 	radeon/Makefile
@@ -208,6 +235,7 @@ AC_OUTPUT([
 	tests/Makefile
 	tests/modeprint/Makefile
 	tests/modetest/Makefile
+	tests/kmstest/Makefile
 	include/Makefile
 	include/drm/Makefile
 	libdrm.pc])
@@ -215,7 +243,9 @@ AC_OUTPUT([
 echo ""
 echo "$PACKAGE_STRING will be compiled with:"
 echo ""
+echo "  libkms         $LIBKMS"
 echo "  Intel API      $INTEL"
+echo "  vmwgfx API     $VMWGFX"
 echo "  Radeon API     $RADEON"
 echo "  Nouveau API    $NOUVEAU"
 echo ""

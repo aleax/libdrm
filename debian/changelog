@@ -1,3 +1,9 @@
+libdrm (2.4.18-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Brice Goglin <bgoglin@debian.org>  Thu, 18 Feb 2010 08:06:14 +0100
+
 libdrm (2.4.17-1ubuntu3) lucid; urgency=low
 
   * Unapply patches in debian/patches from the source package.
@@ -53,6 +59,15 @@ libdrm (2.4.17-0ubuntu2) lucid; urgency=low
 
  -- Emmet Hikory <persia@ubuntu.com>  Fri, 15 Jan 2010 12:31:40 +0900
 
+libdrm (2.4.17-0ubuntu1) lucid; urgency=low
+
+  * Merge with Debian unstable, remaining changes:
+    + control, rules, libdrm-nouveau1.symbols: Enable libdrm_nouveau.
+  * Update libdrm-nouveau1.symbols and shlibs.
+  * Drop 02_silent_master.diff, applied upstream.
+
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Sat, 09 Jan 2010 00:00:29 +0200
+
 libdrm (2.4.17-1) unstable; urgency=low
 
   [ Julien Cristau ]
@@ -79,37 +94,6 @@ libdrm (2.4.17-1) unstable; urgency=low
   * Update libdrm2.symbols and shlibs.
 
  -- Brice Goglin <bgoglin@debian.org>  Sun, 31 Jan 2010 20:12:38 +0100
-
-libdrm (2.4.17-0ubuntu1) lucid; urgency=low
-
-  * Merge with Debian unstable, remaining changes:
-    + control, rules, libdrm-nouveau1.symbols: Enable libdrm_nouveau.
-  * Update libdrm-nouveau1.symbols and shlibs.
-  * Drop 02_silent_master.diff, applied upstream.
-
- -- Timo Aaltonen <tjaalton@ubuntu.com>  Sat, 09 Jan 2010 00:00:29 +0200
-
-libdrm (2.4.17-1) UNRELEASED; urgency=low
-
-  [ Julien Cristau ]
-  * New upstream release, closes: #560434.
-  * Update patch 01_default_perms.diff to account for upstream move of libdrm
-    to toplevel.
-  * Update libdrm2.symbols and shlibs.
-  * Update libdrm-intel1.symbols and shlibs.
-  * Bump debhelper build-dep, we use dh_strip --remaining-packages (closes:
-    #558443).  Thanks, Sergio Gelato!
-  * Enable libdrm_radeon, interface to kernel graphics memory management on
-    radeon (closes: #558786).
-
-  [ Brice Goglin ]
-  * Bump linux-libc-dev dependency to 2.6.32, thanks Piotr Engelking,
-    closes: #561224.
-
-  [ Timo Aaltonen ]
-  * Update libdrm2.symbols and shlibs.
-
- -- Timo Aaltonen <tjaalton@ubuntu.com>  Mon, 04 Jan 2010 14:00:50 +0200
 
 libdrm (2.4.15-1) unstable; urgency=low
 

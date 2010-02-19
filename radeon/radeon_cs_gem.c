@@ -1,7 +1,7 @@
-/* 
+/*
  * Copyright © 2008 Jérôme Glisse
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -9,14 +9,14 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
  * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
  * NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS, AUTHORS
  * AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE 
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * The above copyright notice and this permission notice (including the
@@ -42,6 +42,11 @@
 #include "drm.h"
 #include "xf86drm.h"
 #include "radeon_drm.h"
+
+struct radeon_cs_manager_gem {
+    struct radeon_cs_manager base;
+    uint32_t                 device_id;
+};
 
 #pragma pack(1)
 struct cs_reloc_gem {
@@ -227,7 +232,7 @@ static int cs_gem_begin(struct radeon_cs_int *cs,
     if (cs->cdw + ndw > cs->ndw) {
         uint32_t tmp, *ptr;
 
-	/* round up the required size to a multiple of 1024 */
+        /* round up the required size to a multiple of 1024 */
         tmp = (cs->cdw + ndw + 0x3FF) & (~0x3FF);
         ptr = (uint32_t*)realloc(cs->packets, 4 * tmp);
         if (ptr == NULL) {
@@ -255,7 +260,10 @@ static int cs_gem_end(struct radeon_cs_int *cs,
                 cs->section_file, cs->section_func, cs->section_line, cs->section_ndw, cs->section_cdw);
         fprintf(stderr, "CS section end at (%s,%s,%d)\n",
                 file, func, line);
-        return -EPIPE;
+
+	/* We must reset the section even when there is error. */
+	cs->section_ndw = 0;
+	return -EPIPE;
     }
     cs->section_ndw = 0;
     return 0;
@@ -279,9 +287,9 @@ static int cs_gem_emit(struct radeon_cs_int *cs)
     r = drmCommandWriteRead(cs->csm->fd, DRM_RADEON_CS,
                             &csg->cs, sizeof(struct drm_radeon_cs));
     for (i = 0; i < csg->base.crelocs; i++) {
-	    csg->relocs_bo[i]->space_accounted = 0;
-	    radeon_bo_unref((struct radeon_bo *)csg->relocs_bo[i]);
-	    csg->relocs_bo[i] = NULL;
+        csg->relocs_bo[i]->space_accounted = 0;
+        radeon_bo_unref((struct radeon_bo *)csg->relocs_bo[i]);
+        csg->relocs_bo[i] = NULL;
     }
 
     cs->csm->read_used = 0;
@@ -309,7 +317,7 @@ static int cs_gem_erase(struct radeon_cs_int *cs)
     if (csg->relocs_bo) {
         for (i = 0; i < csg->base.crelocs; i++) {
             if (csg->relocs_bo[i]) {
-	        radeon_bo_unref((struct radeon_bo *)csg->relocs_bo[i]);
+                radeon_bo_unref((struct radeon_bo *)csg->relocs_bo[i]);
                 csg->relocs_bo[i] = NULL;
             }
         }
@@ -328,103 +336,17 @@ static int cs_gem_need_flush(struct radeon_cs_int *cs)
     return 0; //(cs->relocs_total_size > (32*1024*1024));
 }
 
-#define PACKET_TYPE0 0
-#define PACKET_TYPE1 1
-#define PACKET_TYPE2 2
-#define PACKET_TYPE3 3
-  
-#define PACKET3_NOP 0x10
-#define PACKET3_SET_SCISSORS 0x1E
-#define PACKET3_3D_DRAW_VBUF 0x28
-#define PACKET3_3D_DRAW_IMMD 0x29
-#define PACKET3_3D_DRAW_INDX 0x2A
-#define PACKET3_3D_LOAD_VBPNTR 0x2F
-#define PACKET3_INDX_BUFFER 0x33
-#define PACKET3_3D_DRAW_VBUF_2 0x34
-#define PACKET3_3D_DRAW_IMMD_2 0x35
-#define PACKET3_3D_DRAW_INDX_2 0x36
- 
-#define CP_PACKET_GET_TYPE(h) (((h) >> 30) & 3)
-#define CP_PACKET_GET_COUNT(h) (((h) >> 16) & 0x3FFF)
-#define CP_PACKET0_GET_REG(h) (((h) & 0x1FFF) << 2)
-#define CP_PACKET0_GET_ONE_REG_WR(h) (((h) >> 15) & 1)
-#define CP_PACKET3_GET_OPCODE(h) (((h) >> 8) & 0xFF)
-
 static void cs_gem_print(struct radeon_cs_int *cs, FILE *file)
 {
-    unsigned opcode;
-    unsigned reg;
-    unsigned cnt;
-    unsigned int i, j;
+    struct radeon_cs_manager_gem *csm;
+    unsigned int i;
 
-    for (i = 0; i < cs->cdw;) {
-        cnt = CP_PACKET_GET_COUNT(cs->packets[i]) + 1;
-        switch (CP_PACKET_GET_TYPE(cs->packets[i])) {
-        case PACKET_TYPE0:
-            fprintf(file, "Pkt0 at %d (%d dwords):\n", i, cnt);
-            reg = CP_PACKET0_GET_REG(cs->packets[i]);
-            if (CP_PACKET0_GET_ONE_REG_WR(cs->packets[i++])) {
-                for (j = 0; j < cnt; j++) {
-                    fprintf(file, "    0x%08X -> 0x%04X\n",
-                            cs->packets[i++], reg);
-                }
-            } else {
-                for (j = 0; j < cnt; j++) {
-                    fprintf(file, "    0x%08X -> 0x%04X\n",
-                            cs->packets[i++], reg);
-                    reg += 4;
-                }
-            }
-            break;
-        case PACKET_TYPE3:
-            fprintf(file, "Pkt3 at %d :\n", i);
-            opcode = CP_PACKET3_GET_OPCODE(cs->packets[i++]);
-            switch (opcode) {
-            case PACKET3_NOP:
-                fprintf(file, "    PACKET3_NOP:\n");
-                break;
-            case PACKET3_3D_DRAW_VBUF:
-                fprintf(file, "    PACKET3_3D_DRAW_VBUF:\n");
-                break;
-            case PACKET3_3D_DRAW_IMMD:
-                fprintf(file, "    PACKET3_3D_DRAW_IMMD:\n");
-                break;
-            case PACKET3_3D_DRAW_INDX:
-                fprintf(file, "    PACKET3_3D_DRAW_INDX:\n");
-                break;
-            case PACKET3_3D_LOAD_VBPNTR:
-                fprintf(file, "    PACKET3_3D_LOAD_VBPNTR:\n");
-                break;
-            case PACKET3_INDX_BUFFER:
-                fprintf(file, "    PACKET3_INDX_BUFFER:\n");
-                break;
-            case PACKET3_3D_DRAW_VBUF_2:
-                fprintf(file, "    PACKET3_3D_DRAW_VBUF_2:\n");
-                break;
-            case PACKET3_3D_DRAW_IMMD_2:
-                fprintf(file, "    PACKET3_3D_DRAW_IMMD_2:\n");
-                break;
-            case PACKET3_3D_DRAW_INDX_2:
-                fprintf(file, "    PACKET3_3D_DRAW_INDX_2:\n");
-                break;
-            default:
-                fprintf(file, "Unknow opcode 0x%02X at %d\n", opcode, i);
-                return;
-            }
-            for (j = 0; j < cnt; j++) {
-                fprintf(file, "        0x%08X\n", cs->packets[i++]);
-            }
-            break;
-        case PACKET_TYPE1:
-        case PACKET_TYPE2:
-        default:
-            fprintf(file, "Unknow packet 0x%08X at %d\n", cs->packets[i], i);
-            return;
-        }
+    csm = (struct radeon_cs_manager_gem *)cs->csm;
+    fprintf(file, "VENDORID:DEVICEID 0x%04X:0x%04X\n", 0x1002, csm->device_id);
+    for (i = 0; i < cs->cdw; i++) {
+        fprintf(file, "0x%08X\n", cs->packets[i]);
     }
 }
-
-
 
 static struct radeon_cs_funcs radeon_cs_gem_funcs = {
     cs_gem_create,
@@ -438,18 +360,31 @@ static struct radeon_cs_funcs radeon_cs_gem_funcs = {
     cs_gem_print,
 };
 
+static int radeon_get_device_id(int fd, uint32_t *device_id)
+{
+    struct drm_radeon_info info;
+    int r;
+
+    *device_id = 0;
+    info.request = RADEON_INFO_DEVICE_ID;
+    info.value = device_id;
+    r = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info,
+                            sizeof(struct drm_radeon_info));
+    return r;
+}
+
 struct radeon_cs_manager *radeon_cs_manager_gem_ctor(int fd)
 {
-    struct radeon_cs_manager *csm;
+    struct radeon_cs_manager_gem *csm;
 
-    csm = (struct radeon_cs_manager*)calloc(1,
-                                            sizeof(struct radeon_cs_manager));
+    csm = calloc(1, sizeof(struct radeon_cs_manager_gem));
     if (csm == NULL) {
         return NULL;
     }
-    csm->funcs = &radeon_cs_gem_funcs;
-    csm->fd = fd;
-    return csm;
+    csm->base.funcs = &radeon_cs_gem_funcs;
+    csm->base.fd = fd;
+    radeon_get_device_id(fd, &csm->device_id);
+    return &csm->base;
 }
 
 void radeon_cs_manager_gem_dtor(struct radeon_cs_manager *csm)
