@@ -1,11 +1,11 @@
-libdrm (2.4.18-1ubuntu1) UNRELEASED; urgency=low
+libdrm (2.4.18-1ubuntu1) lucid; urgency=low
 
   * Merge from Debian unstable.
   * Remove the nouveau patches, since they are included in this version.
   * Add 03_revert_abi_change.diff to revert the nouveau ABI change.
     We need the old ABI until the kernel has been updated.
 
- -- Timo Aaltonen <tjaalton@ubuntu.com>  Fri, 19 Feb 2010 14:14:45 +0200
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Fri, 19 Feb 2010 14:19:08 +0200
 
 libdrm (2.4.18-1) unstable; urgency=low
 
