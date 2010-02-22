@@ -11,7 +11,7 @@ Build-Depends:
  libtool,
  pkg-config,
  libpthread-stubs0-dev,
-Standards-Version: 3.8.3
+Standards-Version: 3.8.4
 Section: libs
 Vcs-Git: git://git.debian.org/git/pkg-xorg/lib/libdrm
 Vcs-Browser: http://git.debian.org/?p=pkg-xorg/lib/libdrm.git
