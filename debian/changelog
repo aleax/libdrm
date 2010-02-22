@@ -3,6 +3,7 @@ libdrm (2.4.18-2) UNRELEASED; urgency=low
   * Fix FTBFS on non-Linux architectures (Closes: #570851): Replace
     --{enable,disable}-radeon-experimental-api configure flag with
     --{enable,disable}-radeon since it got renamed.
+  * Add ${misc:Depends} where it was missing, and fold all Depends.
   * Add myself to Uploaders.
 
  -- Cyril Brulebois <kibi@debian.org>  Mon, 22 Feb 2010 15:16:42 +0100
