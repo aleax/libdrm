@@ -24,11 +24,11 @@ else
 endif
 ifeq (linux, $(DEB_HOST_ARCH_OS))
 	confflags += --enable-udev
-	confflags += --enable-radeon-experimental-api
+	confflags += --enable-radeon
 	RADEON = yes
 else
 	confflags += --disable-udev
-	confflags += --disable-radeon-experimental-api
+	confflags += --disable-radeon
 	RADEON = no
 endif
 
