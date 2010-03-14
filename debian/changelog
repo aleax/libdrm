@@ -1,6 +1,7 @@
 libdrm (2.4.18-3) UNRELEASED; urgency=low
 
   * Include full SONAME in libdrm*.install to prevent accidental breakage.
+  * Add back the drm headers in libdrm-dev.
 
  -- Julien Cristau <jcristau@debian.org>  Sun, 07 Mar 2010 15:31:51 +0100
 
