@@ -24,10 +24,14 @@ else
 endif
 ifeq (linux, $(DEB_HOST_ARCH_OS))
 	confflags += --enable-udev
+	confflags += --enable-nouveau-experimental-api
+	NOUVEAU = yes
 	confflags += --enable-radeon
 	RADEON = yes
 else
 	confflags += --disable-udev
+	confflags += --disable-nouveau-experimental-api
+	NOUVEAU = no
 	confflags += --disable-radeon
 	RADEON = no
 endif
@@ -121,6 +125,9 @@ binary-arch: build install
 ifeq ($(INTEL), yes)
 	dh_strip -plibdrm-intel1 --dbg-package=libdrm-intel1-dbg
 endif
+ifeq ($(NOUVEAU), yes)
+	dh_strip -plibdrm-nouveau1 --dbg-package=libdrm-nouveau1-dbg
+endif
 ifeq ($(RADEON), yes)
 	dh_strip -plibdrm-radeon1 --dbg-package=libdrm-radeon1-dbg
 endif
@@ -130,6 +137,9 @@ endif
 	dh_makeshlibs -plibdrm2 -V'libdrm2 (>= 2.4.17)' -- -c4
 ifeq ($(INTEL), yes)
 	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.16)' -- -c4
+endif
+ifeq ($(NOUVEAU), yes)
+	dh_makeshlibs -plibdrm-nouveau1 -V'libdrm-nouveau1 (>= 2.4.16)' -- -c4
 endif
 ifeq ($(RADEON), yes)
 	dh_makeshlibs -plibdrm-radeon1 -V'libdrm-radeon1 (>= 2.4.17)' -- -c4
