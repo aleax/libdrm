@@ -1,6 +1,7 @@
 libdrm (2.4.20-1) UNRELEASED; urgency=low
 
   * New upstream release.
+  * Disable libkms for now.
 
  -- Brice Goglin <bgoglin@debian.org>  Tue, 06 Apr 2010 21:46:57 +0200
 
