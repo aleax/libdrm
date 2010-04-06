@@ -21,6 +21,7 @@ libdrm_radeon.so.1 libdrm-radeon1 #MINVER#
  radeon_cs_emit@Base 2.4.17
  radeon_cs_end@Base 2.4.17
  radeon_cs_erase@Base 2.4.17
+ radeon_cs_get_id@Base 2.4.20
  radeon_cs_manager_gem_ctor@Base 2.4.17
  radeon_cs_manager_gem_dtor@Base 2.4.17
  radeon_cs_need_flush@Base 2.4.17
@@ -33,5 +34,6 @@ libdrm_radeon.so.1 libdrm-radeon1 #MINVER#
  radeon_cs_space_set_flush@Base 2.4.17
  radeon_cs_write_reloc@Base 2.4.17
  radeon_gem_get_kernel_name@Base 2.4.17
+ radeon_gem_get_reloc_in_cs@Base 2.4.20
  radeon_gem_name_bo@Base 2.4.17
  radeon_gem_set_domain@Base 2.4.17

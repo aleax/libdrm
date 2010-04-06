@@ -143,7 +143,7 @@ ifeq ($(NOUVEAU), yes)
 	dh_makeshlibs -plibdrm-nouveau1 -V'libdrm-nouveau1 (>= 2.4.16)' -- -c4
 endif
 ifeq ($(RADEON), yes)
-	dh_makeshlibs -plibdrm-radeon1 -V'libdrm-radeon1 (>= 2.4.17)' -- -c4
+	dh_makeshlibs -plibdrm-radeon1 -V'libdrm-radeon1 (>= 2.4.20)' -- -c4
 endif
 	dh_installdeb -s
 	dh_shlibdeps -s
