@@ -19,7 +19,7 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 AC_PREREQ(2.60)
-AC_INIT([libdrm], 2.4.18, [dri-devel@lists.sourceforge.net], libdrm)
+AC_INIT([libdrm], 2.4.20, [dri-devel@lists.sourceforge.net], libdrm)
 AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_INIT_AUTOMAKE([dist-bzip2])
@@ -45,9 +45,9 @@ AC_ARG_ENABLE(udev,	AS_HELP_STRING([--enable-udev],
 				[UDEV=$enableval], [UDEV=no])
 
 AC_ARG_ENABLE(libkms,
-	      AS_HELP_STRING([--enable-libkms],
-	      [Enable KMS mm abstraction library (default: disabled)]),
-	      [LIBKMS=$enableval], [LIBKMS=no])
+	      AS_HELP_STRING([--disable-libkms],
+	      [Disable KMS mm abstraction library (default: enabled)]),
+	      [LIBKMS=$enableval], [LIBKMS=yes])
 
 AC_ARG_ENABLE(intel,
 	      AS_HELP_STRING([--disable-intel],
@@ -56,8 +56,8 @@ AC_ARG_ENABLE(intel,
 
 AC_ARG_ENABLE(radeon,
 	      AS_HELP_STRING([--disable-radeon],
-	      [Enable support for radeon's KMS API (default: enabled)]),
-	      [RADEON=$enableval], [RADEON=yes])
+	      [Enable support for radeon's KMS API (default: auto)]),
+	      [RADEON=$enableval], [RADEON=auto])
 
 AC_ARG_ENABLE(vmwgfx-experimental-api,
 	      AS_HELP_STRING([--enable-vmwgfx-experimental-api],
@@ -154,8 +154,9 @@ if test "x$VMWGFX" = xyes; then
 fi
 
 AM_CONDITIONAL(HAVE_NOUVEAU, [test "x$NOUVEAU" = xyes])
-
-AM_CONDITIONAL(HAVE_RADEON, [test "x$RADEON" = xyes])
+if test "x$NOUVEAU" = xyes; then
+	AC_DEFINE(HAVE_NOUVEAU, 1, [Have nouveau (nvidia) support])
+fi
 
 PKG_CHECK_MODULES(CAIRO, cairo, [HAVE_CAIRO=yes], [HAVE_CAIRO=no])
 if test "x$HAVE_CAIRO" = xyes; then
@@ -170,7 +171,7 @@ if test "x$HAVE_LIBUDEV" = xyes; then
 fi
 AM_CONDITIONAL(HAVE_LIBUDEV, [test "x$HAVE_LIBUDEV" = xyes])
 
-if test "x$INTEL" != "xno"; then
+if test "x$INTEL" != "xno" -o "x$RADEON" != "xno"; then
     # Check for atomic intrinsics
     AC_CACHE_CHECK([for native atomic primitives], drm_cv_atomic_primitives,
     [
@@ -195,7 +196,7 @@ if test "x$INTEL" != "xno"; then
 
     ])
     if test "x$drm_cv_atomic_primitives" = xIntel; then
-	    AC_DEFINE(HAVE_INTEL_ATOMIC_PRIMITIVES, 1,
+	    AC_DEFINE(HAVE_LIBDRM_ATOMIC_PRIMITIVES, 1,
 		      [Enable if your compiler supports the Intel __sync_* atomic primitives])
     fi
     if test "x$drm_cv_atomic_primitives" = "xlibatomic-ops"; then
@@ -203,17 +204,35 @@ if test "x$INTEL" != "xno"; then
     fi
 
     if test "x$drm_cv_atomic_primitives" = "xnone"; then
-	    if test "x$INTEL" != "xauto"; then
-		    AC_MSG_ERROR([libdrm_intel depends upon atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package, or, failing both of those, disable support for Intel GPUs by passing --disable-intel to ./configure])
-	   else
-		    INTEL=no
-	   fi
+           if test "x$INTEL" != "xauto"; then
+                   if test "x$INTEL" != "xno"; then
+                        AC_MSG_ERROR([libdrm_intel depends upon atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package, or, failing both of those, disable support for Intel GPUs by passing --disable-intel to ./configure])
+                   fi
+           else
+                   AC_MSG_WARN([Disabling libdrm_intel. It depends on atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package.])
+                   INTEL=no
+           fi
+           if test "x$RADEON" != "xauto"; then
+                   if test "x$RADEON" != "xno"; then
+                        AC_MSG_ERROR([libdrm_radeon depends upon atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package, or, failing both of those, disable support for Radeon support by passing --disable-radeon to ./configure])
+                   fi
+           else
+                   AC_MSG_WARN([Disabling libdrm_radeon. It depends on atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package.])
+                   RADEON=no
+           fi
+
     else
-	   INTEL=yes
+           if test "x$INTEL" != "xno"; then
+                   INTEL=yes
+           fi
+           if test "x$RADEON" != "xno"; then
+                   RADEON=yes
+           fi
     fi
 fi
 
 AM_CONDITIONAL(HAVE_INTEL, [test "x$INTEL" != "xno"])
+AM_CONDITIONAL(HAVE_RADEON, [test "x$RADEON" != "xno"])
 
 AC_ARG_WITH([kernel-source],
             [AS_HELP_STRING([--with-kernel-source],
