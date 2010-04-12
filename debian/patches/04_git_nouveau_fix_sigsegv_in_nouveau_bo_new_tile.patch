@@ -1,0 +1,27 @@
+commit df32c307e8f81b46ee8aa4dd7222fc18f175bbb3
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Fri Mar 19 10:17:19 2010 +1000
+
+    nouveau: fix segfault in nouveau_bo_new_tile() failure path
+
+Index: libdrm/nouveau/nouveau_bo.c
+===================================================================
+--- libdrm.orig/nouveau/nouveau_bo.c	2010-04-12 16:25:05.273755445 +1000
++++ libdrm/nouveau/nouveau_bo.c	2010-04-12 16:27:51.000000000 +1000
+@@ -198,14 +198,14 @@
+ 	if (flags & (NOUVEAU_BO_VRAM | NOUVEAU_BO_GART)) {
+ 		ret = nouveau_bo_kalloc(nvbo, NULL);
+ 		if (ret) {
+-			nouveau_bo_ref(NULL, (void *)nvbo);
++			nouveau_bo_ref(NULL, (void *)&nvbo);
+ 			return ret;
+ 		}
+ 
+ 		if (flags & NOUVEAU_BO_PIN) {
+ 			ret = nouveau_bo_pin((void *)nvbo, nvbo->flags);
+ 			if (ret) {
+-				nouveau_bo_ref(NULL, (void *)nvbo);
++				nouveau_bo_ref(NULL, (void *)&nvbo);
+ 				return ret;
+ 			}
+ 		}

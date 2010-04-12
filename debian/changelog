@@ -1,3 +1,11 @@
+libdrm (2.4.18-1ubuntu3) lucid; urgency=low
+
+  * debian/patches/04_git_nouveau_fix_sigsegv_in_nouveau_bo_new_tile.patch:
+    + Cherry pick from upstream git.  Fixes a segfault in libdrm_nouveau on
+      X start for some cards (LP: #547124)
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Mon, 12 Apr 2010 11:14:11 +1000
+
 libdrm (2.4.18-1ubuntu2) lucid; urgency=low
 
   * libdrm-nouveau1.symbols: Add a missing symbol introduced in 2.4.18.
