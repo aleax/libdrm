@@ -1,6 +1,7 @@
 libdrm (2.4.20-1) UNRELEASED; urgency=low
 
   * New upstream release.
+    + Cherry-pick upstream fixes 107ccd92 and 332739e3.
   * Update libdrm-intel1.symbols, libdrm-radeon1.symbols and shlibs.
   * Disable libkms for now.
 
