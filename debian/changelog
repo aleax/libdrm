@@ -1,11 +1,11 @@
-libdrm (2.4.20-1) UNRELEASED; urgency=low
+libdrm (2.4.20-1) experimental; urgency=low
 
   * New upstream release.
     + Cherry-pick upstream fixes 107ccd92 and 332739e3.
   * Update libdrm-intel1.symbols, libdrm-radeon1.symbols and shlibs.
   * Disable libkms for now.
 
- -- Brice Goglin <bgoglin@debian.org>  Tue, 06 Apr 2010 21:46:57 +0200
+ -- Brice Goglin <bgoglin@debian.org>  Fri, 16 Apr 2010 07:14:41 +0200
 
 libdrm (2.4.18-5) unstable; urgency=low
 
