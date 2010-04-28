@@ -1,3 +1,10 @@
+libdrm (2.4.20-2) experimental; urgency=low
+
+  * Upload again, faking a new upstream version, since a screw-up on
+    ftpmaster side trashed all files from experimental.
+
+ -- Cyril Brulebois <kibi@debian.org>  Wed, 28 Apr 2010 01:54:44 +0200
+
 libdrm (2.4.20-1) experimental; urgency=low
 
   * New upstream release.
