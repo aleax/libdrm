@@ -261,8 +261,8 @@ INPUTDEP = $(shell cat /usr/share/xserver-xorg/xinputdep 2>/dev/null)
 # these two can be removed post-squeeze
 VIDEOABI = $(shell cat /usr/share/xserver-xorg/videoabiver 2>/dev/null)
 INPUTABI = $(shell cat /usr/share/xserver-xorg/inputabiver 2>/dev/null)
-VIDDRIVER_PROVIDES = xserver-xorg-video-$(VIDEOABI)
-INPDRIVER_PROVIDES = xserver-xorg-input-$(INPUTABI)
+VIDDRIVER_PROVIDES = xserver-xorg-video-$(VIDEOABI), xorg-driver-video
+INPDRIVER_PROVIDES = xserver-xorg-input-$(INPUTABI), xorg-driver-input
 
 ifeq ($(PACKAGE),)
 PACKAGE=$(shell awk '/^Package:/ { print $$2; exit }' < debian/control)
