@@ -39,16 +39,17 @@
 #include <sys/ioctl.h>
 #include "xf86drm.h"
 
-#include "i915_drm.h"
+#include "nouveau_drm.h"
 
-struct intel_bo
+struct nouveau_bo
 {
 	struct kms_bo base;
+	uint64_t map_handle;
 	unsigned map_count;
 };
 
 static int
-intel_get_prop(struct kms_driver *kms, unsigned key, unsigned *out)
+nouveau_get_prop(struct kms_driver *kms, unsigned key, unsigned *out)
 {
 	switch (key) {
 	case KMS_BO_TYPE:
@@ -61,21 +62,21 @@ intel_get_prop(struct kms_driver *kms, unsigned key, unsigned *out)
 }
 
 static int
-intel_destroy(struct kms_driver *kms)
+nouveau_destroy(struct kms_driver *kms)
 {
 	free(kms);
 	return 0;
 }
 
 static int
-intel_bo_create(struct kms_driver *kms,
+nouveau_bo_create(struct kms_driver *kms,
 		 const unsigned width, const unsigned height,
 		 const enum kms_bo_type type, const unsigned *attr,
 		 struct kms_bo **out)
 {
-	struct drm_i915_gem_create arg;
+	struct drm_nouveau_gem_new arg;
 	unsigned size, pitch;
-	struct intel_bo *bo;
+	struct nouveau_bo *bo;
 	int i, ret;
 
 	for (i = 0; attr[i]; i += 2) {
@@ -99,40 +100,30 @@ intel_bo_create(struct kms_driver *kms,
 	} else if (type == KMS_BO_TYPE_SCANOUT_X8R8G8B8) {
 		pitch = width * 4;
 		pitch = (pitch + 512 - 1) & ~(512 - 1);
-		size = pitch * ((height + 4 - 1) & ~(4 - 1));
+		size = pitch * height;
 	} else {
 		return -EINVAL;
 	}
 
 	memset(&arg, 0, sizeof(arg));
-	arg.size = size;
+	arg.info.size = size;
+	arg.info.domain = NOUVEAU_GEM_DOMAIN_MAPPABLE | NOUVEAU_GEM_DOMAIN_VRAM;
+	arg.info.tile_mode = 0;
+	arg.info.tile_flags = 0;
+	arg.align = 512;
+	arg.channel_hint = 0;
 
-	ret = drmCommandWriteRead(kms->fd, DRM_I915_GEM_CREATE, &arg, sizeof(arg));
+	ret = drmCommandWriteRead(kms->fd, DRM_NOUVEAU_GEM_NEW, &arg, sizeof(arg));
 	if (ret)
 		goto err_free;
 
 	bo->base.kms = kms;
-	bo->base.handle = arg.handle;
+	bo->base.handle = arg.info.handle;
 	bo->base.size = size;
 	bo->base.pitch = pitch;
+	bo->map_handle = arg.info.map_handle;
 
 	*out = &bo->base;
-	if (type == KMS_BO_TYPE_SCANOUT_X8R8G8B8 && pitch > 512) {
-		struct drm_i915_gem_set_tiling tile;
-
-		memset(&tile, 0, sizeof(tile));
-		tile.handle = bo->base.handle;
-		tile.tiling_mode = I915_TILING_X;
-		tile.stride = bo->base.pitch;
-
-		ret = drmCommandWriteRead(kms->fd, DRM_I915_GEM_SET_TILING, &tile, sizeof(tile));
-#if 0
-		if (ret) {
-			kms_bo_destroy(out);
-			return ret;
-		}
-#endif
-	}
 
 	return 0;
 
@@ -142,7 +133,7 @@ err_free:
 }
 
 static int
-intel_bo_get_prop(struct kms_bo *bo, unsigned key, unsigned *out)
+nouveau_bo_get_prop(struct kms_bo *bo, unsigned key, unsigned *out)
 {
 	switch (key) {
 	default:
@@ -151,12 +142,10 @@ intel_bo_get_prop(struct kms_bo *bo, unsigned key, unsigned *out)
 }
 
 static int
-intel_bo_map(struct kms_bo *_bo, void **out)
+nouveau_bo_map(struct kms_bo *_bo, void **out)
 {
-	struct intel_bo *bo = (struct intel_bo *)_bo;
-	struct drm_i915_gem_mmap_gtt arg;
+	struct nouveau_bo *bo = (struct nouveau_bo *)_bo;
 	void *map = NULL;
-	int ret;
 
 	if (bo->base.ptr) {
 		bo->map_count++;
@@ -164,14 +153,7 @@ intel_bo_map(struct kms_bo *_bo, void **out)
 		return 0;
 	}
 
-	memset(&arg, 0, sizeof(arg));
-	arg.handle = bo->base.handle;
-
-	ret = drmCommandWriteRead(bo->base.kms->fd, DRM_I915_GEM_MMAP_GTT, &arg, sizeof(arg));
-	if (ret)
-		return ret;
-
-	map = mmap(0, bo->base.size, PROT_READ | PROT_WRITE, MAP_SHARED, bo->base.kms->fd, arg.offset);
+	map = mmap(0, bo->base.size, PROT_READ | PROT_WRITE, MAP_SHARED, bo->base.kms->fd, bo->map_handle);
 	if (map == MAP_FAILED)
 		return -errno;
 
@@ -183,17 +165,17 @@ intel_bo_map(struct kms_bo *_bo, void **out)
 }
 
 static int
-intel_bo_unmap(struct kms_bo *_bo)
+nouveau_bo_unmap(struct kms_bo *_bo)
 {
-	struct intel_bo *bo = (struct intel_bo *)_bo;
+	struct nouveau_bo *bo = (struct nouveau_bo *)_bo;
 	bo->map_count--;
 	return 0;
 }
 
 static int
-intel_bo_destroy(struct kms_bo *_bo)
+nouveau_bo_destroy(struct kms_bo *_bo)
 {
-	struct intel_bo *bo = (struct intel_bo *)_bo;
+	struct nouveau_bo *bo = (struct nouveau_bo *)_bo;
 	struct drm_gem_close arg;
 	int ret;
 
@@ -215,7 +197,7 @@ intel_bo_destroy(struct kms_bo *_bo)
 }
 
 int
-intel_create(int fd, struct kms_driver **out)
+nouveau_create(int fd, struct kms_driver **out)
 {
 	struct kms_driver *kms;
 
@@ -225,13 +207,13 @@ intel_create(int fd, struct kms_driver **out)
 
 	kms->fd = fd;
 
-	kms->bo_create = intel_bo_create;
-	kms->bo_map = intel_bo_map;
-	kms->bo_unmap = intel_bo_unmap;
-	kms->bo_get_prop = intel_bo_get_prop;
-	kms->bo_destroy = intel_bo_destroy;
-	kms->get_prop = intel_get_prop;
-	kms->destroy = intel_destroy;
+	kms->bo_create = nouveau_bo_create;
+	kms->bo_map = nouveau_bo_map;
+	kms->bo_unmap = nouveau_bo_unmap;
+	kms->bo_get_prop = nouveau_bo_get_prop;
+	kms->bo_destroy = nouveau_bo_destroy;
+	kms->get_prop = nouveau_get_prop;
+	kms->destroy = nouveau_destroy;
 	*out = kms;
 
 	return 0;

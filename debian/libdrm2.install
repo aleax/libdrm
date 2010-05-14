@@ -1,1 +1,1 @@
-usr/lib/libdrm.so.* /lib
+usr/lib/libdrm.so.2* /lib

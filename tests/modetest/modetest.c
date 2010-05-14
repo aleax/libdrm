@@ -143,9 +143,9 @@ void dump_encoders(void)
 
 void dump_mode(drmModeModeInfo *mode)
 {
-	printf("  %s %.02f %d %d %d %d %d %d %d %d\n",
+	printf("  %s %d %d %d %d %d %d %d %d %d\n",
 	       mode->name,
-	       (float)mode->vrefresh / 1000,
+	       mode->vrefresh,
 	       mode->hdisplay,
 	       mode->hsync_start,
 	       mode->hsync_end,
@@ -206,10 +206,10 @@ void dump_connectors(void)
 		for (j = 0; j < connector->count_modes; j++)
 			dump_mode(&connector->modes[j]);
 
-		drmModeFreeConnector(connector);
-
 		printf("  props:\n");
 		dump_props(connector);
+
+		drmModeFreeConnector(connector);
 	}
 	printf("\n");
 }
@@ -618,6 +618,7 @@ set_mode(struct connector *c, int count, int page_flip)
 	evctx.page_flip_handler = page_flip_handler;
 	
 	while (1) {
+#if 0
 		struct pollfd pfd[2];
 
 		pfd[0].fd = 0;
@@ -632,6 +633,24 @@ set_mode(struct connector *c, int count, int page_flip)
 
 		if (pfd[0].revents)
 			break;
+#else
+		struct timeval timeout = { .tv_sec = 3, .tv_usec = 0 };
+		fd_set fds;
+		int ret;
+
+		FD_ZERO(&fds);
+		FD_SET(0, &fds);
+		FD_SET(fd, &fds);
+		ret = select(fd + 1, &fds, NULL, NULL, &timeout);
+
+		if (ret <= 0) {
+			fprintf(stderr, "select timed out or error (ret %d)\n",
+				ret);
+			continue;
+		} else if (FD_ISSET(0, &fds)) {
+			break;
+		}
+#endif
 
 		drmHandleEvent(fd, &evctx);
 	}
@@ -680,7 +699,7 @@ int main(int argc, char **argv)
 	int c;
 	int encoders = 0, connectors = 0, crtcs = 0, framebuffers = 0;
 	int test_vsync = 0;
-	char *modules[] = { "i915", "radeon" };
+	char *modules[] = { "i915", "radeon", "nouveau" };
 	char *modeset = NULL;
 	int i, count = 0;
 	struct connector con_args[2];
