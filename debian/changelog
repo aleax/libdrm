@@ -1,3 +1,13 @@
+libdrm (2.4.20-2ubuntu1) maverick; urgency=low
+
+  * Merge from debian unstable, remaining changes:
+    - Dropped patches:
+      02_fix_kms_detection_with_linux_backport_modules.diff - Obsolete
+      03_revert_abi_change.diff - Obsolete
+      04_git_nouveau_fix_sigsegv_in_nouveau_bo_new_tile.patch - Upstream
+
+ -- Robert Hooker <sarvatt@ubuntu.com>  Fri, 14 May 2010 13:47:41 -0400
+
 libdrm (2.4.20-2) experimental; urgency=low
 
   * Upload again, faking a new upstream version, since a screw-up on
