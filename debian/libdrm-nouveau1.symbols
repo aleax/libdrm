@@ -12,12 +12,12 @@ libdrm_nouveau.so.1 libdrm-nouveau1 #MINVER#
  nouveau_bo_new@Base 2.4.4
  nouveau_bo_new_tile@Base 2.4.11-1ubuntu1~
  nouveau_bo_pending@Base 2.4.16
- nouveau_bo_pin@Base 2.4.4
+#MISSING: 2.4.20# nouveau_bo_pin@Base 2.4.4
  nouveau_bo_ref@Base 2.4.4
  nouveau_bo_takedown@Base 2.4.4
 #MISSING: 2.4.12+git20090729.5a73f066# nouveau_bo_tile@Base 2.4.4
  nouveau_bo_unmap@Base 2.4.4
- nouveau_bo_unpin@Base 2.4.4
+#MISSING: 2.4.20# nouveau_bo_unpin@Base 2.4.4
  nouveau_bo_user@Base 2.4.4
 #MISSING: 2.4.12+git20090729.5a73f066# nouveau_bo_validate_nomm@Base 2.4.4
  nouveau_bo_wrap@Base 2.4.11-1ubuntu1~
@@ -53,6 +53,8 @@ libdrm_nouveau.so.1 libdrm-nouveau1 #MINVER#
  nouveau_pushbuf_init@Base 2.4.4
  nouveau_pushbuf_marker_emit@Base 2.4.16
  nouveau_pushbuf_marker_undo@Base 2.4.16
+ nouveau_pushbuf_submit@Base 2.4.20
+ nouveau_reloc_emit@Base 2.4.20
  nouveau_resource_alloc@Base 2.4.4
  nouveau_resource_destroy@Base 2.4.18
  nouveau_resource_free@Base 2.4.4
