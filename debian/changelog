@@ -3,6 +3,7 @@ libdrm (2.4.18-6) UNRELEASED; urgency=low
   * New patch 04_fix_nouveau_bo_new_tile_segfault.diff, backported from
     upstream commit df32c307e8f81b46ee8aa4dd7222fc18f175bbb3.  Fixes
     segfault in nouveau_bo_new_tile() failure path (see #579425).
+  * Update xsfbs to 81fc271788605b52e85c2d11635a0371fb44605e0.
 
  -- Sven Joachim <svenjoac@gmx.de>  Sat, 22 May 2010 13:17:50 +0200
 
