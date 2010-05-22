@@ -1,3 +1,9 @@
+libdrm (2.4.20-3) UNRELEASED; urgency=low
+
+  * Update xsfbs to 81fc271788605b52e85c2d11635a0371fb44605e0.
+
+ -- Sven Joachim <svenjoac@gmx.de>  Sat, 22 May 2010 13:47:34 +0200
+
 libdrm (2.4.20-2) experimental; urgency=low
 
   * Upload again, faking a new upstream version, since a screw-up on
