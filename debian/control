@@ -99,6 +99,7 @@ Section: libs
 Architecture: linux-any
 Depends: ${shlibs:Depends},
  ${misc:Depends},
+Breaks: xserver-xorg-video-nouveau (<< 1:0.0.16)
 Description: Userspace interface to nouveau-specific kernel DRM services -- runtime
  This library implements the userspace interface to the nouveau-specific kernel
  DRM services. DRM stands for "Direct Rendering Manager", which is the

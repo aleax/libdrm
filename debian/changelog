@@ -1,5 +1,12 @@
 libdrm (2.4.20-3) UNRELEASED; urgency=low
 
+  * Update libdrm-nouveau1 to the ABI of Linux 2.6.34.
+    - Drop 03_revert_abi_change.diff.
+    - Bump libdrm-nouveau shlibs and symbols versions to 2.4.20-3~
+      to ensure that packages built against this version are not used
+      with an older libdrm-nouveau1 version.
+    - Add versioned Breaks against xserver-xorg-video-nouveau to force
+      an upgrade of that package and prevent X segfaults.
   * Update xsfbs to 81fc271788605b52e85c2d11635a0371fb44605e0.
 
  -- Sven Joachim <svenjoac@gmx.de>  Sat, 22 May 2010 13:47:34 +0200
