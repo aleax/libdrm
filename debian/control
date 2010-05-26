@@ -152,7 +152,7 @@ Package: libkms1
 Section: libs
 Architecture: linux-any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Library that abstract aways the different mm interface for kernel drivers
+Description: Userspace interface to kernel DRM buffer management
  This library implements a unified userspace interface to the different buffer
  management interfaces of the kernel DRM hardware drivers.
 
@@ -161,7 +161,7 @@ Section: debug
 Priority: extra
 Architecture: linux-any
 Depends: libkms1 (= ${binary:Version}), ${misc:Depends}
-Description: Library that abstract aways the different mm interface for kernel drivers -- debugging symbols
+Description: Userspace interface to kernel DRM buffer management -- debugging symbols
  This library implements a unified userspace interface to the different buffer
  management interfaces of the kernel DRM hardware drivers.
  .
