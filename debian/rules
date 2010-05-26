@@ -17,7 +17,6 @@ DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 DEB_HOST_ARCH_OS    ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
 
-confflags += --disable-libkms
 ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
 	confflags += --build=$(DEB_HOST_GNU_TYPE)
 else
@@ -25,12 +24,15 @@ else
 endif
 ifeq (linux, $(DEB_HOST_ARCH_OS))
 	confflags += --enable-udev
+	confflags += --enable-libkms
+	confflags += --enable-vmwgfx-experimental-api
 	confflags += --enable-nouveau-experimental-api
 	NOUVEAU = yes
 	confflags += --enable-radeon
 	RADEON = yes
 else
 	confflags += --disable-udev
+	confflags += --disable-libkms
 	confflags += --disable-nouveau-experimental-api
 	NOUVEAU = no
 	confflags += --disable-radeon
@@ -132,6 +134,7 @@ endif
 ifeq ($(RADEON), yes)
 	dh_strip -plibdrm-radeon1 --dbg-package=libdrm-radeon1-dbg
 endif
+	dh_strip -p libkms1 --dbg-package=libkms1-dbg
 	dh_strip -s --remaining-packages
 	dh_compress -s
 	dh_fixperms -s
@@ -145,6 +148,7 @@ endif
 ifeq ($(RADEON), yes)
 	dh_makeshlibs -plibdrm-radeon1 -V'libdrm-radeon1 (>= 2.4.20)' -- -c4
 endif
+	dh_makeshlibs -plibkms1 -V'libkms1 (>=2.4.20)' -- -c4
 	dh_installdeb -s
 	dh_shlibdeps -s
 	dh_gencontrol -s

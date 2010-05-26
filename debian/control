@@ -24,6 +24,7 @@ Depends:
  libdrm-intel1 (= ${binary:Version}) [amd64 i386 kfreebsd-amd64 kfreebsd-i386],
  libdrm-radeon1 (= ${binary:Version}) [linux-any],
  libdrm-nouveau1 (= ${binary:Version}) [linux-any],
+ libkms1 (= ${binary:Version}) [linux-any],
  ${misc:Depends},
 Replaces:
  linux-libc-dev (<< 2.6.32-10)
@@ -147,3 +148,21 @@ Description: Userspace interface to radeon-specific kernel DRM services -- debug
  .
  This package provides the debugging symbols for the libdrm-radeon1 package.
 
+Package: libkms1
+Section: libs
+Architecture: linux-any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Library that abstract aways the different mm interface for kernel drivers
+ This library implements a unified userspace interface to the different buffer
+ management interfaces of the kernel DRM hardware drivers.
+
+Package: libkms1-dbg
+Section: debug
+Priority: extra
+Architecture: linux-any
+Depends: libkms1 (= ${binary:Version}), ${misc:Depends}
+Description: Library that abstract aways the different mm interface for kernel drivers -- debugging symbols
+ This library implements a unified userspace interface to the different buffer
+ management interfaces of the kernel DRM hardware drivers.
+ .
+ This package provides the debugging symbols for the libkms1 package.
