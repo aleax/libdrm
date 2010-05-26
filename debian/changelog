@@ -1,3 +1,17 @@
+libdrm (2.4.20-4) UNRELEASED; urgency=low
+
+  * debian/rules:
+    - Add libkms to build
+    - Build vmwgfx experimental API.  The drm module is available in the 2.6.34
+      kernel so we might as well build the userspace bits.
+  * debian/control:
+    - Add libkms1, libkms1-dbg packages on linux
+  * debian/patches/02_build_libkms_against_in_tree_drm:
+    - Build libkms against in-tree headers and link against libdrm as it
+      uses symbols from libdrm.
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Wed, 26 May 2010 17:03:23 +1000
+
 libdrm (2.4.20-3) experimental; urgency=low
 
   [ Sven Joachim ]
