@@ -7,9 +7,14 @@ libdrm (2.4.21-1) UNRELEASED; urgency=low
       kernel so we might as well build the userspace bits.
   * debian/control:
     - Add libkms1, libkms1-dbg packages on linux
+  * debian/patches/02_build_libkms_against_in_tree_drm:
+    - Build libkms against in-tree headers and link against libdrm as it
+      uses symbols from libdrm.
 
   [ Robert Hooker ]
   * New upstream release.
+  * Refresh 02_build_libkms_against_in_tree_drm.
+  * Update libdrm-intel1.symbols, libdrm-radeon1.symbols and shlibs.
 
  -- Robert Hooker <sarvatt@ubuntu.com>  Thu, 10 Jun 2010 14:44:36 -0400
 
