@@ -1,4 +1,4 @@
-libdrm (2.4.21-1) UNRELEASED; urgency=low
+libdrm (2.4.21-1) experimental; urgency=low
 
   [ Christopher James Halse Rogers ]
   * debian/rules:
@@ -8,8 +8,7 @@ libdrm (2.4.21-1) UNRELEASED; urgency=low
   * debian/control:
     - Add libkms1, libkms1-dbg packages on linux
   * debian/patches/02_build_libkms_against_in_tree_drm:
-    - Build libkms against in-tree headers and link against libdrm as it
-      uses symbols from libdrm.
+    - Link libkms against libdrm as it uses symbols from libdrm.
 
   [ Robert Hooker ]
   * New upstream release.
@@ -24,7 +23,7 @@ libdrm (2.4.21-1) UNRELEASED; urgency=low
   * Same with libkms.  Also don't set a minimum version to 2.4.20, since we
     didn't ship it before anyway.
 
- -- Robert Hooker <sarvatt@ubuntu.com>  Thu, 10 Jun 2010 14:44:36 -0400
+ -- Julien Cristau <jcristau@debian.org>  Thu, 10 Jun 2010 23:24:54 +0200
 
 libdrm (2.4.20-3) experimental; urgency=low
 

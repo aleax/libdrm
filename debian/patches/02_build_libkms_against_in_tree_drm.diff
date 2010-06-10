@@ -1,6 +1,4 @@
-Description: Build libkms against in-tree xf86drm.h header
- libkms requires xf86drm.h, and uses symbols from libdrm.  Add
- libdrm to LIBADD.
+Description: Add libdrm to LIBADD as libkms uses symbols from libdrm
 Author: Christopher Halse Rogers <christopher.halse.rogers@canonical.com>
 Bug: https://bugs.freedesktop.org/show_bug.cgi?id=26852
 
