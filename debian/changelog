@@ -19,6 +19,8 @@ libdrm (2.4.21-1) UNRELEASED; urgency=low
   [ Julien Cristau ]
   * Update the copyright file to hopefully include all licenses variations and
     copyright statements from the source tree.
+  * Mark new libdrm_radeon symbols private.  They shouldn't actually be
+    exported.
 
  -- Robert Hooker <sarvatt@ubuntu.com>  Thu, 10 Jun 2010 14:44:36 -0400
 

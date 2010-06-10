@@ -150,7 +150,7 @@ ifeq ($(NOUVEAU), yes)
 	dh_makeshlibs -plibdrm-nouveau1 -V'libdrm-nouveau1 (>= 2.4.20-3~)' -- -c4
 endif
 ifeq ($(RADEON), yes)
-	dh_makeshlibs -plibdrm-radeon1 -V'libdrm-radeon1 (>= 2.4.21)' -- -c4
+	dh_makeshlibs -plibdrm-radeon1 -V'libdrm-radeon1 (>= 2.4.20)' -- -c4
 endif
 ifeq ($(LIBKMS), yes)
 	dh_makeshlibs -plibkms1 -V'libkms1 (>=2.4.20)' -- -c4
