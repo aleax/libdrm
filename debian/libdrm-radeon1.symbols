@@ -1,4 +1,22 @@
 libdrm_radeon.so.1 libdrm-radeon1 #MINVER#
+ bof_array@Base 2.4.21
+ bof_array_append@Base 2.4.21
+ bof_array_get@Base 2.4.21
+ bof_array_size@Base 2.4.21
+ bof_blob@Base 2.4.21
+ bof_blob_size@Base 2.4.21
+ bof_blob_value@Base 2.4.21
+ bof_decref@Base 2.4.21
+ bof_dump_file@Base 2.4.21
+ bof_incref@Base 2.4.21
+ bof_int32@Base 2.4.21
+ bof_int32_value@Base 2.4.21
+ bof_load_file@Base 2.4.21
+ bof_object@Base 2.4.21
+ bof_object_get@Base 2.4.21
+ bof_object_set@Base 2.4.21
+ bof_print@Base 2.4.21
+ bof_string@Base 2.4.21
  radeon_bo_debug@Base 2.4.17
  radeon_bo_get_handle@Base 2.4.17
  radeon_bo_get_src_domain@Base 2.4.17
