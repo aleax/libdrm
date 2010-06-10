@@ -2,3 +2,4 @@
 /lib/libdrm_intel.so.1 /usr/lib/libdrm_intel.so
 /lib/libdrm_nouveau.so.1 /usr/lib/libdrm_nouveau.so
 /lib/libdrm_radeon.so.1 /usr/lib/libdrm_radeon.so
+/lib/libkms.so.1 /usr/lib/libkms.so
