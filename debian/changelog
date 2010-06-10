@@ -16,6 +16,10 @@ libdrm (2.4.21-1) UNRELEASED; urgency=low
   * Refresh 02_build_libkms_against_in_tree_drm.
   * Update libdrm-intel1.symbols, libdrm-radeon1.symbols and shlibs.
 
+  [ Julien Cristau ]
+  * Update the copyright file to hopefully include all licenses variations and
+    copyright statements from the source tree.
+
  -- Robert Hooker <sarvatt@ubuntu.com>  Thu, 10 Jun 2010 14:44:36 -0400
 
 libdrm (2.4.20-3) experimental; urgency=low
