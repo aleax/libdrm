@@ -21,6 +21,8 @@ libdrm (2.4.21-1) UNRELEASED; urgency=low
     copyright statements from the source tree.
   * Mark new libdrm_radeon symbols private.  They shouldn't actually be
     exported.
+  * Same with libkms.  Also don't set a minimum version to 2.4.20, since we
+    didn't ship it before anyway.
 
  -- Robert Hooker <sarvatt@ubuntu.com>  Thu, 10 Jun 2010 14:44:36 -0400
 

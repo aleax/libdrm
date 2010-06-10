@@ -1,13 +1,14 @@
 libkms.so.1 libkms1 #MINVER#
- intel_create@Base 2.4.20
- kms_bo_create@Base 2.4.20
- kms_bo_destroy@Base 2.4.20
- kms_bo_get_prop@Base 2.4.20
- kms_bo_map@Base 2.4.20
- kms_bo_unmap@Base 2.4.20
- kms_create@Base 2.4.20
- kms_destroy@Base 2.4.20
- kms_get_prop@Base 2.4.20
- linux_create@Base 2.4.20
- nouveau_create@Base 2.4.20
- vmwgfx_create@Base 2.4.20
+| libkms-private
+ intel_create@Base 0 1
+ kms_bo_create@Base 0
+ kms_bo_destroy@Base 0
+ kms_bo_get_prop@Base 0
+ kms_bo_map@Base 0
+ kms_bo_unmap@Base 0
+ kms_create@Base 0
+ kms_destroy@Base 0
+ kms_get_prop@Base 0
+ linux_create@Base 0 1
+ nouveau_create@Base 0 1
+ vmwgfx_create@Base 0 1
