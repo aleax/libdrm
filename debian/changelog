@@ -1,3 +1,9 @@
+libdrm (2.4.21-2) UNRELEASED; urgency=low
+
+  * Revert nouveau ABI update.
+
+ -- Julien Cristau <jcristau@debian.org>  Tue, 24 Aug 2010 18:27:59 +0200
+
 libdrm (2.4.21-1) experimental; urgency=low
 
   [ Christopher James Halse Rogers ]
