@@ -1,10 +1,10 @@
-libdrm (2.4.21-2) UNRELEASED; urgency=low
+libdrm (2.4.21-1~squeeze1) unstable; urgency=low
 
   * Revert nouveau ABI update.
   * Don't build libkms and vmwgfx.
   * Drop 04_fix_nouveau_bo_new_tile_segfault.diff, applied upstream.
 
- -- Julien Cristau <jcristau@debian.org>  Tue, 24 Aug 2010 18:27:59 +0200
+ -- Julien Cristau <jcristau@debian.org>  Tue, 24 Aug 2010 19:47:57 +0200
 
 libdrm (2.4.21-1) experimental; urgency=low
 
