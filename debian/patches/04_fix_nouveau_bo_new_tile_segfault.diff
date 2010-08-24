@@ -1,0 +1,15 @@
+---
+ nouveau/nouveau_bo.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/nouveau/nouveau_bo.c
++++ b/nouveau/nouveau_bo.c
+@@ -205,7 +205,7 @@
+ 		if (flags & NOUVEAU_BO_PIN) {
+ 			ret = nouveau_bo_pin((void *)nvbo, nvbo->flags);
+ 			if (ret) {
+-				nouveau_bo_ref(NULL, (void *)nvbo);
++				nouveau_bo_ref(NULL, (void *)&nvbo);
+ 				return ret;
+ 			}
+ 		}
