@@ -30,11 +30,10 @@ libdrm_nouveaucommoninclude_HEADERS = \
 				nouveau_pushbuf.h \
 				nouveau_bo.h \
 				nouveau_resource.h \
-				nouveau_class.h \
 				nouveau_reloc.h
 
 
-libdrm_nouveauincludedir = ${includedir}/drm
+libdrm_nouveauincludedir = ${includedir}/libdrm
 libdrm_nouveauinclude_HEADERS = \
 				nouveau_drmif.h
 

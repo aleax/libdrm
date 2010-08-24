@@ -145,6 +145,19 @@ drm_intel_bo_exec(drm_intel_bo *bo, int used,
 	return bo->bufmgr->bo_exec(bo, used, cliprects, num_cliprects, DR4);
 }
 
+int
+drm_intel_bo_mrb_exec(drm_intel_bo *bo, int used,
+		drm_clip_rect_t *cliprects, int num_cliprects, int DR4,
+		int ring_flag)
+{
+	if (bo->bufmgr->bo_mrb_exec)
+		return bo->bufmgr->bo_mrb_exec(bo, used,
+					cliprects, num_cliprects, DR4,
+					ring_flag);
+
+	return -ENODEV;
+}
+
 void drm_intel_bufmgr_set_debug(drm_intel_bufmgr *bufmgr, int enable_debug)
 {
 	bufmgr->debug = enable_debug;
@@ -172,6 +185,18 @@ drm_intel_bo_emit_reloc(drm_intel_bo *bo, uint32_t offset,
 					 target_bo, target_offset,
 					 read_domains, write_domain);
 }
+
+/* For fence registers, not GL fences */
+int
+drm_intel_bo_emit_reloc_fence(drm_intel_bo *bo, uint32_t offset,
+			      drm_intel_bo *target_bo, uint32_t target_offset,
+			      uint32_t read_domains, uint32_t write_domain)
+{
+	return bo->bufmgr->bo_emit_reloc_fence(bo, offset,
+					       target_bo, target_offset,
+					       read_domains, write_domain);
+}
+
 
 int drm_intel_bo_pin(drm_intel_bo *bo, uint32_t alignment)
 {
@@ -214,6 +239,13 @@ int drm_intel_bo_disable_reuse(drm_intel_bo *bo)
 {
 	if (bo->bufmgr->bo_disable_reuse)
 		return bo->bufmgr->bo_disable_reuse(bo);
+	return 0;
+}
+
+int drm_intel_bo_is_reusable(drm_intel_bo *bo)
+{
+	if (bo->bufmgr->bo_is_reusable)
+		return bo->bufmgr->bo_is_reusable(bo);
 	return 0;
 }
 

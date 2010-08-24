@@ -1,3 +1,680 @@
+commit 65ec8d7699267cc59777d531f545a82a14341480
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Jun 10 08:59:05 2010 -0700
+
+    Bump version to 2.4.21 for release.
+
+commit b8c4e5836cf1eff3e8c666f24567bd4c2fa31140
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Jun 10 09:03:41 2010 -0700
+
+    Fix radeon distcheck.
+
+commit 4f7704aea76b3d93d997d2ff815541d0ac373535
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Jun 10 08:58:08 2010 -0700
+
+    intel: Fix several other paths for buffers pointing at themselves.
+
+commit 0ec768e67aec8b1ded9bcf575ad1c0beb28cc0ca
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Jun 4 17:09:11 2010 -0700
+
+    intel: Add more intermediate sizes of cache buckets between powers of 2.
+    
+    We had two cases recently where the rounding to powers of two hurt
+    badly: 4:2:0 YUV HD video frames would round up from 2.2MB to 4MB, and
+    Urban Terror was hitting aperture size limitations.  For UT, this is
+    because mipmap trees for power of two texture sizes will land right in
+    the middle between two cache buckets.
+    
+    By giving a few more sizes between powers of two, Urban Terror on my
+    945 ends up consuming 207MB of GEM objects instead of 272MB, and HD
+    video decode on Ironlake goes from 99MB to 75MB.
+    
+    cairo-perf-diff of the benchmarks for gl and xlib shows a 1.09x and
+    1.06x speedup and a 1.07x, 1.08x, and 1.11x slowdown.  From this, I
+    think this patch was really a no-op in terms of performance for these
+    CPU-bound workloads.
+
+commit e65caeba9ed0e6c53830d944248aaae2228351ab
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Jun 9 10:08:41 2010 +0100
+
+    intel: Convert to untiled pitches if surface is too large for tiling.
+    
+    If the pitch is too large for the hardware to tile, recompute the
+    required surface size based on the untiled pitch and alignments. For the
+    older hardware, which has smaller limits and greater restrictions, this
+    may be a considerable saving in allocation size.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit f179137f8f5bf272b79266575121c7a04038290c
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jun 7 14:22:36 2010 -0700
+
+    Allow a buffer to point at itself and still get relocs.
+    
+    I'm using this in experiments with the i965 Mesa driver.
+
+commit 66375fd6e8d3e95df5d124883a1426460c1b8ed8
+Author: Zou Nan hai <nanhai.zou@intel.com>
+Date:   Wed Jun 2 10:07:37 2010 +0800
+
+    intel: Add support for kernel multi-ringbuffer API.
+    
+    This introduces a new API to exec on BSD ring buffer, for H.264 VLD
+    decoding.
+    
+    Signed-off-by: Xiang Hai hao <haihao.xiang@intel.com>
+    Signed-off-by: Zou Nan hai <nanhai.zou@intel.com>
+
+commit 73a42a645201a85ce2fe4fc77754df67e5097fc9
+Author: Jesse Barnes <jbarnes@jbarnes-asus.(none)>
+Date:   Wed Jun 2 18:27:24 2010 -0700
+
+    add vbltest to .gitignore
+
+commit ae57dcf6e063860200b7949d5e2365e80ac4aea7
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Tue Jun 1 19:23:42 2010 +0100
+
+    libkms: Fix include paths
+    
+    Otherwise xf86drm.h isn't found, or the wrong one.
+
+commit 607e228c263d5d171bd0615d5d93202dda371e5f
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue May 25 20:13:37 2010 -0700
+
+    Enable silent automake rules.
+
+commit 58e54f62c91aff4f4be96c6d8771ca9110969f49
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue May 25 20:11:23 2010 -0700
+
+    intel_bufmgr_fake: fix compile warning.
+
+commit fcf3e616eeeb289f96af1436d809f0a1a42bebb7
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon May 24 18:35:41 2010 +0100
+
+    intel: Don't change tiling mode unless the kernel reports success.
+    
+    Fixes:
+    
+      Bug 26686 - Some textures are distorted with libdrm 2.4.18 in GTAVC&GTA3
+      http://bugs.freedesktop.org/show_bug.cgi?id=26686
+    
+    This bug continues to haunt me. The kernel SET_TILING ioctl is
+    inconsistent in its return values when reporting an error. If one of its
+    sanity checks fail, then the input values are left unchanged. If the
+    kernel later fails to change the tiling mode, then the input values are
+    modified to match the current tiling on the object. In short, userspace
+    cannot trust the return values upon error and so we must assume that
+    upon error our current tiling mode matches reality and not update.
+
+commit a3305b076c005e0d3bd55da0214e91413cf65b48
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu May 13 08:24:28 2010 +0100
+
+    Revert "intel: We don't need to take the bufmgr lock whilst mapping."
+    
+    This reverts commit 7ca558494dd3f68f29bb6ca981de9b8f49620b60.
+    
+    This was pushed ahead of an essential review of bo level locking in
+    mesa, without which we cannot know whether removing this lock is safe.
+
+commit 52a3e9df629952e58bd019b8cd4cda1dd254a543
+Author: Jonathan Callen <abcd@gentoo.org>
+Date:   Wed May 12 13:55:34 2010 -0400
+
+    Only build tests in make check
+    
+    Currently, all the tests for libdrm are built during 'make all', even
+    if you do not wish to run tests.  Attached is a patch, based on
+    version 2.4.15, to make the tests build in 'make check'.
+
+commit 62731b84114e5dd3310b465921955db14278c256
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Wed May 12 13:34:25 2010 -0400
+
+    Pull in new kernel headers
+    
+    Changes struct drm_mode_crtc_page_flip to use __u32 instead of uint32_t,
+    fixes
+    
+    https://bugs.freedesktop.org/show_bug.cgi?id=26994
+
+commit 07e7589d86624e9c1ca4c38d00cf6886e1445ae2
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue May 11 08:54:06 2010 +0100
+
+    intel: query whether a buffer is reusable.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 7ca558494dd3f68f29bb6ca981de9b8f49620b60
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Apr 1 17:15:39 2010 +0100
+
+    intel: We don't need to take the bufmgr lock whilst mapping.
+
+commit 6293152eb065016a2e5e4fcd047c2db5c2fb0f36
+Author: Michel Dänzer <daenzer@vmware.com>
+Date:   Wed Apr 28 08:25:30 2010 +0200
+
+    vbltest: Doesn't need intel stuff.
+    
+    Fixes build without libdrm_intel.
+
+commit c42d1a10e37cc2ff378511a058b89a6f8eddf1c0
+Author: Jesse Barnes <jbarnes@jbarnes-acer.(none)>
+Date:   Tue Apr 27 15:43:20 2010 -0400
+
+    tests: add new vblank test
+    
+    Simple test for event frequency.
+
+commit af98ccf4dd5dcb1b904ec32b9bd1521e6bf7dda5
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Mon Apr 26 20:06:53 2010 +0200
+
+    radeon: use the const qualifier in radeon_cs_write_table
+    
+    Signed-off-by: Marek Olšák <maraeo@gmail.com>
+
+commit c9065c5963db1b8196d278c47b8da2c33a3c49d1
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Apr 16 17:34:11 2010 -0700
+
+    Correct the Solaris definitions of atomic_add & atomic_dec
+    
+    The #defines added in 966c9907c040b4fe4b288b4a9d82598797aee743 were
+    mapping these to functions that don't exist.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3c7ae8abe1eee1b1231f7c81e9898485940901c7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Apr 16 10:12:37 2010 -0700
+
+    Make libkms build default OS-dependent
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3506173ba7e726a9d0a17ec42734a925a885b01e
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Apr 11 18:40:38 2010 +0100
+
+    intel: Use the correct size when allocating reloc_target_info array
+    
+    Thomas tracked down this error with kdm and commit b509640:
+    
+    ==4320== Invalid write of size 8
+    ==4320==    at 0x9A97998: do_bo_emit_reloc (in /usr/lib/libdrm_intel.so.1.0.0)
+    ==4320==    by 0x9A97B9C: drm_intel_gem_bo_emit_reloc (in /usr/lib/libdrm_intel.so.1.0.0)
+    ==4320==    by 0xAED3234: intel_batchbuffer_emit_reloc (in /usr/lib/xorg/modules/dri/i965_dri.so)
+    ==4320==    by 0xAF13827: brw_emit_vertices (in /usr/lib/xorg/modules/dri/i965_dri.so)
+    ==4320==    by 0xAF1F14D: brw_upload_state (in /usr/lib/xorg/modules/dri/i965_dri.so)
+    ==4320==    by 0xAF12122: brw_draw_prims (in /usr/lib/xorg/modules/dri/i965_dri.so)
+    ==4320==    by 0xB256824: vbo_exec_vtx_flush (in /usr/lib/xorg/modules/dri/libdricore.so)
+    ==4320==    by 0xB2523BB: vbo_exec_FlushVertices_internal (in /usr/lib/xorg/modules/dri/libdricore.so)
+    ==4320==    by 0xB252411: vbo_exec_FlushVertices (in /usr/lib/xorg/modules/dri/libdricore.so)
+    ==4320==    by 0xB195A3D: _mesa_PopAttrib (in /usr/lib/xorg/modules/dri/libdricore.so)
+    ==4320==    by 0x8DF0F02: __glXDisp_Render (in /usr/lib/xorg/modules/extensions/libglx.xorg)
+    ==4320==    by 0x8DF517F: __glXDispatch (in /usr/lib/xorg/modules/extensions/libglx.xorg)
+    ==4320==  Address 0x126a8b80 is 0 bytes after a block of size 16,368 alloc'd
+    ==4320==    at 0x4C23E03: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+    ==4320==    by 0x9A97A64: do_bo_emit_reloc (in /usr/lib/libdrm_intel.so.1.0.0)
+    ==4320==    by 0x9A97B9C: drm_intel_gem_bo_emit_reloc (in /usr/lib/libdrm_intel.so.1.0.0)
+    ==4320==    by 0xAED3234: intel_batchbuffer_emit_reloc (in /usr/lib/xorg/modules/dri/i965_dri.so)
+    ==4320==    by 0xAF191DB: upload_binding_table_pointers (in /usr/lib/xorg/modules/dri/i965_dri.so)
+    ==4320==    by 0xAF1F14D: brw_upload_state (in /usr/lib/xorg/modules/dri/i965_dri.so)
+    ==4320==    by 0xAF12122: brw_draw_prims (in /usr/lib/xorg/modules/dri/i965_dri.so)
+    ==4320==    by 0xB255EF6: vbo_exec_DrawArrays (in /usr/lib/xorg/modules/dri/libdricore.so)
+    ==4320==    by 0x8DF67A3: __glXDisp_DrawArrays (in /usr/lib/xorg/modules/extensions/libglx.xorg)
+    ==4320==    by 0x8DF0F02: __glXDisp_Render (in /usr/lib/xorg/modules/extensions/libglx.xorg)
+    ==4320==    by 0x8DF517F: __glXDispatch (in /usr/lib/xorg/modules/extensions/libglx.xorg)
+    ==4320==    by 0x446293: ??? (in /usr/bin/Xorg)
+    
+    which is simply due to only allocating space for the pointers and not
+    the structs themselves. D'oh.
+    
+    Reported-by: Thomas Bächler <thomas@archlinux.org>
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 894c86e8400f13f1ee0dfe23ca4b5f98c32d9223
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Fri Apr 9 16:33:38 2010 -0400
+
+    Revert "Fix pkgconfig includes for /usr/include/drm"
+    
+    This reverts commit 245d6957794648d7fd83279c680fed6e4c262147.
+    
+    libdrm now install headers in ${includedir}/libdrm and /usr/include/drm
+    is reserved for the kernel headers.  We should only ever add one of these
+    to the CFLAGS.
+
+commit 204c76c4d62c06eceacd9d603f2bc3e2f8e84270
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Fri Apr 9 20:38:34 2010 +1000
+
+    nouveau: stop shipping nouveau_class.h
+    
+    The motivation behind this is that by shipping it here, it's essentially
+    an API which causes issues while bisecting across changes to the header
+    files.
+
+commit 78de69713d742645c1c4347a06afca5b38f97184
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Thu Apr 8 17:50:34 2010 +0200
+
+    drm/radeon: add new cs command stream dumping facilities
+    
+    Dump command stream + associated bo into a binary file
+    which follow a similar design as json file. It allows
+    to intercept a command stream and replay it in a standalone
+    program (see radeondb tools).
+
+commit c7650003c52ee29b7fa5ebf20dd134079f0b8488
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Fri Apr 2 13:46:41 2010 -0700
+
+    libdrm: bump version number to 2.4.20 for release
+    
+    A few good fixes landed, get them out there.
+
+commit cc20ed8100834b7a5129ed403dee6c0e15d82cd1
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Mon Mar 29 16:39:08 2010 +0200
+
+    drm/radeon: tab/whitespace cleanup
+
+commit e6b3f906cef26e1efb8625f5dd4e460b4c79a771
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Fri Mar 26 13:13:57 2010 -0700
+
+    modetest: add optional select codepath
+    
+    For misc. testing.
+
+commit 245d6957794648d7fd83279c680fed6e4c262147
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Thu Mar 25 13:34:51 2010 +1000
+
+    Fix pkgconfig includes for /usr/include/drm
+
+commit c1c8bbf80b1f734e23996bf805dc78f32ebaf56f
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Fri Mar 19 10:20:09 2010 +1000
+
+    nouveau: fix annoying compiler warning
+
+commit df32c307e8f81b46ee8aa4dd7222fc18f175bbb3
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Fri Mar 19 10:17:19 2010 +1000
+
+    nouveau: fix segfault in nouveau_bo_new_tile() failure path
+
+commit a247fca8ba5759979607a514dbda4e4a63676889
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Mon Feb 22 16:22:51 2010 +1000
+
+    nouveau: remove unused field from nouveau_bo
+
+commit 567128211511fcf3d20ccb22e65bc48508514e7a
+Author: Francisco Jerez <currojerez@riseup.net>
+Date:   Wed Mar 17 21:40:33 2010 +0100
+
+    nouveau: Regenerate nouveau_class.h.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+
+commit df9737094ee821289fbf8a0297d34b77587878a4
+Author: Pauli Nieminen <suokkos@gmail.com>
+Date:   Wed Mar 17 22:41:08 2010 +0200
+
+    Check HAVE_RADEON only after checking for atomic operations.
+    
+    Fixes problem that libdrm_radeon was disabled in Makefile even when configure
+    claimed that radeon was enabled.
+    
+    Signed-off-by: Pauli Nieminen <suokkos@gmail.com>
+
+commit ef36c9a3b2828f5a11feda9e4d2708bf3a4a7a52
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Mar 17 12:46:21 2010 -0700
+
+    intel: Install the header file in the libdrm/ directory.
+    
+    Suggested-by: Rémi Cardona <remi@gentoo.org>
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+
+commit 976e779f9cd0571dd2c218580485b39d37bd18a0
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Fri Feb 26 19:07:24 2010 +0100
+
+    Install headers to $(includedir)/libdrm
+    
+    Avoids conflicts with kernel headers.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Reviewed-by: Rémi Cardona <remi@gentoo.org>
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+
+commit e73af7f560c95ba9c665bead7fc8eb1471db9975
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Fri Feb 26 19:07:23 2010 +0100
+
+    libdrm_nouveau requires libdrm
+    
+    nouveau_drmif.h includes xf86drm.h.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+
+commit d271336925eee55057b6665e193b578da534a903
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Fri Feb 26 19:07:22 2010 +0100
+
+    libdrm_intel.pc: don't include ${includedir}/drm
+    
+    intel_bufmgr.h is installed in ${includedir} directly, and the other
+    headers are taken care of by libdrm.pc's Cflags.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+
+commit 7c697b1670fe34b54a7b82d8ff0732845caa05a3
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Mar 17 10:05:55 2010 -0700
+
+    intel: Align untiled buffer pitch to 64B.
+    
+    This is the largest untiled pitch requirement from gen2 through gen4.
+    It's only the case for gen3 rendering to color regions with depth, but
+    it's rare for this to be a significant factor in memory usage -- for
+    example, gen4 requires 1 or 2 times the element size, or up to 64
+    bytes depending on the size of the elements.  This is easier than
+    encoding all the various little quirks for untiled pitch alignment,
+    since we rarely do untiled now.
+
+commit 30ce1fd1522ef266f172321438626813b78ed14c
+Author: Pauli Nieminen <suokkos@gmail.com>
+Date:   Wed Mar 17 14:34:53 2010 +0200
+
+    libdrm: Fix error message if libdrm_intel|radeon is disabled and there is no atomic ops.
+
+commit 966c9907c040b4fe4b288b4a9d82598797aee743
+Author: Pauli Nieminen <suokkos@gmail.com>
+Date:   Sat Aug 29 12:08:57 2009 +0300
+
+    libdrm_radeon: Optimize cs_gem_reloc to do less looping.
+    
+    bo->referenced_in_cs is checked if bo is already in cs. Adding and removing
+    reference in bo is done with atomic operations to allow parallel access to a
+    bo from multiple contexts.
+    
+    cs->id generation code quarentees there is not duplicated ids which limits
+    number of cs->ids to 32. If there is more cs objects rest will get id 0.
+    
+    V2:
+     - Fix configure to check for atomics operations if libdrm_radeon is only selected.
+     - Make atomic operations private to libdrm.
+    
+    This optimization decreases cs_write_reloc share of torcs profiling from 4.3%
+    to 2.6%.
+    
+    Tested-by: Michel Dänzer <michel@daenzer.net>
+    Signed-off-by: Pauli Nieminen <suokkos@gmail.com>
+
+commit 21105bc186d188f0bfc2f41c52b4b0ceb6742cf5
+Author: Pauli Nieminen <suokkos@gmail.com>
+Date:   Wed Mar 10 13:35:59 2010 +0200
+
+    libdrm: Move intel_atomic.h to libdrm core for sharing.
+    
+    intel_atomic.h includes very usefull atomic operations for
+    lock free parrallel access of variables. Moving these to
+    core libdrm for code sharing with radeon.
+    
+    Signed-off-by: Pauli Nieminen <suokkos@gmail.com>
+
+commit df7157fe2e28796ae1f6d938b850e08c8e1d382d
+Author: Francisco Jerez <currojerez@riseup.net>
+Date:   Sat Mar 13 18:55:09 2010 +0100
+
+    nouveau: Fix up the stride of NV20TCL_LIGHT_BACK_*.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+
+commit 04fd3872ee8bd8d5e2c27740508c67c2d51dbc11
+Author: Francisco Jerez <currojerez@riseup.net>
+Date:   Sun Mar 7 18:56:42 2010 +0100
+
+    nouveau: Small lighting related addition to nouveau_class.h.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+
+commit a4041e096ce0faea3dd39b4d78014d45a8cacec0
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Mar 7 14:15:40 2010 +0000
+
+    intel: Repeat execbuffer if interrupted by signal
+    
+    Repeat while EINTR, not EAGAIN! One more source of corruption
+    erradicated, hurray!
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 581cafbc2493ad97ada41f03c8dd70f9ec4bf19d
+Author: Francisco Jerez <currojerez@riseup.net>
+Date:   Sat Mar 6 21:07:31 2010 +0100
+
+    nouveau: Update nouveau_class.h.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+
+commit 1d4d1e6b138aac8bd734c4c20617a43fb3337c63
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Mar 4 16:09:40 2010 -0800
+
+    intel: Only align Y-tiling pitch to the Y tile width.
+    
+    Fixes piglit depth-tex-modes on gen4.
+
+commit 3e21e3ba0090c4dbe976269409b336dc82fe3d36
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Mar 4 21:17:48 2010 +0000
+
+    intel: Propagate some more error returns
+    
+    Ensure that errors from the kernel are propagated back to the caller,
+    and not masked with return 0;
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit b5495527f4c7087d430c0d1c2b83357c40b9c16c
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Mar 3 11:10:54 2010 -0800
+
+    Increment version to 2.4.19 for release.
+    
+    The primary motivation of this release is to expose the new execbuf2
+    Intel API.
+
+commit 47102863eddee2fa6e28a922c072d0243ece6afd
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Mar 3 10:07:27 2010 -0800
+
+    intel: Update the needs_fence flag of buffers on the validate list.
+    
+    Fixes fbo-copyteximage on i915 with texture tiling and execbuf2 fenced
+    relocs.
+
+commit 766fa7909f3a1af27e60f3529a6a3318cc406f67
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Mar 2 16:04:14 2010 -0800
+
+    intel: Don't enable execbuf2 fenced relocs unless we have execbuf2.
+
+commit 292a5d73a244cec8f4d1042c6fec6618333c1e0e
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Mar 2 15:25:42 2010 -0800
+
+    intel: Don't tile-align pitch for untiled buffers.
+    
+    This allows Mesa to use drm_intel_bo_alloc_tiled() for its tiled
+    buffers, since it makes its decision about pitch before telling
+    libdrm.  They happen to be the same choices for the tiled case.
+
+commit acbaff24e071dce0d23c057c9890f3aec732b8ec
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Mar 2 15:24:50 2010 -0800
+
+    intel: Fix typo in conversion from IS_GEN to bufmgr_gem->gen.
+    
+    Luckily I caught the bug with the first consumer of the interface.
+
+commit a0abb1b14ef60abfd1d5aacd83f06d6f94dc13a4
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Mar 2 15:05:30 2010 -0800
+
+    intel: add a comment about tiled buffer alloc height alignment from Mesa.
+
+commit cdc788d6456645072a1610aa9217e4ebae5cfc6b
+Author: Maarten Maathuis <madman2003@gmail.com>
+Date:   Wed Feb 24 23:10:34 2010 +0100
+
+    nouveau: make sure initial kalloc for user bo ends up in the right place
+    
+    - Currently reloc'ing a user bo to gart will first cause an allocation in vram,
+    which is then written to by cpu, then the bo gets moved to gart.
+    
+    Acked-by: Francisco Jerez <currojerez@riseup.net>
+    Signed-off-by: Maarten Maathuis <madman2003@gmail.com>
+
+commit a1f9ea765ddc5cad45e36c4931663b21992727ee
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Mar 2 08:49:36 2010 -0800
+
+    intel: Use an integer for chipset generation instead of many conditionals.
+    
+    Saves a bunch of comparisons in hot paths.
+
+commit b50964027bef249a0cc3d511de05c2464e0a1e22
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Tue Sep 15 11:02:58 2009 -0700
+
+    libdrm/intel: execbuf2 support
+    
+    This patch to libdrm adds support for the new execbuf2 ioctl.  If
+    detected, it will be used instead of the old ioctl.  By using the new
+    drm_intel_bufmgr_gem_enable_fenced_relocs(), you can indicate that any
+    time a fence register is actually required for a relocation target you
+    will call drm_intel_bo_emit_reloc_fence instead of
+    drm_intel_bo_emit_reloc, which will reduce fence register pressure.
+    
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+
+commit 9a37455b35d746d694760cfe8850a8bf856d73c9
+Author: Marcin Kościelnicki <koriakin@0x04.net>
+Date:   Sat Feb 27 15:04:40 2010 +0000
+
+    tests/modetest: Don't get_props on a connector after freeing it.
+
+commit 694ef59532253727176ed0ce9077ae3ec41dd457
+Author: Marcin Kościelnicki <koriakin@0x04.net>
+Date:   Sat Feb 27 15:04:42 2010 +0000
+
+    tests: vrefresh is actually not * 1000.
+
+commit ecb668e1efd30512d27f5bfc331e8e754b6e15ca
+Author: Marcin Kościelnicki <koriakin@0x04.net>
+Date:   Sat Feb 27 15:04:41 2010 +0000
+
+    tests: Add nouveau to list of supported modules.
+
+commit d5a2e776826f7a849f1cf654fde8611f687eb12c
+Author: Marcin Kościelnicki <koriakin@0x04.net>
+Date:   Sat Feb 27 16:02:25 2010 +0000
+
+    libkms/nouveau: Add support
+
+commit 23f62721b707672816ad3461e11c7453ff75810f
+Author: Marcin Kościelnicki <koriakin@0x04.net>
+Date:   Sat Feb 27 15:04:38 2010 +0000
+
+    libkms/intel: Throw out unused intel_bo fields.
+    
+    Acked-by: Jakob Bornecrantz <jakob@vmware.com>
+
+commit afd74ec555a61d7006db90f0c038ff026e76d303
+Author: Marcin Kościelnicki <koriakin@0x04.net>
+Date:   Sat Feb 27 15:04:37 2010 +0000
+
+    Add config.h macro HAVE_NOUVEAU
+
+commit f6dc964e1d4d43e4053b84b31e76d974af128276
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Oct 22 16:37:56 2009 -0700
+
+    intel: Add initial support for Sandybridge, and clean up the #defines.
+
+commit c27ce8674deb11697e33f464dd38d24b6a117200
+Author: Francisco Jerez <currojerez@riseup.net>
+Date:   Thu Feb 25 18:28:18 2010 +0100
+
+    nouveau: Update nouveau_class.h.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+
+commit 3130f94c6ee32668cb9f0b96b6c8e308a7bb3b11
+Author: Patrice Mandin <patmandin@gmail.com>
+Date:   Sat Feb 20 11:57:29 2010 +0100
+
+    nv30: update for 8 texture units
+
+commit bdcd12980b5560b32a006534a7451ed6e3502c33
+Author: Patrice Mandin <patmandin@gmail.com>
+Date:   Sat Feb 20 11:50:37 2010 +0100
+
+    nv30: update for front/back stencil inversion
+    
+    Signed-off-by: Patrice Mandin <patmandin@gmail.com>
+
+commit a5c8f55397377994ceeb76ed0ff148ff89eb3a1b
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Thu Feb 18 16:29:36 2010 +0100
+
+    libkms: Use a standard version number
+
+commit 97003c53f9d9ce8b13f6bde28eeb255c35f0c3bc
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Thu Feb 18 13:27:29 2010 +0100
+
+    libkms: Enable by default
+
+commit 25c0c638c417ec0d7130b06b39af89c264b89983
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Thu Feb 18 13:14:07 2010 +0100
+
+    libkms: Add missing include file to libkms source
+
+commit c9cfe749f7c0a83f3ca00ab2a9aeb4afeee400db
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Thu Feb 18 13:27:59 2010 +0100
+
+    vmwgfx: Update kernel header
+
+commit 4b6f70f20cbaccb18f122e87ac0d471356b01a59
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Sun Feb 14 17:57:19 2010 +0100
+
+    radeon: add square-tiling flag
+
 commit 2d9990c7e8020d28fec4f581493696087def904f
 Author: Carl Worth <cworth@cworth.org>
 Date:   Tue Feb 16 12:12:41 2010 -0800

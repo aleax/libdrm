@@ -106,11 +106,18 @@ void drm_intel_bufmgr_set_debug(drm_intel_bufmgr *bufmgr, int enable_debug);
 void drm_intel_bufmgr_destroy(drm_intel_bufmgr *bufmgr);
 int drm_intel_bo_exec(drm_intel_bo *bo, int used,
 		      drm_clip_rect_t * cliprects, int num_cliprects, int DR4);
+int drm_intel_bo_mrb_exec(drm_intel_bo *bo, int used,
+			drm_clip_rect_t *cliprects, int num_cliprects, int DR4,
+			int ring_flag);
 int drm_intel_bufmgr_check_aperture_space(drm_intel_bo ** bo_array, int count);
 
 int drm_intel_bo_emit_reloc(drm_intel_bo *bo, uint32_t offset,
 			    drm_intel_bo *target_bo, uint32_t target_offset,
 			    uint32_t read_domains, uint32_t write_domain);
+int drm_intel_bo_emit_reloc_fence(drm_intel_bo *bo, uint32_t offset,
+				  drm_intel_bo *target_bo,
+				  uint32_t target_offset,
+				  uint32_t read_domains, uint32_t write_domain);
 int drm_intel_bo_pin(drm_intel_bo *bo, uint32_t alignment);
 int drm_intel_bo_unpin(drm_intel_bo *bo);
 int drm_intel_bo_set_tiling(drm_intel_bo *bo, uint32_t * tiling_mode,
@@ -122,6 +129,7 @@ int drm_intel_bo_busy(drm_intel_bo *bo);
 int drm_intel_bo_madvise(drm_intel_bo *bo, int madv);
 
 int drm_intel_bo_disable_reuse(drm_intel_bo *bo);
+int drm_intel_bo_is_reusable(drm_intel_bo *bo);
 int drm_intel_bo_references(drm_intel_bo *bo, drm_intel_bo *target_bo);
 
 /* drm_intel_bufmgr_gem.c */
@@ -130,6 +138,7 @@ drm_intel_bo *drm_intel_bo_gem_create_from_name(drm_intel_bufmgr *bufmgr,
 						const char *name,
 						unsigned int handle);
 void drm_intel_bufmgr_gem_enable_reuse(drm_intel_bufmgr *bufmgr);
+void drm_intel_bufmgr_gem_enable_fenced_relocs(drm_intel_bufmgr *bufmgr);
 int drm_intel_gem_bo_map_gtt(drm_intel_bo *bo);
 int drm_intel_gem_bo_unmap_gtt(drm_intel_bo *bo);
 void drm_intel_gem_bo_start_gtt_access(drm_intel_bo *bo, int write_enable);
