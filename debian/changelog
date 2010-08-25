@@ -1,12 +1,13 @@
-libdrm (2.4.21-2) UNRELEASED; urgency=low
+libdrm (2.4.21-2) experimental; urgency=low
 
+  [ Sven Joachim ]
   * Bump libdrm-nouveau shlibs and symbols versions to 2.4.21-1 to ensure
     that packages built against this version are not used with squeeze's
     libdrm-nouveau1.
   * Add a lintian override for the symbols-file-contains-debian-revision
     warning.  Bump debhelper compatibility level to 6 for dh_lintian.
 
- -- Sven Joachim <svenjoac@gmx.de>  Wed, 25 Aug 2010 14:38:22 +0200
+ -- Julien Cristau <jcristau@debian.org>  Wed, 25 Aug 2010 23:14:40 +0200
 
 libdrm (2.4.21-1) experimental; urgency=low
 
