@@ -1,3 +1,11 @@
+libdrm (2.4.21-2) UNRELEASED; urgency=low
+
+  * Bump libdrm-nouveau shlibs and symbols versions to 2.4.21-1 to ensure
+    that packages built against this version are not used with squeeze's
+    libdrm-nouveau1.
+
+ -- Sven Joachim <svenjoac@gmx.de>  Wed, 25 Aug 2010 14:38:22 +0200
+
 libdrm (2.4.21-1) experimental; urgency=low
 
   [ Christopher James Halse Rogers ]
