@@ -157,6 +157,7 @@ ifeq ($(LIBKMS), yes)
 endif
 	dh_installdeb -s
 	dh_shlibdeps -s
+	dh_lintian -s
 	dh_gencontrol -s
 	dh_md5sums -s
 	dh_builddeb -s
