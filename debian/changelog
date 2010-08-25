@@ -1,9 +1,10 @@
-libdrm (2.4.21-1~squeeze2) UNRELEASED; urgency=low
+libdrm (2.4.21-1~squeeze2) unstable; urgency=low
 
+  [ Sven Joachim ]
   * Restore 04_fix_nouveau_bo_new_tile_segfault.diff, actually only half
     applied upstream.
 
- -- Sven Joachim <svenjoac@gmx.de>  Tue, 24 Aug 2010 22:16:07 +0200
+ -- Julien Cristau <jcristau@debian.org>  Wed, 25 Aug 2010 12:20:40 +0200
 
 libdrm (2.4.21-1~squeeze1) unstable; urgency=low
 
