@@ -1,3 +1,9 @@
+libdrm (2.4.22-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+
+ -- Sven Joachim <svenjoac@gmx.de>  Wed, 29 Sep 2010 08:57:51 +0200
+
 libdrm (2.4.21-2) experimental; urgency=low
 
   [ Sven Joachim ]

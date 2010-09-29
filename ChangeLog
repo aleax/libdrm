@@ -1,3 +1,248 @@
+commit 624e58e3e43c0b2c6803cb9263863444abeb3acb
+Author: Carl Worth <cworth@cworth.org>
+Date:   Tue Sep 28 20:40:37 2010 -0700
+
+    Increment version to 2.4.22
+    
+    For the upcoming 2.4.22 release.
+
+commit 6299722c478234a759b1ce748436197ca1a17ebf
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Sep 25 21:32:59 2010 +0100
+
+    intel: Replace open-coded drmIoctl with calls to drmIoctl()
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 81fa7a9f56b1efb04658db921e5228c102548921
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Tue Sep 21 13:02:07 2010 +1000
+
+    nouveau: fix drm version check some more
+    
+    ... and make a mental note to not push commits before having coffee
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit d1cec6d2a9d63411c70c6c37509129ea4afe07d8
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Mon Sep 20 08:07:28 2010 +1000
+
+    nouveau: fix thinko in drm version check
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 7ec9a1effa4f551897f91f3b017723a8adf011d9
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Sep 9 18:52:28 2010 +0100
+
+    modetest: Fix drawing routines to use stride.
+
+commit 0da84f89c2cb25416bd3bdecae24f287b08cdb76
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Thu Sep 9 10:27:22 2010 -0700
+
+    modetest: align fb pitch to 64 bytes
+    
+    Docs say this is necessary, and the kernel now enforces this.
+
+commit b8abe6139e5c6779ee87d983346f0f65bf67462e
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Tue Sep 7 13:10:15 2010 -0700
+
+    modetest: add edp and TV connector names to the connector name array
+
+commit 23287f05cf2443ddf9e028e29beb5bd30979c6cf
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Aug 26 15:39:28 2010 -0700
+
+    Avoid use of c++ reserved keyword "virtual" when using a C++ compiler.
+    
+    Avoids requiring nasty hacks around libdrm headers in the new C++
+    parts of Mesa drivers.
+
+commit 8a76244a0fd09d0e3298fe68af812d7eaa4dbcb5
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Aug 24 21:29:31 2010 +0100
+
+    Free the property blob along the error path.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit b61e81a191d3a5c269c5f7c40199aebc9ebc034c
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Wed Aug 18 12:06:48 2010 +1000
+
+    nouveau: accept both 0.0.16 and 1.x.x
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit b04515c5d6c95f573457a94267b855cceb639105
+Author: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+Date:   Fri Aug 6 13:55:11 2010 +1000
+
+    libdrm: Fix PCI domain domain support
+    
+    This works in conjunction with newer kernels. If we succeed in requesting
+    interface 1.4, the we know the kernel provides proper domain numbers. If
+    not, ignore the domain number as it's bogus (except on Alpha).
+    
+    Signed-off-by: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 431f7f00db844534dbcf9a63da0d2832a3d91bff
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Aug 4 08:41:23 2010 +1000
+
+    Copy headers from kernel drm-core-next
+
+commit b803918f3f77c62edf22e78cb2095be399753423
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Jul 1 22:38:54 2010 +0100
+
+    drm mode: Return -errno on drmIoctl() failure
+    
+    The high layers expect to receive a status code on error (on the
+    pessimistic assumption that the errno value will have been overwritten
+    by the time the failure is propagated all the way up), so convert
+    xf86drmMode.c to return -errno on an ioctl error and be consistent with
+    the rest of the libdrm API.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit c570b4b97b8ff71da9294aaf8242ed665f0c09c3
+Author: Fernando Carrijo <fcarrijo@yahoo.com.br>
+Date:   Thu Jul 1 09:28:29 2010 -0700
+
+    Purge macro NEED_REPLIES
+    
+    Signed-off-by: Fernando Carrijo <fcarrijo@yahoo.com.br>
+    Signed-off-by: Brian Paul <brianp@vmware.com>
+
+commit c3ddfea1a64b7aaaebfb429243c71feb0801da9d
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Jun 29 20:12:44 2010 +0100
+
+    intel: Suppress the error return from setting domains after mapping.
+    
+    If the mapping succeeds we have a valid pointer. If setting the domain
+    failures we may incur cache corruption. However the usual failure mode
+    is because of a hung GPU, in which case it is preferable to ignore the
+    minor error from setting the domain and continue on oblivious. If
+    these errors persist, we should rate limit the warning [or even just
+    remove it].
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 726210f87d558d558022f35bc8c839e798a19f0c
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Jun 24 11:38:00 2010 +0100
+
+    intel: Limit tiled pitches to 8192 on pre-i965.
+    
+    Fixes:
+    
+      Bug 28515 - Failed to allocate framebuffer when exceed 2048 width
+      https://bugs.freedesktop.org/show_bug.cgi?id=28515
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 6ea2bda5f5ec8f27359760ce580fdad3df0464df
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Jun 22 13:03:52 2010 +0100
+
+    intel: Only adjust the local stride used for SET_TILING in tiled alloc
+    
+    Mesa uses the returned pitch from alloc_tiled, so make sure that we set
+    it correctly before modifying the stride used for the SET_TILING call.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit aba3502190a5bd2203e71ae2b1b7dd5aeb223905
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Jun 22 13:00:22 2010 +0100
+
+    intel: Restore SET_TILING for non-flinked bo.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit c7bbaca6a376f40d914d1ed33e119f2330701c9a
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Jun 22 11:15:56 2010 +0100
+
+    intel: '===' != '=='
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit cd34cbeb9f5c65b25d241700f27c16b36e1ecce6
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Jun 22 11:07:26 2010 +0100
+
+    intel: Sanitise strides for linear buffers and SET_TILING
+    
+    Ensure that the user doesn't attempt to specify a stride to use with a
+    linear buffer by forcing such to be zero.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 13e8270504cffa96bd067dc5c792a79555e8b2d4
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Jun 21 15:38:06 2010 +0100
+
+    intel: Print out debugging message following ENOSPC
+    
+    execbuffer() returns ENOSPC if it cannot fit the batch buffer into the
+    aperture which is the error we want to diagnose here.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit f16b4164d686893949daa3217a011d21c5bd7f95
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Jun 21 15:21:48 2010 +0100
+
+    intel: Scan the cache for old bo once every second.
+    
+    Rearrange the cache cleanup so that we always scan following a final
+    unreference, and guard against multiple scans in a single second.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 5eec286838118501dd79178c152000ad4cbd70e1
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Jun 21 14:20:56 2010 +0100
+
+    intel: Force stride to be 0 for I915_TILING_NONE.
+    
+    When allocating a tiled buffer, if we remove the desired tiling mode due
+    to it being beyond hardware limits, also remove the stride. This ensures
+    that we only ever use stride 0 with I915_TILING_NONE.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 1db22ff741f92b84450ec13093e070a6ad5fc857
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Jun 21 14:27:23 2010 +0100
+
+    intel: Defer tiling change to allocation.
+    
+    As we now expose a method to allocate tiled buffers, it makes more sense
+    to defer the SET_TILING until required. Besides the slim chance that it
+    will be a no-op, by delaying the change we are less likely to stall on
+    waiting for a bound buffer to release a fence register.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 056aa9be04e923a45ca00924caa587d6dbf8821d
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Jun 21 14:31:29 2010 +0100
+
+    intel: Track tiling stride
+    
+    We need to inform the kernel if the tiling stride changes and not only
+    for changes of the tiling mode.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
 commit 65ec8d7699267cc59777d531f545a82a14341480
 Author: Eric Anholt <eric@anholt.net>
 Date:   Thu Jun 10 08:59:05 2010 -0700
