@@ -1,3 +1,10 @@
+libdrm (2.4.21-1ubuntu2) maverick; urgency=low
+
+  * debian/rules: Don't install upstream changelog. This saves > 1 MB of CD
+    space.
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Sun, 01 Aug 2010 20:46:42 +0200
+
 libdrm (2.4.21-1ubuntu1) maverick; urgency=low
 
   * Merge from debian experimental. Remaining Ubuntu changes:

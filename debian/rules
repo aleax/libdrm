@@ -118,7 +118,7 @@ binary-indep: build install
 binary-arch: build install
 	dh_testdir -s
 	dh_testroot -s
-	dh_installchangelogs -s ChangeLog
+	dh_installchangelogs
 	dh_installdocs -s
 	dh_installexamples -s
 	dh_install -s --sourcedir=debian/tmp -X.la --fail-missing
