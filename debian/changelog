@@ -1,3 +1,12 @@
+libdrm (2.4.21-1ubuntu2.1) maverick-proposed; urgency=low
+
+  * Add 03_intel_limit_tiled_pitches.patch: Fixes a problem where framebuffers
+    with a width greater than 2048 pixels could not be allocated on pre-i965
+    generation intel GPUs, which is common for multi-monitor setups. Backport
+    of upstream commit 726210f87. (LP: #654619)
+
+ -- Robert Hooker <robert.hooker@canonical.com>  Thu, 07 Oct 2010 10:30:37 -0400
+
 libdrm (2.4.21-1ubuntu2) maverick; urgency=low
 
   * debian/rules: Don't install upstream changelog. This saves > 1 MB of CD
