@@ -1,3 +1,12 @@
+libdrm (2.4.22-1ubuntu1) natty; urgency=low
+
+  * Merge from debian experimental. Remaining Ubuntu changes:
+    - Enable libdrm-intel for ports architectures until plymouth is fixed to
+      not need it unconditionally.
+    - Move runtime libraries to /lib for plymouth.
+
+ -- Robert Hooker <robert.hooker@canonical.com>  Fri, 15 Oct 2010 21:08:44 -0400
+
 libdrm (2.4.22-1) experimental; urgency=low
 
   [ Sven Joachim ]
