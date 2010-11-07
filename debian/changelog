@@ -1,3 +1,13 @@
+libdrm (2.4.22-2) UNRELEASED; urgency=low
+
+  * Cherry-pick some commits from upstream to make the intel video driver
+    2.13.901 buildable:
+     - 057fab33: intel: Prepare for BLT ring split
+     - 36245771: intel: enable relaxed fence allocation for i915
+     - 49447a9b: intel: initialize bufmgr.bo_mrb_exec unconditionally
+
+ -- Cyril Brulebois <kibi@debian.org>  Sun, 07 Nov 2010 22:41:56 +0100
+
 libdrm (2.4.22-1) experimental; urgency=low
 
   [ Sven Joachim ]
