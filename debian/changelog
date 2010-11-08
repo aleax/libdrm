@@ -1,11 +1,21 @@
-libdrm (2.4.22-1ubuntu1) natty; urgency=low
+libdrm (2.4.22-2ubuntu1) natty; urgency=low
 
   * Merge from debian experimental. Remaining Ubuntu changes:
     - Enable libdrm-intel for ports architectures until plymouth is fixed to
       not need it unconditionally.
     - Move runtime libraries to /lib for plymouth.
 
- -- Robert Hooker <robert.hooker@canonical.com>  Fri, 15 Oct 2010 21:08:44 -0400
+ -- Robert Hooker <sarvatt@ubuntu.com>  Mon, 08 Nov 2010 21:08:44 -0400
+
+libdrm (2.4.22-2) experimental; urgency=low
+
+  * Cherry-pick some commits from upstream to make the intel video driver
+    2.13.901 buildable:
+     - 057fab33: intel: Prepare for BLT ring split
+     - 36245771: intel: enable relaxed fence allocation for i915
+     - 49447a9b: intel: initialize bufmgr.bo_mrb_exec unconditionally
+
+ -- Cyril Brulebois <kibi@debian.org>  Sun, 07 Nov 2010 22:51:12 +0100
 
 libdrm (2.4.22-1) experimental; urgency=low
 
