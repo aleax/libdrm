@@ -6,6 +6,7 @@ libdrm (2.4.23-1) UNRELEASED; urgency=low
     - Make libdrm-nouveau1a{,-dbg} conflict with libdrm-nouveau1{,-dbg} and
       remove the Breaks against xserver-xorg-video-nouveau.
     - Adjust the lintian override.
+    - Bump libdrm-nouveau shlibs and symbols versions to 2.4.23.
   
  -- Sven Joachim <svenjoac@gmx.de>  Tue, 14 Dec 2010 14:28:11 +0100
 
