@@ -131,7 +131,7 @@ ifeq ($(INTEL), yes)
 	dh_strip -plibdrm-intel1 --dbg-package=libdrm-intel1-dbg
 endif
 ifeq ($(NOUVEAU), yes)
-	dh_strip -plibdrm-nouveau1 --dbg-package=libdrm-nouveau1-dbg
+	dh_strip -plibdrm-nouveau1a --dbg-package=libdrm-nouveau1a-dbg
 endif
 ifeq ($(RADEON), yes)
 	dh_strip -plibdrm-radeon1 --dbg-package=libdrm-radeon1-dbg
@@ -147,7 +147,7 @@ ifeq ($(INTEL), yes)
 	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.21)' -- -c4
 endif
 ifeq ($(NOUVEAU), yes)
-	dh_makeshlibs -plibdrm-nouveau1 -V'libdrm-nouveau1 (>= 2.4.21-1)' -- -c4
+	dh_makeshlibs -plibdrm-nouveau1a -V'libdrm-nouveau1a (>= 2.4.21-1)' -- -c4
 endif
 ifeq ($(RADEON), yes)
 	dh_makeshlibs -plibdrm-radeon1 -V'libdrm-radeon1 (>= 2.4.20)' -- -c4
