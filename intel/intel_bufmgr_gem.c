@@ -351,7 +351,6 @@ drm_intel_gem_bo_reference(drm_intel_bo *bo)
 {
 	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
 
-	assert(atomic_read(&bo_gem->refcount) > 0);
 	atomic_inc(&bo_gem->refcount);
 }
 
@@ -468,8 +467,23 @@ drm_intel_bo_gem_set_in_aperture_size(drm_intel_bufmgr_gem *bufmgr_gem,
 	 * aperture. Optimal packing is for wimps.
 	 */
 	size = bo_gem->bo.size;
-	if (bufmgr_gem->gen < 4 && bo_gem->tiling_mode != I915_TILING_NONE)
-		size *= 2;
+	if (bufmgr_gem->gen < 4 && bo_gem->tiling_mode != I915_TILING_NONE) {
+		int min_size;
+
+		if (bufmgr_gem->has_relaxed_fencing) {
+			if (bufmgr_gem->gen == 3)
+				min_size = 1024*1024;
+			else
+				min_size = 512*1024;
+
+			while (min_size < size)
+				min_size *= 2;
+		} else
+			min_size = size;
+
+		/* Account for worst-case alignment. */
+		size = 2 * min_size;
+	}
 
 	bo_gem->reloc_tree_size = size;
 }
@@ -789,8 +803,8 @@ drm_intel_bo_gem_create_from_name(drm_intel_bufmgr *bufmgr,
 		       DRM_IOCTL_GEM_OPEN,
 		       &open_arg);
 	if (ret != 0) {
-		fprintf(stderr, "Couldn't reference %s handle 0x%08x: %s\n",
-			name, handle, strerror(errno));
+		DBG("Couldn't reference %s handle 0x%08x: %s\n",
+		    name, handle, strerror(errno));
 		free(bo_gem);
 		return NULL;
 	}
@@ -842,9 +856,8 @@ drm_intel_gem_bo_free(drm_intel_bo *bo)
 	close.handle = bo_gem->gem_handle;
 	ret = drmIoctl(bufmgr_gem->fd, DRM_IOCTL_GEM_CLOSE, &close);
 	if (ret != 0) {
-		fprintf(stderr,
-			"DRM_IOCTL_GEM_CLOSE %d failed (%s): %s\n",
-			bo_gem->gem_handle, bo_gem->name, strerror(errno));
+		DBG("DRM_IOCTL_GEM_CLOSE %d failed (%s): %s\n",
+		    bo_gem->gem_handle, bo_gem->name, strerror(errno));
 	}
 	free(bo);
 }
@@ -982,10 +995,9 @@ static int drm_intel_gem_bo_map(drm_intel_bo *bo, int write_enable)
 			       &mmap_arg);
 		if (ret != 0) {
 			ret = -errno;
-			fprintf(stderr,
-				"%s:%d: Error mapping buffer %d (%s): %s .\n",
-				__FILE__, __LINE__, bo_gem->gem_handle,
-				bo_gem->name, strerror(errno));
+			DBG("%s:%d: Error mapping buffer %d (%s): %s .\n",
+			    __FILE__, __LINE__, bo_gem->gem_handle,
+			    bo_gem->name, strerror(errno));
 			pthread_mutex_unlock(&bufmgr_gem->lock);
 			return ret;
 		}
@@ -1005,9 +1017,9 @@ static int drm_intel_gem_bo_map(drm_intel_bo *bo, int write_enable)
 		       DRM_IOCTL_I915_GEM_SET_DOMAIN,
 		       &set_domain);
 	if (ret != 0) {
-		fprintf(stderr, "%s:%d: Error setting to CPU domain %d: %s\n",
-			__FILE__, __LINE__, bo_gem->gem_handle,
-			strerror(errno));
+		DBG("%s:%d: Error setting to CPU domain %d: %s\n",
+		    __FILE__, __LINE__, bo_gem->gem_handle,
+		    strerror(errno));
 	}
 
 	pthread_mutex_unlock(&bufmgr_gem->lock);
@@ -1040,11 +1052,10 @@ int drm_intel_gem_bo_map_gtt(drm_intel_bo *bo)
 			       &mmap_arg);
 		if (ret != 0) {
 			ret = -errno;
-			fprintf(stderr,
-				"%s:%d: Error preparing buffer map %d (%s): %s .\n",
-				__FILE__, __LINE__,
-				bo_gem->gem_handle, bo_gem->name,
-				strerror(errno));
+			DBG("%s:%d: Error preparing buffer map %d (%s): %s .\n",
+			    __FILE__, __LINE__,
+			    bo_gem->gem_handle, bo_gem->name,
+			    strerror(errno));
 			pthread_mutex_unlock(&bufmgr_gem->lock);
 			return ret;
 		}
@@ -1056,11 +1067,10 @@ int drm_intel_gem_bo_map_gtt(drm_intel_bo *bo)
 		if (bo_gem->gtt_virtual == MAP_FAILED) {
 			bo_gem->gtt_virtual = NULL;
 			ret = -errno;
-			fprintf(stderr,
-				"%s:%d: Error mapping buffer %d (%s): %s .\n",
-				__FILE__, __LINE__,
-				bo_gem->gem_handle, bo_gem->name,
-				strerror(errno));
+			DBG("%s:%d: Error mapping buffer %d (%s): %s .\n",
+			    __FILE__, __LINE__,
+			    bo_gem->gem_handle, bo_gem->name,
+			    strerror(errno));
 			pthread_mutex_unlock(&bufmgr_gem->lock);
 			return ret;
 		}
@@ -1079,9 +1089,9 @@ int drm_intel_gem_bo_map_gtt(drm_intel_bo *bo)
 		       DRM_IOCTL_I915_GEM_SET_DOMAIN,
 		       &set_domain);
 	if (ret != 0) {
-		fprintf(stderr, "%s:%d: Error setting domain %d: %s\n",
-			__FILE__, __LINE__, bo_gem->gem_handle,
-			strerror(errno));
+		DBG("%s:%d: Error setting domain %d: %s\n",
+		    __FILE__, __LINE__, bo_gem->gem_handle,
+		    strerror(errno));
 	}
 
 	pthread_mutex_unlock(&bufmgr_gem->lock);
@@ -1092,13 +1102,10 @@ int drm_intel_gem_bo_map_gtt(drm_intel_bo *bo)
 int drm_intel_gem_bo_unmap_gtt(drm_intel_bo *bo)
 {
 	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
-	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
 	int ret = 0;
 
 	if (bo == NULL)
 		return 0;
-
-	assert(bo_gem->gtt_virtual != NULL);
 
 	pthread_mutex_lock(&bufmgr_gem->lock);
 	bo->virtual = NULL;
@@ -1116,8 +1123,6 @@ static int drm_intel_gem_bo_unmap(drm_intel_bo *bo)
 
 	if (bo == NULL)
 		return 0;
-
-	assert(bo_gem->mem_virtual != NULL);
 
 	pthread_mutex_lock(&bufmgr_gem->lock);
 
@@ -1155,10 +1160,9 @@ drm_intel_gem_bo_subdata(drm_intel_bo *bo, unsigned long offset,
 		       &pwrite);
 	if (ret != 0) {
 		ret = -errno;
-		fprintf(stderr,
-			"%s:%d: Error writing data to buffer %d: (%d %d) %s .\n",
-			__FILE__, __LINE__, bo_gem->gem_handle, (int)offset,
-			(int)size, strerror(errno));
+		DBG("%s:%d: Error writing data to buffer %d: (%d %d) %s .\n",
+		    __FILE__, __LINE__, bo_gem->gem_handle, (int)offset,
+		    (int)size, strerror(errno));
 	}
 
 	return ret;
@@ -1207,20 +1211,19 @@ drm_intel_gem_bo_get_subdata(drm_intel_bo *bo, unsigned long offset,
 		       &pread);
 	if (ret != 0) {
 		ret = -errno;
-		fprintf(stderr,
-			"%s:%d: Error reading data from buffer %d: (%d %d) %s .\n",
-			__FILE__, __LINE__, bo_gem->gem_handle, (int)offset,
-			(int)size, strerror(errno));
+		DBG("%s:%d: Error reading data from buffer %d: (%d %d) %s .\n",
+		    __FILE__, __LINE__, bo_gem->gem_handle, (int)offset,
+		    (int)size, strerror(errno));
 	}
 
 	return ret;
 }
 
-/** Waits for all GPU rendering to the object to have completed. */
+/** Waits for all GPU rendering with the object to have completed. */
 static void
 drm_intel_gem_bo_wait_rendering(drm_intel_bo *bo)
 {
-	drm_intel_gem_bo_start_gtt_access(bo, 0);
+	drm_intel_gem_bo_start_gtt_access(bo, 1);
 }
 
 /**
@@ -1245,11 +1248,10 @@ drm_intel_gem_bo_start_gtt_access(drm_intel_bo *bo, int write_enable)
 		       DRM_IOCTL_I915_GEM_SET_DOMAIN,
 		       &set_domain);
 	if (ret != 0) {
-		fprintf(stderr,
-			"%s:%d: Error setting memory domains %d (%08x %08x): %s .\n",
-			__FILE__, __LINE__, bo_gem->gem_handle,
-			set_domain.read_domains, set_domain.write_domain,
-			strerror(errno));
+		DBG("%s:%d: Error setting memory domains %d (%08x %08x): %s .\n",
+		    __FILE__, __LINE__, bo_gem->gem_handle,
+		    set_domain.read_domains, set_domain.write_domain,
+		    strerror(errno));
 	}
 }
 
@@ -1301,6 +1303,7 @@ do_bo_emit_reloc(drm_intel_bo *bo, uint32_t offset,
 	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
 	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
 	drm_intel_bo_gem *target_bo_gem = (drm_intel_bo_gem *) target_bo;
+	int fenced_command;
 
 	if (bo_gem->has_error)
 		return -ENOMEM;
@@ -1310,11 +1313,12 @@ do_bo_emit_reloc(drm_intel_bo *bo, uint32_t offset,
 		return -ENOMEM;
 	}
 
-	if (target_bo_gem->tiling_mode == I915_TILING_NONE)
-		need_fence = 0;
-
 	/* We never use HW fences for rendering on 965+ */
 	if (bufmgr_gem->gen >= 4)
+		need_fence = 0;
+
+	fenced_command = need_fence;
+	if (target_bo_gem->tiling_mode == I915_TILING_NONE)
 		need_fence = 0;
 
 	/* Create a new relocation list if needed */
@@ -1343,8 +1347,6 @@ do_bo_emit_reloc(drm_intel_bo *bo, uint32_t offset,
 		target_bo_gem->reloc_tree_fences = 1;
 	bo_gem->reloc_tree_fences += target_bo_gem->reloc_tree_fences;
 
-	/* Flag the target to disallow further relocations in it. */
-
 	bo_gem->relocs[bo_gem->reloc_count].offset = offset;
 	bo_gem->relocs[bo_gem->reloc_count].delta = target_offset;
 	bo_gem->relocs[bo_gem->reloc_count].target_handle =
@@ -1356,7 +1358,7 @@ do_bo_emit_reloc(drm_intel_bo *bo, uint32_t offset,
 	bo_gem->reloc_target_info[bo_gem->reloc_count].bo = target_bo;
 	if (target_bo != bo)
 		drm_intel_gem_bo_reference(target_bo);
-	if (need_fence)
+	if (fenced_command)
 		bo_gem->reloc_target_info[bo_gem->reloc_count].flags =
 			DRM_INTEL_RELOC_FENCE;
 	else
@@ -1520,16 +1522,15 @@ drm_intel_gem_bo_exec(drm_intel_bo *bo, int used,
 	if (ret != 0) {
 		ret = -errno;
 		if (errno == ENOSPC) {
-			fprintf(stderr,
-				"Execbuffer fails to pin. "
-				"Estimate: %u. Actual: %u. Available: %u\n",
-				drm_intel_gem_estimate_batch_space(bufmgr_gem->exec_bos,
-								   bufmgr_gem->
-								   exec_count),
-				drm_intel_gem_compute_batch_space(bufmgr_gem->exec_bos,
-								  bufmgr_gem->
-								  exec_count),
-				(unsigned int)bufmgr_gem->gtt_size);
+			DBG("Execbuffer fails to pin. "
+			    "Estimate: %u. Actual: %u. Available: %u\n",
+			    drm_intel_gem_estimate_batch_space(bufmgr_gem->exec_bos,
+							       bufmgr_gem->
+							       exec_count),
+			    drm_intel_gem_compute_batch_space(bufmgr_gem->exec_bos,
+							      bufmgr_gem->
+							      exec_count),
+			    (unsigned int)bufmgr_gem->gtt_size);
 		}
 	}
 	drm_intel_update_buffer_offsets(bufmgr_gem);
@@ -1603,14 +1604,13 @@ drm_intel_gem_bo_mrb_exec2(drm_intel_bo *bo, int used,
 	if (ret != 0) {
 		ret = -errno;
 		if (ret == -ENOSPC) {
-			fprintf(stderr,
-				"Execbuffer fails to pin. "
-				"Estimate: %u. Actual: %u. Available: %u\n",
-				drm_intel_gem_estimate_batch_space(bufmgr_gem->exec_bos,
-								   bufmgr_gem->exec_count),
-				drm_intel_gem_compute_batch_space(bufmgr_gem->exec_bos,
-								  bufmgr_gem->exec_count),
-				(unsigned int) bufmgr_gem->gtt_size);
+			DBG("Execbuffer fails to pin. "
+			    "Estimate: %u. Actual: %u. Available: %u\n",
+			    drm_intel_gem_estimate_batch_space(bufmgr_gem->exec_bos,
+							       bufmgr_gem->exec_count),
+			    drm_intel_gem_compute_batch_space(bufmgr_gem->exec_bos,
+							      bufmgr_gem->exec_count),
+			    (unsigned int) bufmgr_gem->gtt_size);
 		}
 	}
 	drm_intel_update_buffer_offsets2(bufmgr_gem);
