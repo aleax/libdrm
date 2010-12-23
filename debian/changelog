@@ -1,5 +1,6 @@
-libdrm (2.4.23-1) UNRELEASED; urgency=low
+libdrm (2.4.23-1) experimental; urgency=low
 
+  [ Sven Joachim ]
   * New upstream release.
   * Rename the libdrm-nouveau1 package to libdrm-nouveau1a, since upstream
     broke the ABI without changing the soname.
@@ -9,7 +10,7 @@ libdrm (2.4.23-1) UNRELEASED; urgency=low
     - Bump libdrm-nouveau shlibs and symbols versions to 2.4.23.
   * Use dh_prep instead of the deprecated dh_clean -k in debian/rules.
   
- -- Sven Joachim <svenjoac@gmx.de>  Tue, 14 Dec 2010 14:28:11 +0100
+ -- Julien Cristau <jcristau@debian.org>  Thu, 23 Dec 2010 17:56:54 +0100
 
 libdrm (2.4.22-2) experimental; urgency=low
 
