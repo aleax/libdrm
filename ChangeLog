@@ -1,3 +1,246 @@
+commit 760c01a6af12c013bca0ad1f17c793ca813be4cc
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Dec 10 12:10:46 2010 +0000
+
+    configure: Bump version to 2.4.23
+    
+    To export new kernel API for Intel's 2010Q4 release.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 000a0972c21ca1a17609e638907607470ee21751
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Dec 10 12:10:13 2010 +0000
+
+    tests: Update for ENOENT returns from unknown handles
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 537703fd4805e9cd352965fce642670986822d22
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Dec 7 20:34:22 2010 +0000
+
+    intel: Reorder need_fence vs fenced_command to avoid fences on gen4
+    
+    gen4+ hardware doesn't use fences for GPU access and the older kernel
+    doesn't expect userspace to make such a mistake. So don't.
+    
+    Bugzilla: https://bugs.freedesktop.org/show_bug.cgi?id=32190
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 39e5e982242cd2b611a9dfc1e9b63f857d52da61
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Dec 7 14:26:09 2010 +1000
+
+    drm: don't do the create the node ourselves if we have udev.
+    
+    this can remove nodes it shouldn't, let udev run the show.
+    
+    this is needed for reliably GPU switch.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit af3d282afbd3360245c2ef2d3552b2530f67481d
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Dec 3 10:48:12 2010 +0000
+
+    intel: If the command is fenced inform the kernel
+    
+    ... but only account for a fenced used if the object is tiled.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 8420743301a36dc1316fadf53bf8e1478068400a
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Thu Dec 2 04:12:16 2010 +0100
+
+    radeon: silence valgrind warnings by zeroing memory
+
+commit 1443bea488f6ad47cb4469c01b35aea0377822c0
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Nov 25 16:59:20 2010 +0000
+
+    intel: Add a forward declaration of struct drm_clip_rect
+    
+    ... so that intel_bufmgr.h can be compiled standalone.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 51b895041c65f7ec9ecda48e79279dde29258b07
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Nov 22 09:50:06 2010 +0000
+
+    intel: Compute in-aperture size for relaxed fenced objects
+    
+    For relaxed fencing the object may only consume the small set of active
+    pages, but still requires a fence region once bound into the aperture.
+    This is the size we need to use when computing the maximum possible
+    aperture space that could be used by a single batchbuffer and so avoid
+    hitting ENOSPC.
+    
+    Reported-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit d17681d538ce86a3f8d6d1c7407df3ceb2bcc499
+Author: Francisco Jerez <currojerez@riseup.net>
+Date:   Sat Nov 20 14:32:45 2010 +0100
+
+    nouveau: Add implicit pushbuf flush before gpuobj destruction.
+    
+    It makes sure that GPU object destruction is executed in order with
+    respect to the previous FIFO commands.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+    Acked-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 877b2ce15b80975b4dac42657bdfb0a3da833e1c
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Nov 9 13:51:45 2010 -0800
+
+    intel: Fix drm_intel_gem_bo_wait_rendering to wait for read-only usage too.
+    
+    Both the consumers of this API (sync objects and client throttling)
+    were expecting this behavior.  The kernel used to actually behave the
+    desired (but incorrect) way for us anyway, but that got fixed a while
+    back.
+
+commit 49447a9b957047db2549b8a929e763bbd87808ba
+Author: Albert Damen <albrt@gmx.net>
+Date:   Sun Nov 7 15:54:32 2010 +0100
+
+    intel: initialize bufmgr.bo_mrb_exec unconditionally
+    
+    If bufmgr.bo_mrb_exec is not set, drm_intel_bo_mrb_exec returns ENODEV
+    even though drm_intel_gem_bo_mrb_exec2 will work fine for the RENDER ring.
+    Fixes xf86-video-intel after commit 'add BLT ring support' (5bed685f76)
+    with kernels without BSD or BLT ring support (2.6.34 and before).
+    
+    Bugzilla: https://bugs.freedesktop.org/show_bug.cgi?id=31443
+    Signed-off-by: Albert Damen <albrt@gmx.net>
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit a52e61b5c888444435929a2770f14109c3a94f2f
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Nov 2 11:21:56 2010 -0700
+
+    intel: Drop silly asserts on mappings present at unmap time.
+    
+    The intent of these was to catch mismatched map/unmap.  What it
+    actually did was check whether there was ever a mapping of that type
+    (including in a previous life of the buffer through the userland BO
+    cache), not whether they were mismatched.  We don't even actually want
+    to catch mismatched map/unmap, unless we also do refcounting, since at
+    one point Mesa would do map/map/use/unmap/unmap.  Just remove this
+    code instead.
+
+commit 4abb65f95c79c9a2ec2cc1147a753704b5cdd22e
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Nov 2 11:19:21 2010 -0700
+
+    intel: Remove gratuitous assert on bo_reference.
+    
+    This couldn't be triggered except by overflow, since there's an assert
+    in unreference to catch the usual failure of over-unreferencing.
+
+commit f45305c1aaf5d8053b047ff6c4ac177e26ae6d17
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Nov 1 06:54:58 2010 -0700
+
+    intel: Shove the fake bufmgr subdata implementation into the fake bufmgr.
+
+commit 6560b4766c37603f5167859513bdc300f89a4761
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Sep 20 14:14:14 2010 -0700
+
+    intel: Remove stale comment.
+
+commit d0a4f2e292e5b347f7e5ee2cdbe4f077986eb9da
+Author: Francisco Jerez <currojerez@riseup.net>
+Date:   Sun Oct 31 02:22:29 2010 +0200
+
+    nouveau: Avoid unnecessary call to CPU_FINI.
+    
+    nouveau_bo_unmap called the CPU_FINI IOCTL even if it was a NOSYNC
+    mapping. It caused no harmful effects (actually CPU_FINI is a no-op on
+    recent enough kernels) besides the precious CPU cycles being wasted.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+
+commit 362457715faacd3101929e5f0d8ae250d0ad09df
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Oct 29 10:49:54 2010 +0100
+
+    intel: enable relaxed fence allocation for i915
+    
+    The kernel has always allowed userspace to underallocate objects
+    supplied for fencing. However, the kernel only allocated the object size
+    for the fence in the GTT and so caused tiling corruption. More recently
+    the kernel does allocate the full fence region in the GTT for an
+    under-sized object and so advertises that clients may finally make use
+    of this feature. The biggest benefit is for texture-heavy GL games on
+    i945 such as World of Padman which go from needing over 1GiB of RAM to
+    play to fitting in the GTT!
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 0a1ff35c70730160973715b82112cd97c62ac13e
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Oct 27 18:44:53 2010 -0400
+
+    s/drmStrdup/strdup/
+    
+    _DRM_MALLOC hasn't been a relevant concern since we split libdrm out
+    from xserver.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 057fab3382c02af54126ce395c43d4e6dce9439a
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Oct 26 11:35:11 2010 +0100
+
+    intel: Prepare for BLT ring split.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit c5286f4a871e054b63dee8a60a6f06574c4ca1b8
+Author: Francisco Jerez <currojerez@riseup.net>
+Date:   Thu Oct 21 23:02:43 2010 +0200
+
+    nouveau: Define the HAS_PAGEFLIP getparam.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+
+commit 09b1062628f2cbddb3ebae20e7b3b8a0a93acebf
+Author: Francisco Jerez <currojerez@riseup.net>
+Date:   Tue Sep 28 22:45:27 2010 +0200
+
+    nouveau: Let the user choose the push buffer size.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+    Acked-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 1b9187c43a0c17600611edb9e299141748e87974
+Author: Francisco Jerez <currojerez@riseup.net>
+Date:   Tue Sep 28 22:47:11 2010 +0200
+
+    nouveau: Define buffer object usage flags.
+    
+    Signed-off-by: Francisco Jerez <currojerez@riseup.net>
+    Acked-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 96214860bb0a5e11e7d346351a1be248e3716144
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Oct 1 16:50:09 2010 +0100
+
+    intel: Downgrade error warnings to debug
+    
+    As the higher layers check the error return from libdrm-intel and
+    are supposed to handle the error (and print their own warning in
+    extremis) the voluminous output on stderr is just noise and a hazard in
+    its own right.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
 commit 624e58e3e43c0b2c6803cb9263863444abeb3acb
 Author: Carl Worth <cworth@cworth.org>
 Date:   Tue Sep 28 20:40:37 2010 -0700

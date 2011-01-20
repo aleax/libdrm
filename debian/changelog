@@ -1,3 +1,26 @@
+libdrm (2.4.23-1ubuntu1) UNRELASED; urgency=low
+
+  * Merge from Debian experimental.  Remaining Ubuntu changes:
+    - Enable libdrm-intel for ports architectures until plymouth is fixed to
+      not need it unconditionally.
+    - Move runtime libraries to /lib for plymouth.
+  
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Fri, 21 Jan 2011 10:23:07 +1100
+
+libdrm (2.4.23-1) experimental; urgency=low
+
+  [ Sven Joachim ]
+  * New upstream release.
+  * Rename the libdrm-nouveau1 package to libdrm-nouveau1a, since upstream
+    broke the ABI without changing the soname.
+    - Make libdrm-nouveau1a{,-dbg} conflict with libdrm-nouveau1{,-dbg} and
+      remove the Breaks against xserver-xorg-video-nouveau.
+    - Adjust the lintian override.
+    - Bump libdrm-nouveau shlibs and symbols versions to 2.4.23.
+  * Use dh_prep instead of the deprecated dh_clean -k in debian/rules.
+  
+ -- Julien Cristau <jcristau@debian.org>  Thu, 23 Dec 2010 17:56:54 +0100
+
 libdrm (2.4.22-2ubuntu1) natty; urgency=low
 
   * Merge from debian experimental. Remaining Ubuntu changes:
