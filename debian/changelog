@@ -1,3 +1,10 @@
+libdrm (2.4.23-1ubuntu3) natty; urgency=low
+
+  * Change Conflicts to Breaks/Replaces as per debian policy 7.4
+    for libdrm-nouveau1a/libdrm-nouveau1a-dbg
+
+ -- Robert Hooker <sarvatt@ubuntu.com>  Tue, 25 Jan 2011 11:35:22 -0500
+
 libdrm (2.4.23-1ubuntu2) natty; urgency=low
 
   * Temporarily lower libdrm-nouveau1 Conflicts: to Replaces: libdrm-nouveau1
