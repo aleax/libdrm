@@ -97,6 +97,7 @@ Section: libs
 Architecture: linux-any
 Depends: ${shlibs:Depends},
  ${misc:Depends},
+Breaks: libdrm-nouveau1
 Replaces: libdrm-nouveau1
 Description: Userspace interface to nouveau-specific kernel DRM services -- runtime
  This library implements the userspace interface to the nouveau-specific kernel
@@ -110,7 +111,8 @@ Priority: extra
 Architecture: linux-any
 Depends: libdrm-nouveau1a (= ${binary:Version}),
  ${misc:Depends},
-Conflicts: libdrm-nouveau1-dbg
+Breaks: libdrm-nouveau1-dbg
+Replaces: libdrm-nouveau1-dbg
 Description: Userspace interface to nouveau-specific kernel DRM -- debugging symbols
  This library implements the userspace interface to the kernel DRM services.
  DRM stands for "Direct Rendering Manager", which is the kernelspace portion
