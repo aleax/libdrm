@@ -15,7 +15,7 @@ libdrm (2.4.23-1) experimental; urgency=low
     - Adjust the lintian override.
     - Bump libdrm-nouveau shlibs and symbols versions to 2.4.23.
   * Use dh_prep instead of the deprecated dh_clean -k in debian/rules.
-  
+
  -- Julien Cristau <jcristau@debian.org>  Thu, 23 Dec 2010 17:56:54 +0100
 
 libdrm (2.4.22-2) experimental; urgency=low
