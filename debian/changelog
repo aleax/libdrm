@@ -1,3 +1,9 @@
+libdrm (2.4.23-2) UNRELEASED; urgency=low
+
+  * Update Uploaders list. Thanks, David & Brice!
+
+ -- Cyril Brulebois <kibi@debian.org>  Sat, 05 Feb 2011 11:25:09 +0100
+
 libdrm (2.4.23-1) experimental; urgency=low
 
   [ Sven Joachim ]
