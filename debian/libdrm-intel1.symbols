@@ -16,7 +16,7 @@ libdrm_intel.so.1 libdrm-intel1 #MINVER#
  drm_intel_bo_is_reusable@Base 2.4.21
  drm_intel_bo_madvise@Base 2.4.16
  drm_intel_bo_map@Base 2.4.1
- drm_intel_bo_mrb_exec@Base 2.4.23-3
+ drm_intel_bo_mrb_exec@Base 2.4.23-3~
  drm_intel_bo_pin@Base 2.4.1
  drm_intel_bo_reference@Base 2.4.1
  drm_intel_bo_references@Base 2.4.15
