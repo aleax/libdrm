@@ -2,6 +2,7 @@ libdrm (2.4.24-1) UNRELEASED; urgency=low
 
   * New upstream release.
     - Contains intel cherry-picks taken in 2.4.23-3.
+  * Add new internal radeon symbols to libkms1.symbols
 
  -- Christopher James Halse Rogers <raof@ubuntu.com>  Fri, 04 Mar 2011 11:24:07 +1100
 
