@@ -744,7 +744,7 @@ drm_intel_gem_bo_alloc_tiled(drm_intel_bufmgr *bufmgr, const char *name,
 	uint32_t tiling;
 
 	do {
-		unsigned long aligned_y;
+		unsigned long aligned_y, height_alignment;
 
 		tiling = *tiling_mode;
 
@@ -760,12 +760,16 @@ drm_intel_gem_bo_alloc_tiled(drm_intel_bufmgr *bufmgr, const char *name,
 		 * too so we try to be careful.
 		 */
 		aligned_y = y;
-		if (tiling == I915_TILING_NONE)
-			aligned_y = ALIGN(y, 2);
-		else if (tiling == I915_TILING_X)
-			aligned_y = ALIGN(y, 8);
+		height_alignment = 2;
+
+		if (tiling == I915_TILING_X)
+			height_alignment = 8;
 		else if (tiling == I915_TILING_Y)
-			aligned_y = ALIGN(y, 32);
+			height_alignment = 32;
+		/* i8xx has a interleaved 2-row tile layout */
+		if (IS_GEN2(bufmgr_gem) && tiling != I915_TILING_NONE)
+			height_alignment *= 2;
+		aligned_y = ALIGN(y, height_alignment);
 
 		stride = x * cpp;
 		stride = drm_intel_gem_bo_tile_pitch(bufmgr_gem, stride, tiling_mode);
@@ -1581,13 +1585,13 @@ drm_intel_gem_bo_exec(drm_intel_bo *bo, int used,
 static int
 drm_intel_gem_bo_mrb_exec2(drm_intel_bo *bo, int used,
 			drm_clip_rect_t *cliprects, int num_cliprects, int DR4,
-			int ring_flag)
+			unsigned int flags)
 {
 	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *)bo->bufmgr;
 	struct drm_i915_gem_execbuffer2 execbuf;
 	int ret, i;
 
-	switch (ring_flag) {
+	switch (flags & 0x7) {
 	default:
 		return -EINVAL;
 	case I915_EXEC_BLT:
@@ -1620,7 +1624,7 @@ drm_intel_gem_bo_mrb_exec2(drm_intel_bo *bo, int used,
 	execbuf.num_cliprects = num_cliprects;
 	execbuf.DR1 = 0;
 	execbuf.DR4 = DR4;
-	execbuf.flags = ring_flag;
+	execbuf.flags = flags;
 	execbuf.rsvd1 = 0;
 	execbuf.rsvd2 = 0;
 

@@ -19,7 +19,7 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 AC_PREREQ(2.60)
-AC_INIT([libdrm], 2.4.23, [dri-devel@lists.sourceforge.net], libdrm)
+AC_INIT([libdrm], 2.4.24, [dri-devel@lists.sourceforge.net], libdrm)
 AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_INIT_AUTOMAKE([dist-bzip2])
@@ -244,6 +244,9 @@ fi
 
 AM_CONDITIONAL(HAVE_INTEL, [test "x$INTEL" != "xno"])
 AM_CONDITIONAL(HAVE_RADEON, [test "x$RADEON" != "xno"])
+if test "x$RADEON" = xyes; then
+	AC_DEFINE(HAVE_RADEON, 1, [Have radeon support])
+fi
 
 AC_ARG_WITH([kernel-source],
             [AS_HELP_STRING([--with-kernel-source],
