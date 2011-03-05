@@ -1,4 +1,4 @@
-libdrm (2.4.24-1) UNRELEASED; urgency=low
+libdrm (2.4.24-1) experimental; urgency=low
 
   [ Christopher James Halse Rogers ]
   * New upstream release.
@@ -9,7 +9,7 @@ libdrm (2.4.24-1) UNRELEASED; urgency=low
     warning, since patches were sent upstream to stop exporting private
     symbols: symbols-declares-dependency-on-other-package
 
- -- Christopher James Halse Rogers <raof@ubuntu.com>  Fri, 04 Mar 2011 11:24:07 +1100
+ -- Cyril Brulebois <kibi@debian.org>  Sat, 05 Mar 2011 20:27:23 +0100
 
 libdrm (2.4.23-3) unstable; urgency=low
 
