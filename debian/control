@@ -3,7 +3,7 @@ Priority: optional
 Maintainer: Debian X Strike Force <debian-x@lists.debian.org>
 Uploaders: Cyril Brulebois <kibi@debian.org>
 Build-Depends:
- debhelper (>= 7.2.7),
+ debhelper (>= 8.1.2ubuntu2),
  libx11-dev,
  dpkg-dev (>= 1.13.19),
  quilt (>= 0.40),
@@ -43,6 +43,8 @@ Architecture: any
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
 Description: Userspace interface to kernel DRM services -- runtime
  This library implements the userspace interface to the kernel DRM
  services.  DRM stands for "Direct Rendering Manager", which is the
@@ -59,6 +61,7 @@ Architecture: any
 Depends:
  libdrm2 (= ${binary:Version}),
  ${misc:Depends},
+Multi-Arch: same
 Description: Userspace interface to kernel DRM services -- debugging symbols
  This library implements the userspace interface to the kernel DRM
  services.  DRM stands for "Direct Rendering Manager", which is the
@@ -153,6 +156,8 @@ Package: libkms1
 Section: libs
 Architecture: linux-any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
 Description: Userspace interface to kernel DRM buffer management
  This library implements a unified userspace interface to the different buffer
  management interfaces of the kernel DRM hardware drivers.
@@ -162,6 +167,7 @@ Section: debug
 Priority: extra
 Architecture: linux-any
 Depends: libkms1 (= ${binary:Version}), ${misc:Depends}
+Multi-Arch: same
 Description: Userspace interface to kernel DRM buffer management -- debugging symbols
  This library implements a unified userspace interface to the different buffer
  management interfaces of the kernel DRM hardware drivers.
