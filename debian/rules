@@ -16,6 +16,7 @@ include debian/xsfbs/xsfbs.mk
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 DEB_HOST_ARCH_OS    ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
+DEB_HOST_MULTIARCH  ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
 	confflags += --build=$(DEB_HOST_GNU_TYPE)
@@ -76,6 +77,7 @@ build/config.status: configure
 		--mandir=\$${prefix}/share/man \
 		--infodir=\$${prefix}/share/info \
 		--enable-static=yes \
+		--libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH) \
 		$(confflags) \
 		CFLAGS="$(CFLAGS)"
 
@@ -99,6 +101,9 @@ clean: xsfclean
 	rm -f compile config.guess config.sub configure depcomp install-sh
 	rm -f ltmain.sh missing INSTALL aclocal.m4 config.h.in mkinstalldirs
 	rm -f libdrm.pc libdrm/config.h.in
+	rm -f debian/libdrm-intel1.install debian/libdrm-nouveau1a.install \
+	      debian/libdrm-radeon1.install debian/libdrm2.install \
+	      debian/libkms1.install
 
 	dh_clean
 
@@ -106,6 +111,12 @@ install: build
 	dh_testdir
 	dh_testroot
 	dh_prep
+	for file in libdrm-intel1.install libdrm-nouveau1a.install \
+	            libdrm-radeon1.install libdrm2.install libkms1.install; \
+	do \
+		sed -e"s,\$${DEB_HOST_MULTIARCH},${DEB_HOST_MULTIARCH},g" \
+			debian/$${file}.in > debian/$$file; \
+	done
 	dh_installdirs
 
 	cd build && $(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
