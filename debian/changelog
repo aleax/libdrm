@@ -1,3 +1,9 @@
+libdrm (2.4.23-1ubuntu5) UNRELEASED; urgency=low
+
+  * Fix up libdrm-dev symlinks for multiarch.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Sat, 19 Mar 2011 20:59:37 -0700
+
 libdrm (2.4.23-1ubuntu4) natty; urgency=low
 
   * Build for multiarch.
