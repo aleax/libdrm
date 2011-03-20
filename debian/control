@@ -76,6 +76,8 @@ Package: libdrm-intel1
 Section: libs
 Architecture: linux-any kfreebsd-any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Pre-Depends: ${misc:Pre-Depends}
+Multi-Arch: same
 Description: Userspace interface to intel-specific kernel DRM services -- runtime
  This library implements the userspace interface to the intel-specific kernel
  DRM services.  DRM stands for "Direct Rendering Manager", which is the
@@ -87,6 +89,7 @@ Section: debug
 Priority: extra
 Architecture: linux-any kfreebsd-any
 Depends: libdrm-intel1 (= ${binary:Version}), ${misc:Depends}
+Multi-Arch: same
 Description: Userspace interface to intel-specific kernel DRM services -- debugging symbols
  This library implements the userspace interface to the kernel DRM services.
  DRM stands for "Direct Rendering Manager", which is the kernelspace portion
@@ -102,6 +105,8 @@ Depends: ${shlibs:Depends},
  ${misc:Depends},
 Breaks: libdrm-nouveau1
 Replaces: libdrm-nouveau1
+Pre-Depends: ${misc:Pre-Depends}
+Multi-Arch: same
 Description: Userspace interface to nouveau-specific kernel DRM services -- runtime
  This library implements the userspace interface to the nouveau-specific kernel
  DRM services. DRM stands for "Direct Rendering Manager", which is the
@@ -116,6 +121,7 @@ Depends: libdrm-nouveau1a (= ${binary:Version}),
  ${misc:Depends},
 Breaks: libdrm-nouveau1-dbg
 Replaces: libdrm-nouveau1-dbg
+Multi-Arch: same
 Description: Userspace interface to nouveau-specific kernel DRM -- debugging symbols
  This library implements the userspace interface to the kernel DRM services.
  DRM stands for "Direct Rendering Manager", which is the kernelspace portion
@@ -130,6 +136,8 @@ Architecture: linux-any
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
+Pre-Depends: ${misc:Pre-Depends}
+Multi-Arch: same
 Description: Userspace interface to radeon-specific kernel DRM services -- runtime
  This library implements the userspace interface to the radeon-specific kernel
  DRM services.  DRM stands for "Direct Rendering Manager", which is the
@@ -143,6 +151,7 @@ Architecture: linux-any
 Depends:
  libdrm-radeon1 (= ${binary:Version}),
  ${misc:Depends},
+Multi-Arch: same
 Description: Userspace interface to radeon-specific kernel DRM services -- debugging symbols
  This library implements the userspace interface to the kernel DRM services.
  DRM stands for "Direct Rendering Manager", which is the kernelspace portion
