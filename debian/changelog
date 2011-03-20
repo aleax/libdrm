@@ -1,8 +1,8 @@
-libdrm (2.4.23-1ubuntu4) UNRELEASED; urgency=low
+libdrm (2.4.23-1ubuntu4) natty; urgency=low
 
   * Build for multiarch.
 
- -- Steve Langasek <steve.langasek@ubuntu.com>  Sat, 19 Mar 2011 20:43:29 -0700
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Sat, 19 Mar 2011 20:53:05 -0700
 
 libdrm (2.4.23-1ubuntu3) natty; urgency=low
 
