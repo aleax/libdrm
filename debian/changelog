@@ -1,8 +1,18 @@
-libdrm (2.4.23-1ubuntu5) UNRELEASED; urgency=low
+libdrm (2.4.23-1ubuntu6) natty; urgency=low
+
+  * Add 100_intel_remember_named_bo.patch: Reuse already requested buffer
+    objects if re-requested.  Fixes error where dmesg shows "Object
+    ... appears more than once in object list".  Cherrypick from upstream
+    libdrm 2.4.24 tree.
+    (LP: #747205)
+
+ -- Bryce Harrington <bryce@ubuntu.com>  Fri, 01 Apr 2011 17:53:28 -0700
+
+libdrm (2.4.23-1ubuntu5) natty; urgency=low
 
   * Fix up libdrm-dev symlinks for multiarch.
 
- -- Steve Langasek <steve.langasek@ubuntu.com>  Sat, 19 Mar 2011 20:59:37 -0700
+ -- Bryce Harrington <bryce@ubuntu.com>  Fri, 01 Apr 2011 11:44:30 -0700
 
 libdrm (2.4.23-1ubuntu4) natty; urgency=low
 
