@@ -9,6 +9,8 @@ libdrm (2.4.24-1ubuntu1) UNRELEASED; urgency=low
     - debian/*.install.in:
     - debian/*.links.in:
       + Multiarchify
+  * debian/patches/100_intel_remember_named_bo.patch:
+    - Drop this cherry-pick; included in 2.4.24
   
  -- Christopher James Halse Rogers <chris@cooperteam.net>  Mon, 04 Apr 2011 11:07:04 +1000
 
