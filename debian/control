@@ -2,7 +2,7 @@ Source: libdrm
 Priority: optional
 Maintainer: Ubuntu X-SWAT <ubuntu-x@lists.ubuntu.com>
 XSBC-Original-Maintainer: Debian X Strike Force <debian-x@lists.debian.org>
-Uploaders: David Nusinow <dnusinow@debian.org>, Brice Goglin <bgoglin@debian.org>, Cyril Brulebois <kibi@debian.org>
+Uploaders: Cyril Brulebois <kibi@debian.org>
 Build-Depends:
  debhelper (>= 8.1.2ubuntu2),
  libx11-dev,

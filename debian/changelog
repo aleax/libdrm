@@ -1,3 +1,53 @@
+libdrm (2.4.24-1ubuntu1) UNRELEASED; urgency=low
+
+  * Merge from Debian experimental.  Remaining Ubuntu changes:
+    - debian/rules
+    - debian/control:
+      + Build libdrm-intel everywhere rather than just {i386,amd64} for Plymouth
+    - debian/rules:
+    - debian/control:
+    - debian/*.install.in:
+    - debian/*.links.in:
+      + Multiarchify
+  
+ -- Christopher James Halse Rogers <chris@cooperteam.net>  Mon, 04 Apr 2011 11:07:04 +1000
+
+libdrm (2.4.24-1) experimental; urgency=low
+
+  [ Christopher James Halse Rogers ]
+  * New upstream release.
+  * Add new internal radeon symbols to libkms1.symbols
+
+  [ Cyril Brulebois ]
+  * Just as a reminder, not adding a lintian override for the following
+    warning, since patches were sent upstream to stop exporting private
+    symbols: symbols-declares-dependency-on-other-package
+
+ -- Cyril Brulebois <kibi@debian.org>  Sat, 05 Mar 2011 20:27:23 +0100
+
+libdrm (2.4.23-3) unstable; urgency=low
+
+  * Cherry-pick from upstream:
+    - intel: Fallback to old exec if no mrb_exec is available
+    - intel: Set the public handle after opening by name
+    - intel: Remember named bo
+  * The first of those fixes should fix some failures to submit batch
+    buffer (Closes: #612766).
+  * Bump dependency to 2.4.23-3 for the drm_intel_bo_mrb_exec symbol in
+    libdrm-intel1's symbols file. While the former version is alright
+    from a shared object point of view, runtime doesn't seem to agree
+    (Closes: #609299).
+  * Bump the libdrm-intel1 shlibs version for consistency.
+
+ -- Cyril Brulebois <kibi@debian.org>  Wed, 16 Feb 2011 11:44:44 +0100
+
+libdrm (2.4.23-2) unstable; urgency=low
+
+  * Upload to unstable.
+  * Update Uploaders list. Thanks, David & Brice!
+
+ -- Cyril Brulebois <kibi@debian.org>  Sat, 05 Feb 2011 11:26:44 +0100
+
 libdrm (2.4.23-1ubuntu6) natty; urgency=low
 
   * Add 100_intel_remember_named_bo.patch: Reuse already requested buffer
@@ -54,7 +104,7 @@ libdrm (2.4.23-1) experimental; urgency=low
     - Adjust the lintian override.
     - Bump libdrm-nouveau shlibs and symbols versions to 2.4.23.
   * Use dh_prep instead of the deprecated dh_clean -k in debian/rules.
-  
+
  -- Julien Cristau <jcristau@debian.org>  Thu, 23 Dec 2010 17:56:54 +0100
 
 libdrm (2.4.22-2ubuntu1) natty; urgency=low

@@ -95,6 +95,8 @@ typedef struct _drm_intel_bufmgr_gem {
 	int num_buckets;
 	time_t time;
 
+	drmMMListHead named;
+
 	uint64_t gtt_size;
 	int available_fences;
 	int pci_device;
@@ -124,6 +126,7 @@ struct _drm_intel_bo_gem {
 	 * Kenel-assigned global name for this object
 	 */
 	unsigned int global_name;
+	drmMMListHead name_list;
 
 	/**
 	 * Index of the buffer within the validation list while preparing a
@@ -690,6 +693,8 @@ retry:
 		    drm_intel_gem_bo_free(&bo_gem->bo);
 		    return NULL;
 		}
+
+		DRMINITLISTHEAD(&bo_gem->name_list);
 	}
 
 	bo_gem->name = name;
@@ -739,7 +744,7 @@ drm_intel_gem_bo_alloc_tiled(drm_intel_bufmgr *bufmgr, const char *name,
 	uint32_t tiling;
 
 	do {
-		unsigned long aligned_y;
+		unsigned long aligned_y, height_alignment;
 
 		tiling = *tiling_mode;
 
@@ -755,12 +760,16 @@ drm_intel_gem_bo_alloc_tiled(drm_intel_bufmgr *bufmgr, const char *name,
 		 * too so we try to be careful.
 		 */
 		aligned_y = y;
-		if (tiling == I915_TILING_NONE)
-			aligned_y = ALIGN(y, 2);
-		else if (tiling == I915_TILING_X)
-			aligned_y = ALIGN(y, 8);
+		height_alignment = 2;
+
+		if (tiling == I915_TILING_X)
+			height_alignment = 8;
 		else if (tiling == I915_TILING_Y)
-			aligned_y = ALIGN(y, 32);
+			height_alignment = 32;
+		/* i8xx has a interleaved 2-row tile layout */
+		if (IS_GEN2(bufmgr_gem) && tiling != I915_TILING_NONE)
+			height_alignment *= 2;
+		aligned_y = ALIGN(y, height_alignment);
 
 		stride = x * cpp;
 		stride = drm_intel_gem_bo_tile_pitch(bufmgr_gem, stride, tiling_mode);
@@ -792,6 +801,23 @@ drm_intel_bo_gem_create_from_name(drm_intel_bufmgr *bufmgr,
 	int ret;
 	struct drm_gem_open open_arg;
 	struct drm_i915_gem_get_tiling get_tiling;
+	drmMMListHead *list;
+
+	/* At the moment most applications only have a few named bo.
+	 * For instance, in a DRI client only the render buffers passed
+	 * between X and the client are named. And since X returns the
+	 * alternating names for the front/back buffer a linear search
+	 * provides a sufficiently fast match.
+	 */
+	for (list = bufmgr_gem->named.next;
+	     list != &bufmgr_gem->named;
+	     list = list->next) {
+		bo_gem = DRMLISTENTRY(drm_intel_bo_gem, list, name_list);
+		if (bo_gem->global_name == handle) {
+			drm_intel_gem_bo_reference(&bo_gem->bo);
+			return &bo_gem->bo;
+		}
+	}
 
 	bo_gem = calloc(1, sizeof(*bo_gem));
 	if (!bo_gem)
@@ -816,6 +842,7 @@ drm_intel_bo_gem_create_from_name(drm_intel_bufmgr *bufmgr,
 	atomic_set(&bo_gem->refcount, 1);
 	bo_gem->validate_index = -1;
 	bo_gem->gem_handle = open_arg.handle;
+	bo_gem->bo.handle = open_arg.handle;
 	bo_gem->global_name = handle;
 	bo_gem->reusable = 0;
 
@@ -833,6 +860,7 @@ drm_intel_bo_gem_create_from_name(drm_intel_bufmgr *bufmgr,
 	/* XXX stride is unknown */
 	drm_intel_bo_gem_set_in_aperture_size(bufmgr_gem, bo_gem);
 
+	DRMLISTADDTAIL(&bo_gem->name_list, &bufmgr_gem->named);
 	DBG("bo_create_from_handle: %d (%s)\n", handle, bo_gem->name);
 
 	return &bo_gem->bo;
@@ -923,6 +951,8 @@ drm_intel_gem_bo_unreference_final(drm_intel_bo *bo, time_t time)
 		free(bo_gem->relocs);
 		bo_gem->relocs = NULL;
 	}
+
+	DRMLISTDEL(&bo_gem->name_list);
 
 	bucket = drm_intel_gem_bo_bucket_for_size(bufmgr_gem, bo->size);
 	/* Put the buffer into our internal cache for reuse if we can. */
@@ -1555,13 +1585,13 @@ drm_intel_gem_bo_exec(drm_intel_bo *bo, int used,
 static int
 drm_intel_gem_bo_mrb_exec2(drm_intel_bo *bo, int used,
 			drm_clip_rect_t *cliprects, int num_cliprects, int DR4,
-			int ring_flag)
+			unsigned int flags)
 {
 	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *)bo->bufmgr;
 	struct drm_i915_gem_execbuffer2 execbuf;
 	int ret, i;
 
-	switch (ring_flag) {
+	switch (flags & 0x7) {
 	default:
 		return -EINVAL;
 	case I915_EXEC_BLT:
@@ -1594,7 +1624,7 @@ drm_intel_gem_bo_mrb_exec2(drm_intel_bo *bo, int used,
 	execbuf.num_cliprects = num_cliprects;
 	execbuf.DR1 = 0;
 	execbuf.DR4 = DR4;
-	execbuf.flags = ring_flag;
+	execbuf.flags = flags;
 	execbuf.rsvd1 = 0;
 	execbuf.rsvd2 = 0;
 
@@ -1770,6 +1800,8 @@ drm_intel_gem_bo_flink(drm_intel_bo *bo, uint32_t * name)
 			return -errno;
 		bo_gem->global_name = flink.name;
 		bo_gem->reusable = 0;
+
+		DRMLISTADDTAIL(&bo_gem->name_list, &bufmgr_gem->named);
 	}
 
 	*name = bo_gem->global_name;
@@ -2216,6 +2248,7 @@ drm_intel_bufmgr_gem_init(int fd, int batch_size)
 	    drm_intel_gem_get_pipe_from_crtc_id;
 	bufmgr_gem->bufmgr.bo_references = drm_intel_gem_bo_references;
 
+	DRMINITLISTHEAD(&bufmgr_gem->named);
 	init_cache_buckets(bufmgr_gem);
 
 	return &bufmgr_gem->bufmgr;
