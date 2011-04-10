@@ -1,8 +1,8 @@
-libdrm (2.4.24-2) UNRELEASED; urgency=low
+libdrm (2.4.24-2) unstable; urgency=low
 
   * Upload to unstable.
 
- -- Cyril Brulebois <kibi@debian.org>  Sun, 10 Apr 2011 22:51:14 +0200
+ -- Cyril Brulebois <kibi@debian.org>  Sun, 10 Apr 2011 22:57:02 +0200
 
 libdrm (2.4.24-1) experimental; urgency=low
 
