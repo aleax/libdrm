@@ -1,3 +1,267 @@
+commit ba11501bb9f5bd98110dfe1385b4501c0a9a643a
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Apr 11 08:25:42 2011 +0100
+
+    configure: version bump for 2.4.25 release
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit be8802a9414e85ba07ae257fccadd245fcf7c7b6
+Author: Ilija Hadzic <ihadzic@research.bell-labs.com>
+Date:   Thu Mar 24 13:24:28 2011 -0400
+
+    libdrm: (revised) vblank wait on crtc > 1
+    
+    Hi Alex,
+    
+    Enclosed is a revised version of the patch sent on Mar 18, against
+    the master branch of the drm userspace (i.e. libdrm). Details
+    summarised in this thread:
+    http://lists.freedesktop.org/archives/dri-devel/2011-March/009499.html
+    
+    This patch reconciles libdrm with the the kernel change that Dave
+    pushed this morning. It *supersedes* the previously sent patch (i.e.
+    apply it to the master branch as it exists at the time of this writing,
+    not as an incremental patch to the one sent previously).
+    
+    Regards,
+    
+    Ilija
+    
+    Signed-off-by: Ilija Hadzic <ihadzic@research.bell-labs.com>
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit f395b0a25c9f99688e7b2799ac02f1f930f24e09
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Apr 4 08:57:42 2011 +0100
+
+    intel: Also handle mrb_exec fallback with ring == I915_EXEC_RENDER
+    
+    Reported-by: Oliver McFadden <oliver.mcfadden@nokia.com>
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 5cb554a0d6e986f2d7300a91d95983fa09b17f65
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Mar 30 06:11:21 2011 +1000
+
+    drm_mode: fix types on recently added ioctls
+
+commit 06ebbf7c2c071c8a4f32d3cfac914874fe981054
+Author: Daniel Vetter <daniel.vetter@ffwll.ch>
+Date:   Sat Mar 26 15:04:04 2011 +0100
+
+    Cleanup gen2 tiling confusion
+    
+    A tile on gen2 has a size of 2kb, stride of 128 bytes and 16 rows.
+    
+    Signed-off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit fd3ed34a2070fca3804baf54ece40d0bc2666226
+Author: Javier Jardón <javier.jardon@codethink.co.uk>
+Date:   Wed Feb 9 13:28:20 2011 +0000
+
+    build: Update autotools configuration
+    
+    Replace some deprecated autoconf macros and use the new libtool
+    syntax
+
+commit 3b04c73650b5e9bbcb602fdb8cea0b16ad82d0c0
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Mar 4 15:48:31 2011 +1000
+
+    libdrm: oops fix get cap return value.
+
+commit bb994653667986757b4c906b8f144737667f7374
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Feb 9 13:41:49 2011 +1000
+
+    libkms: add dumb support
+    
+    this uses the drm cap interface to check if the dumb ioctl
+    is supported.
+
+commit 5c6c6913d1260024e5d156db7973c9e46fe1ff03
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Mon Feb 21 11:27:19 2011 +1000
+
+    Implement drmGetCap() to query device/driver capabilities
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 4473a7e8234da6d16f4ccfa660fbd72ff1b7dd95
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Feb 9 13:41:28 2011 +1000
+
+    drm: add dumb interface
+
+commit edd41db37deb21aab5154b94354fe9470fc59cf3
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Thu Mar 3 21:35:28 2011 -0500
+
+    Build modetest for all chipsets, always build modeprint
+
+commit 3293eb95cabc83f5d2282c2890919c07e6af5205
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Thu Mar 3 21:20:52 2011 -0500
+
+    don't try to build modetest without libkms
+    
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
+commit a926a043b8079a8e283aa231e3c2347f5ad5864f
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Mar 1 18:24:14 2011 +0000
+
+    configure: Bump version to 2.4.24
+    
+    New kernel headers.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 0209428b3918c4336018da9293cdcbf7f8fedfb6
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Mar 1 16:01:53 2011 +0000
+
+    intel: Add I915_PARAM_HAS_RELAXED_DELTA
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit e6018c25ca63fa6066d8fa6e57373030d07b0392
+Author: Daniel Vetter <daniel.vetter@ffwll.ch>
+Date:   Tue Feb 22 19:11:07 2011 +0100
+
+    intel: Fixup for the fix for relaxed tiling on gen2
+    
+    This is Fail.
+    
+    First patch to libdrm, and I've borked it up.
+    
+    Noticed-by: Chris Wilson <chris@chris-wilson.co.uk>
+    Signed-off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 9a71ed93f48f4b319148913a6b56751f6341f078
+Author: Daniel Vetter <daniel.vetter@ffwll.ch>
+Date:   Tue Feb 22 18:53:56 2011 +0100
+
+    intel: fix relaxed tiling on gen2
+    
+    Signed-off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit a697fb6acad7992c3d23bb6a663663694782eb7b
+Author: Benjamin Franzke <benjaminfranzke@googlemail.com>
+Date:   Thu Feb 17 20:36:42 2011 +0100
+
+    modetest: Do no flip twice to a current front buffer
+    
+    The incorrect order was:
+    fb, other_fb, other_fb, fb_id, other_fb, ..
+
+commit 51c6ae4c3a0e5527d3c6e1632b21546baaba0b29
+Author: Benjamin Franzke <benjaminfranzke@googlemail.com>
+Date:   Thu Feb 17 14:09:12 2011 +0100
+
+    tests/modeprint: Output masks as hex numbers
+
+commit 17762467850618323f59e91702e3fc0749fbceac
+Author: Benjamin Franzke <benjaminfranzke@googlemail.com>
+Date:   Thu Feb 17 14:07:58 2011 +0100
+
+    tests/modeprint: Remove needless dependency on drm_intel
+
+commit 8fef29093fae2a08f8c1cb4946687bf4bb62a1ca
+Author: Benjamin Franzke <benjaminfranzke@googlemail.com>
+Date:   Thu Feb 17 10:47:47 2011 +0100
+
+    modetest: Create buffers using libkms
+
+commit c75fe3ae738732afda3a7d4222bb3828ed9ef7a8
+Author: Benjamin Franzke <benjaminfranzke@googlemail.com>
+Date:   Thu Feb 17 10:46:35 2011 +0100
+
+    configure.ac: ac_define HAVE_RADEON
+
+commit ed7d177f66885dfbc4e8410154559c4767fefa9f
+Author: nobled <nobled@dreamwidth.org>
+Date:   Thu Sep 9 10:07:21 2010 +0100
+
+    libkms/radeon: Add backend
+    
+    Todo: What tiling should be set on scanout buffers?
+    
+    Haven't tested besides compiling it.
+
+commit 36d4939343d8789d9066f7245fa2d4fe69119dd8
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Feb 14 09:39:06 2011 +0000
+
+    intel: Remember named bo
+    
+    ... and if asked to open a bo by the same global name, return a fresh
+    reference to the previously allocated buffer.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 53581b6210c024044e0065527d1506e6f5657ef5
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Feb 14 09:27:05 2011 +0000
+
+    intel: Set the public handle after opening by name
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 550fe2ca3b29ad2191eab4fdfbed9ed21e25492d
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Jan 12 15:06:25 2011 +0000
+
+    intel: compile fix for previous commit after rebasing
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 6717b7579f84d05e45e7846d2b6e767760461709
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Jan 12 10:57:46 2011 +0000
+
+    intel: Fallback to old exec if no mrb_exec is available
+    
+    Reported-by: Torsten Hilbrich <torsten.hilbrich@secunet.com>
+    Bugzilla: https://bugs.freedesktop.org/show_bug.cgi?id=33016
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit bad5242a59aa8e31cf10749e2ac69b3c66ef7da0
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Mon Dec 20 16:02:42 2010 +1000
+
+    nouveau: fix up reloc_emit() to accept NULL target buffer
+    
+    The nvc0 gallium drivers passes NULL here to indicate to the memory manager
+    that a buffer is being used, but without creating an actual reloc.
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 45cfb9cf089cd56878b1cb5d15391d2470dbeb7c
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Mon Dec 20 10:53:44 2010 +1000
+
+    nouveau: split pushbuf macros specific to nv04-nv50 out, and add nvc0
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit ba731e7b58911e8caa4e37f0075a677d7ac2afc6
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Thu Dec 9 09:18:35 2010 +1000
+
+    nouveau: nvc0 drm has no concept of "notifier block"
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 0184bb1c6d946bcaf198f7680b3405adca676790
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Dec 19 13:01:15 2010 +0000
+
+    intel: Export CONSTANT_BUFFER addressing mode
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
 commit 760c01a6af12c013bca0ad1f17c793ca813be4cc
 Author: Chris Wilson <chris@chris-wilson.co.uk>
 Date:   Fri Dec 10 12:10:46 2010 +0000
