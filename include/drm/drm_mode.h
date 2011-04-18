@@ -344,4 +344,33 @@ struct drm_mode_crtc_page_flip {
 	__u64 user_data;
 };
 
+/* create a dumb scanout buffer */
+struct drm_mode_create_dumb {
+        __u32 height;
+        __u32 width;
+        __u32 bpp;
+        __u32 flags;
+        /* handle, pitch, size will be returned */
+        __u32 handle;
+        __u32 pitch;
+        __u64 size;
+};
+
+/* set up for mmap of a dumb scanout buffer */
+struct drm_mode_map_dumb {
+        /** Handle for the object being mapped. */
+        __u32 handle;
+        __u32 pad;
+        /**
+         * Fake offset to use for subsequent mmap call
+         *
+         * This is a fixed-size type for 32/64 compatibility.
+         */
+        __u64 offset;
+};
+
+struct drm_mode_destroy_dumb {
+	__u32 handle;
+};
+
 #endif
