@@ -10,6 +10,7 @@ libdrm (2.4.25-1) UNRELEASED; urgency=low
     - Testsuite now automatically gets run.
   * Accordingly, add a build-dep to fix FTBFS during make check:
     - 03_build_against_librt.diff
+  * Add libudev-dev build-dep on Linux so that detection works.
 
  -- Cyril Brulebois <kibi@debian.org>  Mon, 18 Apr 2011 22:23:18 +0200
 

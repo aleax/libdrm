@@ -9,6 +9,7 @@ Build-Depends:
  libx11-dev,
  pkg-config,
  libpthread-stubs0-dev,
+ libudev-dev [linux-any],
 Standards-Version: 3.8.4
 Section: libs
 Vcs-Git: git://git.debian.org/git/pkg-xorg/lib/libdrm
