@@ -1,3 +1,9 @@
+libdrm (2.4.25-2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Cyril Brulebois <kibi@debian.org>  Mon, 16 May 2011 19:14:49 +0200
+
 libdrm (2.4.25-1) experimental; urgency=low
 
   * New upstream release.
