@@ -10,13 +10,10 @@ check_PROGRAMS = \
 	dristat \
 	drmstat
 
-SUBDIRS =
+SUBDIRS = modeprint
 
 if HAVE_LIBKMS
-SUBDIRS += kmstest
-endif
-
-if HAVE_INTEL
+SUBDIRS += kmstest modetest
 endif
 
 if HAVE_LIBUDEV
@@ -50,11 +47,6 @@ TESTS =						\
 SUBDIRS += vbltest $(NULL)
 
 if HAVE_INTEL
-SUBDIRS += \
-	modeprint				\
-	modetest				\
-	$(NULL)
-
 TESTS +=					\
 	gem_basic				\
 	gem_flink				\

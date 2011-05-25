@@ -47,6 +47,7 @@ libdrm.so.2 libdrm2 #MINVER#
  drmFreeVersion@Base 2.3.1
  drmGetBufInfo@Base 2.3.1
  drmGetBusid@Base 2.3.1
+ drmGetCap@Base 2.4.25
  drmGetClient@Base 2.3.1
  drmGetContextFlags@Base 2.3.1
  drmGetContextPrivateMapping@Base 2.3.1

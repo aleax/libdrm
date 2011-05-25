@@ -1,6 +1,6 @@
-libdrm (2.4.24-1ubuntu1) UNRELEASED; urgency=low
+libdrm (2.4.25-2ubuntu1) UNRELEASED; urgency=low
 
-  * Merge from Debian experimental.  Remaining Ubuntu changes:
+  * Merge from Debian unstable.  remaining Ubuntu changes:
     - debian/rules
     - debian/control:
       + Build libdrm-intel everywhere rather than just {i386,amd64} for Plymouth
@@ -11,8 +11,39 @@ libdrm (2.4.24-1ubuntu1) UNRELEASED; urgency=low
       + Multiarchify
   * debian/patches/100_intel_remember_named_bo.patch:
     - Drop this cherry-pick; included in 2.4.24
-  
- -- Christopher James Halse Rogers <chris@cooperteam.net>  Mon, 04 Apr 2011 11:07:04 +1000
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Wed, 25 May 2011 10:39:02 +1000
+
+libdrm (2.4.25-2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Cyril Brulebois <kibi@debian.org>  Mon, 16 May 2011 19:14:49 +0200
+
+libdrm (2.4.25-1) experimental; urgency=low
+
+  * New upstream release.
+  * Update libdrm2.symbols and shlibs.
+  * Update libkms1.symbols, marking dumb_create@Base as private.
+  * Switch to dh:
+    - Bump compat/build-dep to 8.
+    - Use dh-autoreconf.
+    - Tidy old build-deps.
+    - Testsuite now automatically gets run.
+  * Accordingly, add a build-dep to fix FTBFS during make check:
+    - 03_build_against_librt.diff
+  * Add libudev-dev build-dep on Linux so that detection works.
+  * Since the testsuite just got enabled, let's not bail out if it fails.
+  * Remove xsfbs as it's no longer needed.
+  * Bump Standards-Version (no changes needed).
+
+ -- Cyril Brulebois <kibi@debian.org>  Tue, 19 Apr 2011 02:57:29 +0200
+
+libdrm (2.4.24-2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Cyril Brulebois <kibi@debian.org>  Sun, 10 Apr 2011 22:57:02 +0200
 
 libdrm (2.4.24-1) experimental; urgency=low
 
