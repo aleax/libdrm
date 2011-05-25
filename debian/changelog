@@ -1,4 +1,4 @@
-libdrm (2.4.25-2ubuntu1) UNRELEASED; urgency=low
+libdrm (2.4.25-2ubuntu1) oneiric; urgency=low
 
   * Merge from Debian unstable.  remaining Ubuntu changes:
     - debian/rules
