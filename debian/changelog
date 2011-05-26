@@ -1,3 +1,10 @@
+libdrm (2.4.25-2ubuntu2) oneiric; urgency=low
+
+  * debian/rules:
+    - Really build libdrm-intel everywhere.  Fixes arm/powerpc FTBFS.
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Thu, 26 May 2011 12:09:35 +1000
+
 libdrm (2.4.25-2ubuntu1) oneiric; urgency=low
 
   * Merge from Debian unstable.  remaining Ubuntu changes:
