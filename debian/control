@@ -3,7 +3,7 @@ Priority: optional
 Maintainer: Debian X Strike Force <debian-x@lists.debian.org>
 Uploaders: Cyril Brulebois <kibi@debian.org>
 Build-Depends:
- debhelper (>= 8),
+ debhelper (>= 8.1.2ubuntu2),
  dh-autoreconf,
  quilt,
  libx11-dev,
@@ -42,6 +42,8 @@ Architecture: any
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
 Description: Userspace interface to kernel DRM services -- runtime
  This library implements the userspace interface to the kernel DRM
  services.  DRM stands for "Direct Rendering Manager", which is the
@@ -58,6 +60,7 @@ Architecture: any
 Depends:
  libdrm2 (= ${binary:Version}),
  ${misc:Depends},
+Multi-Arch: same
 Description: Userspace interface to kernel DRM services -- debugging symbols
  This library implements the userspace interface to the kernel DRM
  services.  DRM stands for "Direct Rendering Manager", which is the
@@ -73,6 +76,8 @@ Architecture: amd64 i386 kfreebsd-amd64 kfreebsd-i386
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
+Pre-Depends: ${misc:Pre-Depends}
+Multi-Arch: same
 Description: Userspace interface to intel-specific kernel DRM services -- runtime
  This library implements the userspace interface to the intel-specific kernel
  DRM services.  DRM stands for "Direct Rendering Manager", which is the
@@ -86,6 +91,7 @@ Architecture: amd64 i386 kfreebsd-amd64 kfreebsd-i386
 Depends:
  libdrm-intel1 (= ${binary:Version}),
  ${misc:Depends},
+Multi-Arch: same
 Description: Userspace interface to intel-specific kernel DRM services -- debugging symbols
  This library implements the userspace interface to the kernel DRM services.
  DRM stands for "Direct Rendering Manager", which is the kernelspace portion
@@ -100,6 +106,8 @@ Architecture: linux-any
 Depends: ${shlibs:Depends},
  ${misc:Depends},
 Conflicts: libdrm-nouveau1
+Pre-Depends: ${misc:Pre-Depends}
+Multi-Arch: same
 Description: Userspace interface to nouveau-specific kernel DRM services -- runtime
  This library implements the userspace interface to the nouveau-specific kernel
  DRM services. DRM stands for "Direct Rendering Manager", which is the
@@ -113,6 +121,7 @@ Architecture: linux-any
 Depends: libdrm-nouveau1a (= ${binary:Version}),
  ${misc:Depends},
 Conflicts: libdrm-nouveau1-dbg
+Multi-Arch: same
 Description: Userspace interface to nouveau-specific kernel DRM -- debugging symbols
  This library implements the userspace interface to the kernel DRM services.
  DRM stands for "Direct Rendering Manager", which is the kernelspace portion
@@ -127,6 +136,8 @@ Architecture: linux-any
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
+Pre-Depends: ${misc:Pre-Depends}
+Multi-Arch: same
 Description: Userspace interface to radeon-specific kernel DRM services -- runtime
  This library implements the userspace interface to the radeon-specific kernel
  DRM services.  DRM stands for "Direct Rendering Manager", which is the
@@ -140,6 +151,7 @@ Architecture: linux-any
 Depends:
  libdrm-radeon1 (= ${binary:Version}),
  ${misc:Depends},
+Multi-Arch: same
 Description: Userspace interface to radeon-specific kernel DRM services -- debugging symbols
  This library implements the userspace interface to the kernel DRM services.
  DRM stands for "Direct Rendering Manager", which is the kernelspace portion
@@ -152,6 +164,8 @@ Package: libkms1
 Section: libs
 Architecture: linux-any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
 Description: Userspace interface to kernel DRM buffer management
  This library implements a unified userspace interface to the different buffer
  management interfaces of the kernel DRM hardware drivers.
@@ -161,6 +175,7 @@ Section: debug
 Priority: extra
 Architecture: linux-any
 Depends: libkms1 (= ${binary:Version}), ${misc:Depends}
+Multi-Arch: same
 Description: Userspace interface to kernel DRM buffer management -- debugging symbols
  This library implements a unified userspace interface to the different buffer
  management interfaces of the kernel DRM hardware drivers.
