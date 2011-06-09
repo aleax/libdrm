@@ -1,3 +1,10 @@
+libdrm (2.4.25-3) UNRELEASED; urgency=low
+
+  [ Steve Langasek ]
+  * Build for multiarch.
+
+ -- Julien Cristau <jcristau@debian.org>  Thu, 09 Jun 2011 19:51:16 +0200
+
 libdrm (2.4.25-2) unstable; urgency=low
 
   * Upload to unstable.
