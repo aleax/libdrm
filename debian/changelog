@@ -6,6 +6,7 @@ libdrm (2.4.25-3) UNRELEASED; urgency=low
   [ Julien Cristau ]
   * Add lintian overrides for symbols-declares-dependency-on-other-package (we
     use that for private symbols).
+  * Bump Standards-Version to 3.9.2.
 
  -- Julien Cristau <jcristau@debian.org>  Thu, 09 Jun 2011 19:51:16 +0200
 
