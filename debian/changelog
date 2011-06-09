@@ -1,4 +1,6 @@
-libdrm (2.4.25-3) UNRELEASED; urgency=low
+libdrm (2.4.25-3) unstable; urgency=low
+
+  * Team upload.
 
   [ Steve Langasek ]
   * Build for multiarch.
@@ -8,7 +10,7 @@ libdrm (2.4.25-3) UNRELEASED; urgency=low
     use that for private symbols).
   * Bump Standards-Version to 3.9.2.
 
- -- Julien Cristau <jcristau@debian.org>  Thu, 09 Jun 2011 19:51:16 +0200
+ -- Julien Cristau <jcristau@debian.org>  Thu, 09 Jun 2011 20:05:53 +0200
 
 libdrm (2.4.25-2) unstable; urgency=low
 
