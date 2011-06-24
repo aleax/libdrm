@@ -20,7 +20,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libdrm],
-        [2.4.25],
+        [2.4.26],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=DRI],
         [libdrm])
 
@@ -50,6 +50,10 @@ LT_INIT([disable-static])
 PKG_CHECK_MODULES(PTHREADSTUBS, pthread-stubs)
 AC_SUBST(PTHREADSTUBS_CFLAGS)
 AC_SUBST(PTHREADSTUBS_LIBS)
+
+PKG_CHECK_MODULES(PCIACCESS, [pciaccess >= 0.10])
+AC_SUBST(PCIACCESS_CFLAGS)
+AC_SUBST(PCIACCESS_LIBS)
 
 pkgconfigdir=${libdir}/pkgconfig
 AC_SUBST(pkgconfigdir)
