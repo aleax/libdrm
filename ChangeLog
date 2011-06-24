@@ -1,3 +1,33 @@
+commit 6dd804c5a92104042b8be0a67d107946394a0b7a
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Jun 4 13:01:50 2011 +0100
+
+    configure: version bump for 2.4.26 release
+    
+    Push the new Intel API for use by mesa.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 9d77603d8b95aee4f2408e437c55af15ee05b608
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat Jun 4 12:47:19 2011 +0100
+
+    intel: Add interface to query aperture sizes.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 61be94018ae9c403517d53f69357719224fa6ff3
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sat May 14 11:15:06 2011 +0100
+
+    libkms: All current BO_TYPE are 32bpp
+    
+    ... so request a 32bpp dumb buffer rather than a 16bpp.
+    
+    Fixes modetest and friends.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
 commit ba11501bb9f5bd98110dfe1385b4501c0a9a643a
 Author: Chris Wilson <chris@chris-wilson.co.uk>
 Date:   Mon Apr 11 08:25:42 2011 +0100
