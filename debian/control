@@ -10,6 +10,7 @@ Build-Depends:
  pkg-config,
  libpthread-stubs0-dev,
  libudev-dev [linux-any],
+ libpciaccess-dev,
 Standards-Version: 3.9.2
 Section: libs
 Vcs-Git: git://git.debian.org/git/pkg-xorg/lib/libdrm
