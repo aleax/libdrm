@@ -1,3 +1,9 @@
+libdrm (2.4.26-1~bpo60+1) UNRELEASED; urgency=low
+
+  * Rebuild for squeeze-backports.
+
+ -- Cyril Brulebois <kibi@debian.org>  Sun, 26 Jun 2011 23:12:58 +0200
+
 libdrm (2.4.26-1) unstable; urgency=low
 
   * New upstream release:
