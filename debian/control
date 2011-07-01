@@ -11,7 +11,8 @@ Build-Depends:
  pkg-config,
  libpthread-stubs0-dev,
  libudev-dev [linux-any],
-Standards-Version: 3.9.1
+ libpciaccess-dev,
+Standards-Version: 3.9.2
 Section: libs
 Vcs-Git: git://git.debian.org/git/pkg-xorg/lib/libdrm
 Vcs-Browser: http://git.debian.org/?p=pkg-xorg/lib/libdrm.git
@@ -74,7 +75,9 @@ Description: Userspace interface to kernel DRM services -- debugging symbols
 Package: libdrm-intel1
 Section: libs
 Architecture: linux-any kfreebsd-any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
 Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
 Description: Userspace interface to intel-specific kernel DRM services -- runtime
@@ -87,7 +90,9 @@ Package: libdrm-intel1-dbg
 Section: debug
 Priority: extra
 Architecture: linux-any kfreebsd-any
-Depends: libdrm-intel1 (= ${binary:Version}), ${misc:Depends}
+Depends:
+ libdrm-intel1 (= ${binary:Version}),
+ ${misc:Depends},
 Multi-Arch: same
 Description: Userspace interface to intel-specific kernel DRM services -- debugging symbols
  This library implements the userspace interface to the kernel DRM services.
@@ -102,8 +107,7 @@ Section: libs
 Architecture: linux-any
 Depends: ${shlibs:Depends},
  ${misc:Depends},
-Breaks: libdrm-nouveau1
-Replaces: libdrm-nouveau1
+Conflicts: libdrm-nouveau1
 Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
 Description: Userspace interface to nouveau-specific kernel DRM services -- runtime
@@ -118,8 +122,7 @@ Priority: extra
 Architecture: linux-any
 Depends: libdrm-nouveau1a (= ${binary:Version}),
  ${misc:Depends},
-Breaks: libdrm-nouveau1-dbg
-Replaces: libdrm-nouveau1-dbg
+Conflicts: libdrm-nouveau1-dbg
 Multi-Arch: same
 Description: Userspace interface to nouveau-specific kernel DRM -- debugging symbols
  This library implements the userspace interface to the kernel DRM services.

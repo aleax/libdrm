@@ -1,3 +1,26 @@
+libdrm (2.4.26-1) unstable; urgency=low
+
+  * New upstream release:
+    - Fix two important intel bugs.
+  * Add libpciaccess-dev build-dep.
+  * Update libdrm-intel1.symbols and shlibs for new aperture-related symbol.
+
+ -- Cyril Brulebois <kibi@debian.org>  Fri, 24 Jun 2011 17:07:04 +0200
+
+libdrm (2.4.25-3) unstable; urgency=low
+
+  * Team upload.
+
+  [ Steve Langasek ]
+  * Build for multiarch.
+
+  [ Julien Cristau ]
+  * Add lintian overrides for symbols-declares-dependency-on-other-package (we
+    use that for private symbols).
+  * Bump Standards-Version to 3.9.2.
+
+ -- Julien Cristau <jcristau@debian.org>  Thu, 09 Jun 2011 20:05:53 +0200
+
 libdrm (2.4.25-2ubuntu2) oneiric; urgency=low
 
   * debian/rules:

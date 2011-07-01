@@ -41,6 +41,7 @@ libdrm_intel.so.1 libdrm-intel1 #MINVER#
  drm_intel_gem_bo_map_gtt@Base 2.4.3
  drm_intel_gem_bo_start_gtt_access@Base 2.4.3
  drm_intel_gem_bo_unmap_gtt@Base 2.4.9
+ drm_intel_get_aperture_sizes@Base 2.4.26
  drm_intel_get_pipe_from_crtc_id@Base 2.4.11
  drm_mmAllocMem@Base 2.4.1
  drm_mmDestroy@Base 2.4.1
