@@ -1,3 +1,13 @@
+libdrm (2.4.26-1ubuntu1) oneiric; urgency=low
+
+  * Merge from Debian unstable, remaining changes:
+    - debian/rules
+    - debian/control:
+      + Build libdrm-intel everywhere rather than just {i386,amd64}
+        for Plymouth
+
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Sat, 02 Jul 2011 01:00:31 +0300
+
 libdrm (2.4.26-1) unstable; urgency=low
 
   * New upstream release:
