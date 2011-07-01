@@ -1,1 +1,0 @@
-usr/lib/${DEB_HOST_MULTIARCH}/libdrm_radeon.so.1* /lib/${DEB_HOST_MULTIARCH}
