@@ -1,3 +1,274 @@
+commit cc9b751e82c5a3525907bba30ba3c95246751824
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Oct 28 13:14:44 2011 -0700
+
+    configure: version bump for 2.4.27 release.
+    
+    Push the new Intel API for use by mesa.
+    
+    Reviewed-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit d0ae6837d117881d9f1f9cc12d3f1012b6a46103
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Oct 28 13:13:08 2011 -0700
+
+    intel: Share the implementation of BO unmap between CPU and GTT mappings.
+    
+    Before this, consumers of the libdrm API that might map a buffer
+    either way had to track which way was chosen at map time to call the
+    appropriate unmap.  This relaxes that requirement by making
+    drm_intel_bo_unmap() always appropriate.
+    
+    Reviewed-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+    Reviewed-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 4cb01eeccfa6a5169edea07c339117cac1f7b261
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Oct 28 13:12:16 2011 -0700
+
+    intel: Don't call the SW_FINISH ioctl unless a CPU-mapped write was done.
+    
+    Reviewed-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+    Reviewed-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 77dc16f33d19195c7f7c569d877a6180ed1b9d54
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Oct 28 13:02:53 2011 -0700
+
+    intel: Remove stale comment.
+    
+    This used to be next to some map refcounting code, but that is long dead.
+    
+    Reviewed-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 515cea6ac67eb458c59fececc3c67411ee6fd3c3
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Oct 21 18:48:20 2011 -0700
+
+    intel: Add an interface for removing relocs after they're added.
+    
+    This lets us replace the current inner drawing loop of mesa:
+    
+    for each prim {
+    	compute bo list
+    	if (check_aperture_space(bo list)) {
+    		batch_flush()
+    		compute bo list
+    		if (check_aperture_space(bo list)) {
+    			whine_about_batch_size()
+    			fall back;
+    		}
+    	}
+    	upload state to BOs
+    }
+    
+    with this inner loop:
+    
+    for each prim {
+     retry:
+    	upload state to BOs
+    	if (check_aperture_space(batch)) {
+    		if (!retried) {
+    			reset_to_last_prim()
+    			batch_flush()
+    		} else {
+    			if (batch_flush())
+    				whine_about_batch_size()
+    			goto retry;
+    		}
+    	}
+    }
+    
+    This avoids having to implement code to walk over certain sets of GL
+    state twice (the "compute bo list" step).  While it's not a
+    performance improvement, it's a significant win in code complexity:
+    about -200 lines, and one place to make mistakes related to aperture
+    space instead of N places to forget some BO we should have included.
+    
+    Note how if we do a reset in the new loop , we immediately flush.  We
+    don't need to check aperture space -- the kernel will tell us if we
+    actually ran out of aperture or not.  And if we did run out of
+    aperture, it's because either the single prim was too big, or because
+    check_aperture was wrong at the point of setting up the last
+    primitive.
+    
+    Reviewed-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 2c2bdb36c5b6bd7f8eac07cf163975b361114fb1
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Oct 21 16:53:16 2011 -0700
+
+    intel: Use stdbool.h for dealing with boolean values.
+    
+    A few of the bitfield-based booleans are left in place.  Changing them
+    to "bool" results in the same code size, so I'm erring on the side of
+    not changing things.
+    
+    Reviewed-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit cc088f1721eaa5f8f1ba1932723882f92e34c39a
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Oct 19 17:39:54 2011 +0100
+
+    nouveau: free in error path if drmAvailable fails.
+    
+    This was reported in coverity.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit d23146f3f0ad14c8ad482a4832cae859c8d646f2
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Wed Oct 19 13:32:43 2011 +0200
+
+    modetest: Call dirty fb on modeset
+    
+    Signed-off-by: Jakob Bornecrantz <jakob@vmware.com>
+
+commit 680b9c4fa3dfb329bd74ec08c17cfc876ea2fc5b
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Wed Oct 19 13:32:26 2011 +0200
+
+    modetest: Print extra info if we fail to create a framebuffer
+    
+    Signed-off-by: Jakob Bornecrantz <jakob@vmware.com>
+
+commit 3c8adda6e1e6b0471b3d70a63d795622bbeb1580
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Wed Sep 28 23:34:09 2011 +0200
+
+    modetest: Check error message from pageflip ioctl
+    
+    Signed-off-by: Jakob Bornecrantz <jakob@vmware.com>
+
+commit c2925e51979fcb829962e7bf66c13cbc96c39db1
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Wed Sep 28 17:27:07 2011 +0200
+
+    vbltest: Check error codes returned from libdrm
+    
+    Signed-off-by: Jakob Bornecrantz <jakob@vmware.com>
+
+commit dc11db2e282c522219bb6e419eb648f3e836bdc0
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Fri Sep 16 20:50:39 2011 +0200
+
+    tests: Add vmwgfx driver to probed drivers in tests
+    
+    Signed-off-by: Jakob Bornecrantz <jakob@vmware.com>
+
+commit b317c96361f88a0a4ccb2faeff09b0476d142c68
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Tue Oct 11 11:09:44 2011 -0700
+
+    modetest: use 24 bit depth on the framebuffer
+    
+    It's more compatible; at least the Intel driver now rejects 32 bit
+    depths since it generally can't support real 32 bit framebuffers
+    (supports 30, 36, and 64 bit, but not 32).
+
+commit c82ef03e4c92017bf5644f294ea04e30500f8d4c
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Sep 26 16:03:20 2011 +0100
+
+    drmtest: make check should fail so hard on unable to open device
+
+commit 3a551c127439b2d5cad5c7ca817feab1ca4c78c5
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Sep 26 15:54:13 2011 +0100
+
+    drm/test: handle usub being empty
+    
+    fixes a segfault on make check seen in tinderbox
+
+commit cfee5218b17a2741e5519ed44091171e01f0dbb2
+Author: Tapani Pälli <tapani.palli@intel.com>
+Date:   Fri Sep 23 14:17:42 2011 +0300
+
+    xf86drm.h : wrap C code for C++ compilation/linking
+    
+    To enable usage of xf86drm.h from C++ programs/frameworks.
+    
+    Signed-off-by: Tapani Pälli <tapani.palli@intel.com>
+    [ickle: also wrap xf86drmMode.h]
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 194aa1bee632c6dce19238664eb8373e3483de55
+Author: Daniel Vetter <daniel.vetter@ffwll.ch>
+Date:   Thu Sep 22 22:20:53 2011 +0200
+
+    drm/i915: y tiling on i915G/i915GM is different
+    
+    Luckily the kernel has become extremely paranoid about such matters.
+    
+    Signed-off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 630dd26fb41c64c1e61be6e929e025c1528e9046
+Author: Daniel Vetter <daniel.vetter@ffwll.ch>
+Date:   Thu Sep 22 22:20:09 2011 +0200
+
+    drm/intel: don't clobber bufmgr->pci_device
+    
+    Otherwise it's pretty hard to differentiate the different chipset
+    variants.
+    
+    Signed-off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 1459cb9252e3a07292d3e64ce961f738cd01eae4
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Thu Mar 3 21:02:06 2011 -0500
+
+    modeprint.c: use PRIu64 for printing uint64_t
+    
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
+commit 7d8381614174c6c70c5676cb230f0d9b034b27aa
+Author: Marcin Slusarz <marcin.slusarz@gmail.com>
+Date:   Sun Jun 12 16:40:40 2011 +0200
+
+    nouveau: assert argument cannot have side effects
+    
+    ... because argument is evaluated only if NDEBUG is not defined
+
+commit 763b618d55a973807823bb1a1c6e60b9e2db6d8b
+Author: Marcin Slusarz <marcin.slusarz@gmail.com>
+Date:   Sun Jun 5 18:53:16 2011 +0200
+
+    drm mode: fix drmIoctl wrapper
+    
+    Both drmIoctl and ioctl define second argument as unigned long.
+    
+    Debugging/tracing tools (like strace or valgrind) on 64-bit machines see
+    different request value for ioctls with 32nd bit set, because casting
+    signed int to unsigned long extends 32nd bit to upper word, so 0x80000000
+    becomes 0xFFFFFFFF80000000)
+    
+    Nobody noticed because higher 32 bits are chopped off on their way to kernel.
+
+commit 2acaf160df584a5ef7b5c5b84819389948cd97ad
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Fri Jun 24 10:52:57 2011 -0700
+
+    intel: shared header for shader debugging
+    
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+    Cc: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit ce317a6d09bb93cff73703b06e5a5bc3cc0b1c6a
+Author: Yuanhan Liu <yuanhan.liu@linux.intel.com>
+Date:   Wed Jul 20 16:08:51 2011 +0800
+
+    intel: fix the wrong method check for bo_get_subdata
+    
+    It's going to call bo_get_subdata method, but not bo_subdata
+    
+    Signed-off-by: Yuanhan Liu <yuanhan.liu@linux.intel.com>
+
+commit 8d055890d90c3d92647e3d8b98d32630ef87c2c8
+Author: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date:   Tue Jul 12 16:35:28 2011 +0800
+
+    Specify the return type explicitly.
+
 commit 6dd804c5a92104042b8be0a67d107946394a0b7a
 Author: Chris Wilson <chris@chris-wilson.co.uk>
 Date:   Sat Jun 4 13:01:50 2011 +0100
