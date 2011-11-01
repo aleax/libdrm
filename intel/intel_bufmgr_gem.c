@@ -51,6 +51,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <stdbool.h>
 
 #include "errno.h"
 #include "libdrm_lists.h"
@@ -105,7 +106,7 @@ typedef struct _drm_intel_bufmgr_gem {
 	unsigned int has_blt : 1;
 	unsigned int has_relaxed_fencing : 1;
 	unsigned int bo_reuse : 1;
-	char fenced_relocs;
+	bool fenced_relocs;
 } drm_intel_bufmgr_gem;
 
 #define DRM_INTEL_RELOC_FENCE (1<<0)
@@ -163,24 +164,24 @@ struct _drm_intel_bo_gem {
 	 * Boolean of whether this BO and its children have been included in
 	 * the current drm_intel_bufmgr_check_aperture_space() total.
 	 */
-	char included_in_check_aperture;
+	bool included_in_check_aperture;
 
 	/**
 	 * Boolean of whether this buffer has been used as a relocation
 	 * target and had its size accounted for, and thus can't have any
 	 * further relocations added to it.
 	 */
-	char used_as_reloc_target;
+	bool used_as_reloc_target;
 
 	/**
 	 * Boolean of whether we have encountered an error whilst building the relocation tree.
 	 */
-	char has_error;
+	bool has_error;
 
 	/**
 	 * Boolean of whether this buffer can be re-used
 	 */
-	char reusable;
+	bool reusable;
 
 	/**
 	 * Size in bytes of this buffer and its relocation descendents.
@@ -195,6 +196,9 @@ struct _drm_intel_bo_gem {
 	 * relocations.
 	 */
 	int reloc_tree_fences;
+
+	/** Flags that we may need to do the SW_FINSIH ioctl on unmap. */
+	bool mapped_cpu_write;
 };
 
 static unsigned int
@@ -275,7 +279,8 @@ drm_intel_gem_bo_tile_pitch(drm_intel_bufmgr_gem *bufmgr_gem,
 	if (*tiling_mode == I915_TILING_NONE)
 		return ALIGN(pitch, 64);
 
-	if (*tiling_mode == I915_TILING_X)
+	if (*tiling_mode == I915_TILING_X
+			|| (IS_915(bufmgr_gem) && *tiling_mode == I915_TILING_Y))
 		tile_width = 512;
 	else
 		tile_width = 128;
@@ -506,7 +511,7 @@ drm_intel_setup_reloc_list(drm_intel_bo *bo)
 	bo_gem->reloc_target_info = malloc(max_relocs *
 					   sizeof(drm_intel_reloc_target));
 	if (bo_gem->relocs == NULL || bo_gem->reloc_target_info == NULL) {
-		bo_gem->has_error = 1;
+		bo_gem->has_error = true;
 
 		free (bo_gem->relocs);
 		bo_gem->relocs = NULL;
@@ -591,12 +596,12 @@ drm_intel_gem_bo_alloc_internal(drm_intel_bufmgr *bufmgr,
 	unsigned int page_size = getpagesize();
 	int ret;
 	struct drm_intel_gem_bo_bucket *bucket;
-	int alloc_from_cache;
+	bool alloc_from_cache;
 	unsigned long bo_size;
-	int for_render = 0;
+	bool for_render = false;
 
 	if (flags & BO_ALLOC_FOR_RENDER)
-		for_render = 1;
+		for_render = true;
 
 	/* Round the allocated size up to a power of two number of pages. */
 	bucket = drm_intel_gem_bo_bucket_for_size(bufmgr_gem, size);
@@ -615,7 +620,7 @@ drm_intel_gem_bo_alloc_internal(drm_intel_bufmgr *bufmgr,
 	pthread_mutex_lock(&bufmgr_gem->lock);
 	/* Get a buffer out of the cache if available */
 retry:
-	alloc_from_cache = 0;
+	alloc_from_cache = false;
 	if (bucket != NULL && !DRMLISTEMPTY(&bucket->head)) {
 		if (for_render) {
 			/* Allocate new render-target BOs from the tail (MRU)
@@ -625,7 +630,7 @@ retry:
 			bo_gem = DRMLISTENTRY(drm_intel_bo_gem,
 					      bucket->head.prev, head);
 			DRMLISTDEL(&bo_gem->head);
-			alloc_from_cache = 1;
+			alloc_from_cache = true;
 		} else {
 			/* For non-render-target BOs (where we're probably
 			 * going to map it first thing in order to fill it
@@ -637,7 +642,7 @@ retry:
 			bo_gem = DRMLISTENTRY(drm_intel_bo_gem,
 					      bucket->head.next, head);
 			if (!drm_intel_gem_bo_busy(&bo_gem->bo)) {
-				alloc_from_cache = 1;
+				alloc_from_cache = true;
 				DRMLISTDEL(&bo_gem->head);
 			}
 		}
@@ -701,9 +706,9 @@ retry:
 	atomic_set(&bo_gem->refcount, 1);
 	bo_gem->validate_index = -1;
 	bo_gem->reloc_tree_fences = 0;
-	bo_gem->used_as_reloc_target = 0;
-	bo_gem->has_error = 0;
-	bo_gem->reusable = 1;
+	bo_gem->used_as_reloc_target = false;
+	bo_gem->has_error = false;
+	bo_gem->reusable = true;
 
 	drm_intel_bo_gem_set_in_aperture_size(bufmgr_gem, bo_gem);
 
@@ -764,7 +769,8 @@ drm_intel_gem_bo_alloc_tiled(drm_intel_bufmgr *bufmgr, const char *name,
 
 		if (IS_GEN2(bufmgr_gem) && tiling != I915_TILING_NONE)
 			height_alignment = 16;
-		else if (tiling == I915_TILING_X)
+		else if (tiling == I915_TILING_X
+			|| (IS_915(bufmgr_gem) && tiling == I915_TILING_Y))
 			height_alignment = 8;
 		else if (tiling == I915_TILING_Y)
 			height_alignment = 32;
@@ -843,7 +849,7 @@ drm_intel_bo_gem_create_from_name(drm_intel_bufmgr *bufmgr,
 	bo_gem->gem_handle = open_arg.handle;
 	bo_gem->bo.handle = open_arg.handle;
 	bo_gem->global_name = handle;
-	bo_gem->reusable = 0;
+	bo_gem->reusable = false;
 
 	memset(&get_tiling, 0, sizeof(get_tiling));
 	get_tiling.handle = bo_gem->gem_handle;
@@ -936,7 +942,7 @@ drm_intel_gem_bo_unreference_final(drm_intel_bo *bo, time_t time)
 		}
 	}
 	bo_gem->reloc_count = 0;
-	bo_gem->used_as_reloc_target = 0;
+	bo_gem->used_as_reloc_target = false;
 
 	DBG("bo_unreference final: %d (%s)\n",
 	    bo_gem->gem_handle, bo_gem->name);
@@ -1007,9 +1013,6 @@ static int drm_intel_gem_bo_map(drm_intel_bo *bo, int write_enable)
 
 	pthread_mutex_lock(&bufmgr_gem->lock);
 
-	/* Allow recursive mapping. Mesa may recursively map buffers with
-	 * nested display loops.
-	 */
 	if (!bo_gem->mem_virtual) {
 		struct drm_i915_gem_mmap mmap_arg;
 
@@ -1050,6 +1053,9 @@ static int drm_intel_gem_bo_map(drm_intel_bo *bo, int write_enable)
 		    __FILE__, __LINE__, bo_gem->gem_handle,
 		    strerror(errno));
 	}
+
+	if (write_enable)
+		bo_gem->mapped_cpu_write = true;
 
 	pthread_mutex_unlock(&bufmgr_gem->lock);
 
@@ -1128,46 +1134,42 @@ int drm_intel_gem_bo_map_gtt(drm_intel_bo *bo)
 	return 0;
 }
 
-int drm_intel_gem_bo_unmap_gtt(drm_intel_bo *bo)
+static int drm_intel_gem_bo_unmap(drm_intel_bo *bo)
 {
 	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
+	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
+	struct drm_i915_gem_sw_finish sw_finish;
 	int ret = 0;
 
 	if (bo == NULL)
 		return 0;
 
 	pthread_mutex_lock(&bufmgr_gem->lock);
+
+	if (bo_gem->mapped_cpu_write) {
+		/* Cause a flush to happen if the buffer's pinned for
+		 * scanout, so the results show up in a timely manner.
+		 * Unlike GTT set domains, this only does work if the
+		 * buffer should be scanout-related.
+		 */
+		sw_finish.handle = bo_gem->gem_handle;
+		ret = drmIoctl(bufmgr_gem->fd,
+			       DRM_IOCTL_I915_GEM_SW_FINISH,
+			       &sw_finish);
+		ret = ret == -1 ? -errno : 0;
+
+		bo_gem->mapped_cpu_write = false;
+	}
+
 	bo->virtual = NULL;
 	pthread_mutex_unlock(&bufmgr_gem->lock);
 
 	return ret;
 }
 
-static int drm_intel_gem_bo_unmap(drm_intel_bo *bo)
+int drm_intel_gem_bo_unmap_gtt(drm_intel_bo *bo)
 {
-	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
-	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
-	struct drm_i915_gem_sw_finish sw_finish;
-	int ret;
-
-	if (bo == NULL)
-		return 0;
-
-	pthread_mutex_lock(&bufmgr_gem->lock);
-
-	/* Cause a flush to happen if the buffer's pinned for scanout, so the
-	 * results show up in a timely manner.
-	 */
-	sw_finish.handle = bo_gem->gem_handle;
-	ret = drmIoctl(bufmgr_gem->fd,
-		       DRM_IOCTL_I915_GEM_SW_FINISH,
-		       &sw_finish);
-	ret = ret == -1 ? -errno : 0;
-
-	bo->virtual = NULL;
-	pthread_mutex_unlock(&bufmgr_gem->lock);
-
-	return ret;
+	return drm_intel_gem_bo_unmap(bo);
 }
 
 static int
@@ -1327,28 +1329,28 @@ static int
 do_bo_emit_reloc(drm_intel_bo *bo, uint32_t offset,
 		 drm_intel_bo *target_bo, uint32_t target_offset,
 		 uint32_t read_domains, uint32_t write_domain,
-		 int need_fence)
+		 bool need_fence)
 {
 	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
 	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
 	drm_intel_bo_gem *target_bo_gem = (drm_intel_bo_gem *) target_bo;
-	int fenced_command;
+	bool fenced_command;
 
 	if (bo_gem->has_error)
 		return -ENOMEM;
 
 	if (target_bo_gem->has_error) {
-		bo_gem->has_error = 1;
+		bo_gem->has_error = true;
 		return -ENOMEM;
 	}
 
 	/* We never use HW fences for rendering on 965+ */
 	if (bufmgr_gem->gen >= 4)
-		need_fence = 0;
+		need_fence = false;
 
 	fenced_command = need_fence;
 	if (target_bo_gem->tiling_mode == I915_TILING_NONE)
-		need_fence = 0;
+		need_fence = false;
 
 	/* Create a new relocation list if needed */
 	if (bo_gem->relocs == NULL && drm_intel_setup_reloc_list(bo))
@@ -1366,7 +1368,7 @@ do_bo_emit_reloc(drm_intel_bo *bo, uint32_t offset,
 	 */
 	assert(!bo_gem->used_as_reloc_target);
 	if (target_bo_gem != bo_gem) {
-		target_bo_gem->used_as_reloc_target = 1;
+		target_bo_gem->used_as_reloc_target = true;
 		bo_gem->reloc_tree_size += target_bo_gem->reloc_tree_size;
 	}
 	/* An object needing a fence is a tiled buffer, so it won't have
@@ -1417,7 +1419,49 @@ drm_intel_gem_bo_emit_reloc_fence(drm_intel_bo *bo, uint32_t offset,
 				  uint32_t read_domains, uint32_t write_domain)
 {
 	return do_bo_emit_reloc(bo, offset, target_bo, target_offset,
-				read_domains, write_domain, 1);
+				read_domains, write_domain, true);
+}
+
+int
+drm_intel_gem_bo_get_reloc_count(drm_intel_bo *bo)
+{
+	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
+
+	return bo_gem->reloc_count;
+}
+
+/**
+ * Removes existing relocation entries in the BO after "start".
+ *
+ * This allows a user to avoid a two-step process for state setup with
+ * counting up all the buffer objects and doing a
+ * drm_intel_bufmgr_check_aperture_space() before emitting any of the
+ * relocations for the state setup.  Instead, save the state of the
+ * batchbuffer including drm_intel_gem_get_reloc_count(), emit all the
+ * state, and then check if it still fits in the aperture.
+ *
+ * Any further drm_intel_bufmgr_check_aperture_space() queries
+ * involving this buffer in the tree are undefined after this call.
+ */
+void
+drm_intel_gem_bo_clear_relocs(drm_intel_bo *bo, int start)
+{
+	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
+	int i;
+	struct timespec time;
+
+	clock_gettime(CLOCK_MONOTONIC, &time);
+
+	assert(bo_gem->reloc_count >= start);
+	/* Unreference the cleared target buffers */
+	for (i = start; i < bo_gem->reloc_count; i++) {
+		if (bo_gem->reloc_target_info[i].bo != bo) {
+			drm_intel_gem_bo_unreference_locked_timed(bo_gem->
+								  reloc_target_info[i].bo,
+								  time.tv_sec);
+		}
+	}
+	bo_gem->reloc_count = start;
 }
 
 /**
@@ -1798,7 +1842,7 @@ drm_intel_gem_bo_flink(drm_intel_bo *bo, uint32_t * name)
 		if (ret != 0)
 			return -errno;
 		bo_gem->global_name = flink.name;
-		bo_gem->reusable = 0;
+		bo_gem->reusable = false;
 
 		DRMLISTADDTAIL(&bo_gem->name_list, &bufmgr_gem->named);
 	}
@@ -1819,7 +1863,7 @@ drm_intel_bufmgr_gem_enable_reuse(drm_intel_bufmgr *bufmgr)
 {
 	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bufmgr;
 
-	bufmgr_gem->bo_reuse = 1;
+	bufmgr_gem->bo_reuse = true;
 }
 
 /**
@@ -1835,7 +1879,7 @@ drm_intel_bufmgr_gem_enable_fenced_relocs(drm_intel_bufmgr *bufmgr)
 	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *)bufmgr;
 
 	if (bufmgr_gem->bufmgr.bo_exec == drm_intel_gem_bo_exec2)
-		bufmgr_gem->fenced_relocs = 1;
+		bufmgr_gem->fenced_relocs = true;
 }
 
 /**
@@ -1853,7 +1897,7 @@ drm_intel_gem_bo_get_aperture_space(drm_intel_bo *bo)
 		return 0;
 
 	total += bo->size;
-	bo_gem->included_in_check_aperture = 1;
+	bo_gem->included_in_check_aperture = true;
 
 	for (i = 0; i < bo_gem->reloc_count; i++)
 		total +=
@@ -1901,7 +1945,7 @@ drm_intel_gem_bo_clear_aperture_space_flag(drm_intel_bo *bo)
 	if (bo == NULL || !bo_gem->included_in_check_aperture)
 		return;
 
-	bo_gem->included_in_check_aperture = 0;
+	bo_gem->included_in_check_aperture = false;
 
 	for (i = 0; i < bo_gem->reloc_count; i++)
 		drm_intel_gem_bo_clear_aperture_space_flag(bo_gem->
@@ -2018,7 +2062,7 @@ drm_intel_gem_bo_disable_reuse(drm_intel_bo *bo)
 {
 	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
 
-	bo_gem->reusable = 0;
+	bo_gem->reusable = false;
 	return 0;
 }
 
@@ -2113,8 +2157,8 @@ drm_intel_bufmgr_gem_init(int fd, int batch_size)
 	drm_intel_bufmgr_gem *bufmgr_gem;
 	struct drm_i915_gem_get_aperture aperture;
 	drm_i915_getparam_t gp;
-	int ret;
-	int exec2 = 0;
+	int ret, tmp;
+	bool exec2 = false;
 
 	bufmgr_gem = calloc(1, sizeof(*bufmgr_gem));
 	if (bufmgr_gem == NULL)
@@ -2160,10 +2204,12 @@ drm_intel_bufmgr_gem_init(int fd, int batch_size)
 	else
 		bufmgr_gem->gen = 6;
 
+	gp.value = &tmp;
+
 	gp.param = I915_PARAM_HAS_EXECBUF2;
 	ret = drmIoctl(bufmgr_gem->fd, DRM_IOCTL_I915_GETPARAM, &gp);
 	if (!ret)
-		exec2 = 1;
+		exec2 = true;
 
 	gp.param = I915_PARAM_HAS_BSD;
 	ret = drmIoctl(bufmgr_gem->fd, DRM_IOCTL_I915_GETPARAM, &gp);
