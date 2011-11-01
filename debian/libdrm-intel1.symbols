@@ -38,6 +38,8 @@ libdrm_intel.so.1 libdrm-intel1 #MINVER#
  drm_intel_bufmgr_gem_enable_reuse@Base 2.4.1
  drm_intel_bufmgr_gem_init@Base 2.4.1
  drm_intel_bufmgr_set_debug@Base 2.4.1
+ drm_intel_gem_bo_clear_relocs@Base 2.4.27
+ drm_intel_gem_bo_get_reloc_count@Base 2.4.27
  drm_intel_gem_bo_map_gtt@Base 2.4.3
  drm_intel_gem_bo_start_gtt_access@Base 2.4.3
  drm_intel_gem_bo_unmap_gtt@Base 2.4.9

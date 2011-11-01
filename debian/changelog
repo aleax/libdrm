@@ -3,6 +3,7 @@ libdrm (2.4.27-1) UNRELEASED; urgency=low
   * New upstream release:
     - Push the new Intel API for use by mesa.
     - Usual bug fixes.
+  * Update libdrm-intel1's symbols and shlibs accordingly.
 
  -- Cyril Brulebois <kibi@debian.org>  Tue, 01 Nov 2011 19:16:18 +0100
 
