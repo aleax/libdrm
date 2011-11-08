@@ -566,9 +566,10 @@ set_mode(struct connector *c, int count, int page_flip)
 		return;
 
 	kms_bo_get_prop(bo, KMS_HANDLE, &handle);
-	ret = drmModeAddFB(fd, width, height, 32, 32, stride, handle, &fb_id);
+	ret = drmModeAddFB(fd, width, height, 24, 32, stride, handle, &fb_id);
 	if (ret) {
-		fprintf(stderr, "failed to add fb: %s\n", strerror(errno));
+		fprintf(stderr, "failed to add fb (%ux%u): %s\n",
+			width, height, strerror(errno));
 		return;
 	}
 
@@ -582,6 +583,10 @@ set_mode(struct connector *c, int count, int page_flip)
 
 		ret = drmModeSetCrtc(fd, c[i].crtc, fb_id, x, 0,
 				     &c[i].id, 1, c[i].mode);
+
+		/* XXX: Actually check if this is needed */
+		drmModeDirtyFB(fd, fb_id, NULL, 0);
+
 		x += c[i].mode->hdisplay;
 
 		if (ret) {
@@ -608,8 +613,12 @@ set_mode(struct connector *c, int count, int page_flip)
 		if (c[i].mode == NULL)
 			continue;
 
-		drmModePageFlip(fd, c[i].crtc, other_fb_id,
-				DRM_MODE_PAGE_FLIP_EVENT, &c[i]);
+		ret = drmModePageFlip(fd, c[i].crtc, other_fb_id,
+				      DRM_MODE_PAGE_FLIP_EVENT, &c[i]);
+		if (ret) {
+			fprintf(stderr, "failed to page flip: %s\n", strerror(errno));
+			return;
+		}
 		gettimeofday(&c[i].start, NULL);
 		c[i].swap_count = 0;
 		c[i].fb_id[0] = fb_id;
@@ -712,7 +721,7 @@ int main(int argc, char **argv)
 	int c;
 	int encoders = 0, connectors = 0, crtcs = 0, framebuffers = 0;
 	int test_vsync = 0;
-	char *modules[] = { "i915", "radeon", "nouveau" };
+	char *modules[] = { "i915", "radeon", "nouveau", "vmwgfx" };
 	char *modeset = NULL;
 	int i, count = 0;
 	struct connector con_args[2];

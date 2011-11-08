@@ -1,3 +1,12 @@
+libdrm (2.4.27-1) unstable; urgency=low
+
+  * New upstream release:
+    - Push the new Intel API for use by mesa.
+    - Usual bug fixes.
+  * Update libdrm-intel1's symbols and shlibs accordingly.
+
+ -- Cyril Brulebois <kibi@debian.org>  Tue, 01 Nov 2011 19:30:54 +0100
+
 libdrm (2.4.26-1ubuntu1) oneiric; urgency=low
 
   * Merge from Debian unstable, remaining changes:
