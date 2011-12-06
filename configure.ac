@@ -20,7 +20,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libdrm],
-        [2.4.27],
+        [2.4.28],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=DRI],
         [libdrm])
 
@@ -283,6 +283,7 @@ AC_CONFIG_FILES([
 	tests/modeprint/Makefile
 	tests/modetest/Makefile
 	tests/kmstest/Makefile
+	tests/radeon/Makefile
 	tests/vbltest/Makefile
 	include/Makefile
 	include/drm/Makefile
