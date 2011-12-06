@@ -1,3 +1,69 @@
+commit e73161a02b604742e3da3bca8f13cff81276de43
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Dec 5 10:30:52 2011 +0000
+
+    configure: Bump version to 2.4.28
+    
+    So that we can pull a couple of Intel bug fixes into xf86-video-intel.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit c549a777c1b6227a724942c64aa5cd181eb93c6c
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Dec 5 10:14:34 2011 +0000
+
+    intel: Unmap buffers during drm_intel_gem_bo_unmap
+    
+    We cannot afford to cache the vma per open bo as this may exhaust the
+    per-process limits.
+    
+    References: https://bugs.freedesktop.org/show_bug.cgi?id=43075
+    References: https://bugs.freedesktop.org/show_bug.cgi?id=40066
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 36cff1cbb89477c839588a7e40fec2a8db7df396
+Author: Daniel Vetter <daniel.vetter@ffwll.ch>
+Date:   Sun Dec 4 12:51:45 2011 +0100
+
+    intel: limit aperture space to mappable area on gen3
+    
+    Otherwise we blow up on heavy tiled blitter loads (with giant
+    pixmaps).
+    
+    Signed-Off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+    Acked-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 37ccce5e390a9d757474920f488cafa1cf89854a
+Author: Maarten Lankhorst <m.b.lankhorst@gmail.com>
+Date:   Thu Nov 24 14:08:53 2011 +0100
+
+    nouveau: Mark nouveau subchannel unbound nouveau_grobj_free
+    
+    Valgrind throws warns about a user-after-free if you try to bind a
+    new subchannel after the old one in that slot was freed,
+    so remove it from the channel list.
+    
+    Signed-off-by: Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+commit ca4971292cf99e0063416cd1c3467af94637bf2b
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Thu Nov 10 16:47:10 2011 -0500
+
+    tests/radeon: radeon specific test
+    
+    Initial test only include ttm test for stressing ttm memory
+    allocations.
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 961bf9b5c2866ccb4fedf2b45b29fb688519d0db
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Tue Nov 1 14:42:13 2011 -0700
+
+    Fix compilation with -Werror=int-to-pointer-cast -Werror=pointer-to-int-cast
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
 commit cc9b751e82c5a3525907bba30ba3c95246751824
 Author: Eric Anholt <eric@anholt.net>
 Date:   Fri Oct 28 13:14:44 2011 -0700

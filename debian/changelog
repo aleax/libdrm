@@ -1,3 +1,9 @@
+libdrm (2.4.28-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+
+ -- Cyril Brulebois <kibi@debian.org>  Tue, 06 Dec 2011 15:16:09 +0100
+
 libdrm (2.4.27-1) unstable; urgency=low
 
   * New upstream release:
