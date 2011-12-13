@@ -1,3 +1,73 @@
+commit 7fd1678110b78d9324723a54dfd5049496b9e3cf
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Dec 5 23:09:20 2011 +0000
+
+    configure: Bump version for 2.4.29
+    
+    Yet another release required for new API
+
+commit 015286f03e871ccf49af9f2ceef7f5e04c8d61ca
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Dec 11 17:35:06 2011 +0000
+
+    intel: Remove the fresh assertions used to debug the vma cacheing
+    
+    Hopefully all the bugs in the callers have been found, so time to
+    handle the failures "gracefully" again.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit c5f0ed1d296f11367febd0e1b7dce8789308bf35
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Dec 13 10:30:54 2011 +0000
+
+    intel: Update map-count for an early error return during mapping
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit dd9a5b4f7fb07c78db4e7481bedca1b981030e3f
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Dec 6 13:12:37 2011 +0000
+
+    intel: Evict cached VMA in order to make room for new mappings
+    
+    As the max number of VMA mappings is a hard per-process limit, we need
+    to include the number of currently active mappings when evicting in
+    order to make room for a new mmap.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit e4b60f29609e9993dc7268993da509530862aa78
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Dec 5 21:29:05 2011 +0000
+
+    intel: Add an interface to limit vma caching
+    
+    There is a per-process limit on the number of vma that the process can
+    keep open, so we cannot keep an unlimited cache of unused vma's (besides
+    keeping track of all those vma in the kernel adds considerable overhead).
+    However, in order to work around inefficiencies in the kernel it is
+    beneficial to reuse the vma, so keep a MRU cache of vma.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 902ee661f1864aaf8325621085f6a1b5a6a3673a
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Dec 5 21:24:48 2011 +0000
+
+    test/radeon: add missing files for dist
+
+commit 5c5332bbc38ff25c06081ac53a15ad583ad4cbc4
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Dec 5 10:39:49 2011 +0000
+
+    intel: Clean up mmaps on freeing the buffer
+    
+    As a precautionary measure munmap on buffer free so that we never leak
+    the vma. Also include a warning during debugging.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
 commit e73161a02b604742e3da3bca8f13cff81276de43
 Author: Chris Wilson <chris@chris-wilson.co.uk>
 Date:   Mon Dec 5 10:30:52 2011 +0000

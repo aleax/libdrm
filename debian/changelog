@@ -1,3 +1,10 @@
+libdrm (2.4.29-1) UNRELEASED; urgency=low
+
+  * New upstream release:
+    - assert()s are now gone (Closes: #651316).
+
+ -- Cyril Brulebois <kibi@debian.org>  Tue, 13 Dec 2011 13:06:03 +0100
+
 libdrm (2.4.28-1) unstable; urgency=low
 
   * New upstream release.
