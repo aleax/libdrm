@@ -37,6 +37,7 @@ libdrm_intel.so.1 libdrm-intel1 #MINVER#
  drm_intel_bufmgr_gem_enable_fenced_relocs@Base 2.4.20
  drm_intel_bufmgr_gem_enable_reuse@Base 2.4.1
  drm_intel_bufmgr_gem_init@Base 2.4.1
+ drm_intel_bufmgr_gem_set_vma_cache_size@Base 2.4.29
  drm_intel_bufmgr_set_debug@Base 2.4.1
  drm_intel_gem_bo_clear_relocs@Base 2.4.27
  drm_intel_gem_bo_get_reloc_count@Base 2.4.27
