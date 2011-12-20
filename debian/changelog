@@ -1,3 +1,17 @@
+libdrm (2.4.29-1) unstable; urgency=low
+
+  * New upstream release:
+    - assert()s are now gone (Closes: #651316).
+  * Update libdrm-intel1's symbols and shlibs accordingly.
+
+ -- Cyril Brulebois <kibi@debian.org>  Tue, 13 Dec 2011 13:16:22 +0100
+
+libdrm (2.4.28-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Cyril Brulebois <kibi@debian.org>  Tue, 06 Dec 2011 15:17:50 +0100
+
 libdrm (2.4.27-1ubuntu1) precise; urgency=low
 
   * Merge from Debian unstable, remaining changes:

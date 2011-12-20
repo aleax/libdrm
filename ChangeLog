@@ -1,3 +1,139 @@
+commit 7fd1678110b78d9324723a54dfd5049496b9e3cf
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Dec 5 23:09:20 2011 +0000
+
+    configure: Bump version for 2.4.29
+    
+    Yet another release required for new API
+
+commit 015286f03e871ccf49af9f2ceef7f5e04c8d61ca
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Dec 11 17:35:06 2011 +0000
+
+    intel: Remove the fresh assertions used to debug the vma cacheing
+    
+    Hopefully all the bugs in the callers have been found, so time to
+    handle the failures "gracefully" again.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit c5f0ed1d296f11367febd0e1b7dce8789308bf35
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Dec 13 10:30:54 2011 +0000
+
+    intel: Update map-count for an early error return during mapping
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit dd9a5b4f7fb07c78db4e7481bedca1b981030e3f
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Tue Dec 6 13:12:37 2011 +0000
+
+    intel: Evict cached VMA in order to make room for new mappings
+    
+    As the max number of VMA mappings is a hard per-process limit, we need
+    to include the number of currently active mappings when evicting in
+    order to make room for a new mmap.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit e4b60f29609e9993dc7268993da509530862aa78
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Dec 5 21:29:05 2011 +0000
+
+    intel: Add an interface to limit vma caching
+    
+    There is a per-process limit on the number of vma that the process can
+    keep open, so we cannot keep an unlimited cache of unused vma's (besides
+    keeping track of all those vma in the kernel adds considerable overhead).
+    However, in order to work around inefficiencies in the kernel it is
+    beneficial to reuse the vma, so keep a MRU cache of vma.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 902ee661f1864aaf8325621085f6a1b5a6a3673a
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Dec 5 21:24:48 2011 +0000
+
+    test/radeon: add missing files for dist
+
+commit 5c5332bbc38ff25c06081ac53a15ad583ad4cbc4
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Dec 5 10:39:49 2011 +0000
+
+    intel: Clean up mmaps on freeing the buffer
+    
+    As a precautionary measure munmap on buffer free so that we never leak
+    the vma. Also include a warning during debugging.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit e73161a02b604742e3da3bca8f13cff81276de43
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Dec 5 10:30:52 2011 +0000
+
+    configure: Bump version to 2.4.28
+    
+    So that we can pull a couple of Intel bug fixes into xf86-video-intel.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit c549a777c1b6227a724942c64aa5cd181eb93c6c
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Dec 5 10:14:34 2011 +0000
+
+    intel: Unmap buffers during drm_intel_gem_bo_unmap
+    
+    We cannot afford to cache the vma per open bo as this may exhaust the
+    per-process limits.
+    
+    References: https://bugs.freedesktop.org/show_bug.cgi?id=43075
+    References: https://bugs.freedesktop.org/show_bug.cgi?id=40066
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 36cff1cbb89477c839588a7e40fec2a8db7df396
+Author: Daniel Vetter <daniel.vetter@ffwll.ch>
+Date:   Sun Dec 4 12:51:45 2011 +0100
+
+    intel: limit aperture space to mappable area on gen3
+    
+    Otherwise we blow up on heavy tiled blitter loads (with giant
+    pixmaps).
+    
+    Signed-Off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+    Acked-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 37ccce5e390a9d757474920f488cafa1cf89854a
+Author: Maarten Lankhorst <m.b.lankhorst@gmail.com>
+Date:   Thu Nov 24 14:08:53 2011 +0100
+
+    nouveau: Mark nouveau subchannel unbound nouveau_grobj_free
+    
+    Valgrind throws warns about a user-after-free if you try to bind a
+    new subchannel after the old one in that slot was freed,
+    so remove it from the channel list.
+    
+    Signed-off-by: Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+commit ca4971292cf99e0063416cd1c3467af94637bf2b
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Thu Nov 10 16:47:10 2011 -0500
+
+    tests/radeon: radeon specific test
+    
+    Initial test only include ttm test for stressing ttm memory
+    allocations.
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 961bf9b5c2866ccb4fedf2b45b29fb688519d0db
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Tue Nov 1 14:42:13 2011 -0700
+
+    Fix compilation with -Werror=int-to-pointer-cast -Werror=pointer-to-int-cast
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
 commit cc9b751e82c5a3525907bba30ba3c95246751824
 Author: Eric Anholt <eric@anholt.net>
 Date:   Fri Oct 28 13:14:44 2011 -0700
