@@ -75,9 +75,9 @@ endif
 	dh_strip -s --remaining-packages
 
 override_dh_makeshlibs:
-	dh_makeshlibs -plibdrm2 -V'libdrm2 (>= 2.4.25)' -- -c4
+	dh_makeshlibs -plibdrm2 -V'libdrm2 (>= 2.4.30)' -- -c4
 ifeq ($(INTEL), yes)
-	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.29)' -- -c4
+	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.30)' -- -c4
 endif
 ifeq ($(NOUVEAU), yes)
 	dh_makeshlibs -plibdrm-nouveau1a -V'libdrm-nouveau1a (>= 2.4.23)' -- -c4

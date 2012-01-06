@@ -1,6 +1,7 @@
 libdrm (2.4.30-1) UNRELEASED; urgency=low
 
   * New upstream release.
+  * Bump libdrm2's and libdrm-intel1's symbols and shlibs accordingly.
 
  -- Cyril Brulebois <kibi@debian.org>  Fri, 06 Jan 2012 19:47:07 +0100
 
