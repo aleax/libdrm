@@ -20,7 +20,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libdrm],
-        [2.4.29],
+        [2.4.30],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=DRI],
         [libdrm])
 
@@ -113,6 +113,8 @@ AC_CHECK_FUNCS([clock_gettime], [CLOCK_LIB=],
                [AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIB=-lrt],
                              [AC_MSG_ERROR([Couldn't find clock_gettime])])])
 AC_SUBST([CLOCK_LIB])
+
+AC_CHECK_FUNCS([open_memstream], [HAVE_OPEN_MEMSTREAM=yes])
 
 dnl Use lots of warning flags with with gcc and compatible compilers
 
