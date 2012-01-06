@@ -14,6 +14,12 @@ Quick Guide To Patching This Package For The Impatient
 Alternatively, instead of using quilt directly, you can drop the patch in to 
 debian/patches and add the name of the patch to debian/patches/series.
 
+While building from git, dpkg-source can complain about symlinks vs.
+normal files mismatches. To work around this issue, before uploading,
+and without committing:
+
+  find -type l | while read dest; do src=$(readlink -f $dest); rm $dest; cp $src $dest; done
+
 ------------------------------------
 Guide To The X Strike Force Packages
 ------------------------------------
