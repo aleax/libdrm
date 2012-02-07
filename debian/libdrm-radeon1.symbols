@@ -56,3 +56,7 @@ libdrm_radeon.so.1 libdrm-radeon1 #MINVER#
  radeon_gem_get_reloc_in_cs@Base 2.4.20
  radeon_gem_name_bo@Base 2.4.17
  radeon_gem_set_domain@Base 2.4.17
+ radeon_surface_best@Base 2.4.31
+ radeon_surface_init@Base 2.4.31
+ radeon_surface_manager_free@Base 2.4.31
+ radeon_surface_manager_new@Base 2.4.31

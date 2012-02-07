@@ -90,6 +90,7 @@ libdrm.so.2 libdrm2 #MINVER#
  drmModeFreeFB@Base 2.4.3
  drmModeFreeModeInfo@Base 2.4.3
  drmModeFreePlane@Base 2.4.30
+ drmModeFreePlaneResources@Base 2.4.31
  drmModeFreeProperty@Base 2.4.3
  drmModeFreePropertyBlob@Base 2.4.3
  drmModeFreeResources@Base 2.4.3
