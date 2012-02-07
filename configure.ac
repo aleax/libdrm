@@ -20,7 +20,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libdrm],
-        [2.4.30],
+        [2.4.31],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=DRI],
         [libdrm])
 
@@ -250,7 +250,10 @@ if test "x$INTEL" != "xno" -o "x$RADEON" != "xno"; then
 
     else
            if test "x$INTEL" != "xno"; then
-                   INTEL=yes
+                   case $host_cpu in
+                           i?86|x86_64) INTEL=yes ;;
+                           *) INTEL=no ;;
+                   esac
            fi
            if test "x$RADEON" != "xno"; then
                    RADEON=yes
