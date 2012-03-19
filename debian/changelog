@@ -1,10 +1,14 @@
-libdrm (2.4.31-1) UNRELEASED; urgency=low
+libdrm (2.4.32-1) UNRELEASED; urgency=low
 
-  * New upstream release.
+  [ Robert Hooker ]
+  * New upstream release (2.4.31).
   * Bump libdrm2 and libdrm-radeon1 symbols and shlibs to account for
     recent changes.
 
- -- Robert Hooker <sarvatt@ubuntu.com>  Tue, 07 Feb 2012 11:06:32 -0500
+  [ Cyril Brulebois ]
+  * New upstream release (2.4.32).
+
+ -- Cyril Brulebois <kibi@debian.org>  Mon, 19 Mar 2012 19:33:21 +0000
 
 libdrm (2.4.30-1) unstable; urgency=low
 
