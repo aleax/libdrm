@@ -20,7 +20,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libdrm],
-        [2.4.31],
+        [2.4.32],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=DRI],
         [libdrm])
 
@@ -50,10 +50,6 @@ LT_INIT([disable-static])
 PKG_CHECK_MODULES(PTHREADSTUBS, pthread-stubs)
 AC_SUBST(PTHREADSTUBS_CFLAGS)
 AC_SUBST(PTHREADSTUBS_LIBS)
-
-PKG_CHECK_MODULES(PCIACCESS, [pciaccess >= 0.10])
-AC_SUBST(PCIACCESS_CFLAGS)
-AC_SUBST(PCIACCESS_LIBS)
 
 pkgconfigdir=${libdir}/pkgconfig
 AC_SUBST(pkgconfigdir)
@@ -259,6 +255,17 @@ if test "x$INTEL" != "xno" -o "x$RADEON" != "xno"; then
                    RADEON=yes
            fi
     fi
+fi
+
+if test "x$INTEL" != "xno"; then
+	PKG_CHECK_MODULES(PCIACCESS, [pciaccess >= 0.10])
+fi
+AC_SUBST(PCIACCESS_CFLAGS)
+AC_SUBST(PCIACCESS_LIBS)
+
+PKG_CHECK_MODULES(VALGRIND, [valgrind], [have_valgrind=yes], [have_valgrind=no])
+if test "x$have_valgrind" = "xyes"; then
+	AC_DEFINE([HAVE_VALGRIND], 1, [Use valgrind intrinsics to suppress false warnings])
 fi
 
 AM_CONDITIONAL(HAVE_INTEL, [test "x$INTEL" != "xno"])

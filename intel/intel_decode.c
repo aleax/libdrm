@@ -2577,10 +2577,8 @@ static const char *get_965_element_component(uint32_t data, int component)
 	}
 }
 
-static const char *get_965_prim_type(uint32_t data)
+static const char *get_965_prim_type(uint32_t primtype)
 {
-	uint32_t primtype = (data >> 10) & 0x1f;
-
 	switch (primtype) {
 	case 0x01:
 		return "point list";
@@ -2745,6 +2743,17 @@ gen7_3DSTATE_DEPTH_STENCIL_STATE_POINTERS(struct drm_intel_decode *ctx)
 }
 
 static int
+gen7_3DSTATE_HIER_DEPTH_BUFFER(struct drm_intel_decode *ctx)
+{
+	instr_out(ctx, 0, "3DSTATE_HIER_DEPTH_BUFFER\n");
+	instr_out(ctx, 1, "pitch %db\n",
+		  (ctx->data[1] & 0x1ffff) + 1);
+	instr_out(ctx, 2, "pointer to HiZ buffer\n");
+
+	return 3;
+}
+
+static int
 gen6_3DSTATE_CC_STATE_POINTERS(struct drm_intel_decode *ctx)
 {
 	instr_out(ctx, 0, "3DSTATE_CC_STATE_POINTERS\n");
@@ -2859,6 +2868,177 @@ gen7_3DSTATE_CONSTANT_HS(struct drm_intel_decode *ctx)
 	return gen7_3DSTATE_CONSTANT(ctx, "HS");
 }
 
+
+static int
+gen6_3DSTATE_WM(struct drm_intel_decode *ctx)
+{
+	instr_out(ctx, 0, "3DSTATE_WM\n");
+	instr_out(ctx, 1, "kernel start pointer 0\n");
+	instr_out(ctx, 2,
+		  "SPF=%d, VME=%d, Sampler Count %d, "
+		  "Binding table count %d\n",
+		  (ctx->data[2] >> 31) & 1,
+		  (ctx->data[2] >> 30) & 1,
+		  (ctx->data[2] >> 27) & 7,
+		  (ctx->data[2] >> 18) & 0xff);
+	instr_out(ctx, 3, "scratch offset\n");
+	instr_out(ctx, 4,
+		  "Depth Clear %d, Depth Resolve %d, HiZ Resolve %d, "
+		  "Dispatch GRF start[0] %d, start[1] %d, start[2] %d\n",
+		  (ctx->data[4] & (1 << 30)) != 0,
+		  (ctx->data[4] & (1 << 28)) != 0,
+		  (ctx->data[4] & (1 << 27)) != 0,
+		  (ctx->data[4] >> 16) & 0x7f,
+		  (ctx->data[4] >> 8) & 0x7f,
+		  (ctx->data[4] & 0x7f));
+	instr_out(ctx, 5,
+		  "MaxThreads %d, PS KillPixel %d, PS computed Z %d, "
+		  "PS use sourceZ %d, Thread Dispatch %d, PS use sourceW %d, "
+		  "Dispatch32 %d, Dispatch16 %d, Dispatch8 %d\n",
+		  ((ctx->data[5] >> 25) & 0x7f) + 1,
+		  (ctx->data[5] & (1 << 22)) != 0,
+		  (ctx->data[5] & (1 << 21)) != 0,
+		  (ctx->data[5] & (1 << 20)) != 0,
+		  (ctx->data[5] & (1 << 19)) != 0,
+		  (ctx->data[5] & (1 << 8)) != 0,
+		  (ctx->data[5] & (1 << 2)) != 0,
+		  (ctx->data[5] & (1 << 1)) != 0,
+		  (ctx->data[5] & (1 << 0)) != 0);
+	instr_out(ctx, 6,
+		  "Num SF output %d, Pos XY offset %d, ZW interp mode %d , "
+		  "Barycentric interp mode 0x%x, Point raster rule %d, "
+		  "Multisample mode %d, "
+		  "Multisample Dispatch mode %d\n",
+		  (ctx->data[6] >> 20) & 0x3f,
+		  (ctx->data[6] >> 18) & 3,
+		  (ctx->data[6] >> 16) & 3,
+		  (ctx->data[6] >> 10) & 0x3f,
+		  (ctx->data[6] & (1 << 9)) != 0,
+		  (ctx->data[6] >> 1) & 3,
+		  (ctx->data[6] & 1));
+	instr_out(ctx, 7, "kernel start pointer 1\n");
+	instr_out(ctx, 8, "kernel start pointer 2\n");
+
+	return 9;
+}
+
+static int
+gen7_3DSTATE_WM(struct drm_intel_decode *ctx)
+{
+	const char *computed_depth = "";
+	const char *early_depth = "";
+	const char *zw_interp = "";
+
+	switch ((ctx->data[1] >> 23) & 0x3) {
+	case 0:
+		computed_depth = "";
+		break;
+	case 1:
+		computed_depth = "computed depth";
+		break;
+	case 2:
+		computed_depth = "computed depth >=";
+		break;
+	case 3:
+		computed_depth = "computed depth <=";
+		break;
+	}
+
+	switch ((ctx->data[1] >> 21) & 0x3) {
+	case 0:
+		early_depth = "";
+		break;
+	case 1:
+		early_depth = ", EDSC_PSEXEC";
+		break;
+	case 2:
+		early_depth = ", EDSC_PREPS";
+		break;
+	case 3:
+		early_depth = ", BAD EDSC";
+		break;
+	}
+
+	switch ((ctx->data[1] >> 17) & 0x3) {
+	case 0:
+		early_depth = "";
+		break;
+	case 1:
+		early_depth = ", BAD ZW interp";
+		break;
+	case 2:
+		early_depth = ", ZW centroid";
+		break;
+	case 3:
+		early_depth = ", ZW sample";
+		break;
+	}
+
+	instr_out(ctx, 0, "3DSTATE_WM\n");
+	instr_out(ctx, 1, "(%s%s%s%s%s%s)%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+		  (ctx->data[1] & (1 << 11)) ? "PP " : "",
+		  (ctx->data[1] & (1 << 12)) ? "PC " : "",
+		  (ctx->data[1] & (1 << 13)) ? "PS " : "",
+		  (ctx->data[1] & (1 << 14)) ? "NPP " : "",
+		  (ctx->data[1] & (1 << 15)) ? "NPC " : "",
+		  (ctx->data[1] & (1 << 16)) ? "NPS " : "",
+		  (ctx->data[1] & (1 << 30)) ? ", depth clear" : "",
+		  (ctx->data[1] & (1 << 29)) ? "" : ", disabled",
+		  (ctx->data[1] & (1 << 28)) ? ", depth resolve" : "",
+		  (ctx->data[1] & (1 << 27)) ? ", hiz resolve" : "",
+		  (ctx->data[1] & (1 << 25)) ? ", kill" : "",
+		  computed_depth,
+		  early_depth,
+		  zw_interp,
+		  (ctx->data[1] & (1 << 20)) ? ", source depth" : "",
+		  (ctx->data[1] & (1 << 19)) ? ", source W" : "",
+		  (ctx->data[1] & (1 << 10)) ? ", coverage" : "",
+		  (ctx->data[1] & (1 << 4)) ? ", poly stipple" : "",
+		  (ctx->data[1] & (1 << 3)) ? ", line stipple" : "",
+		  (ctx->data[1] & (1 << 2)) ? ", point UL" : ", point UR"
+		  );
+	instr_out(ctx, 2, "MS\n");
+
+	return 3;
+}
+
+static int
+gen4_3DPRIMITIVE(struct drm_intel_decode *ctx)
+{
+	instr_out(ctx, 0,
+		  "3DPRIMITIVE: %s %s\n",
+		  get_965_prim_type((ctx->data[0] >> 10) & 0x1f),
+		  (ctx->data[0] & (1 << 15)) ? "random" : "sequential");
+	instr_out(ctx, 1, "vertex count\n");
+	instr_out(ctx, 2, "start vertex\n");
+	instr_out(ctx, 3, "instance count\n");
+	instr_out(ctx, 4, "start instance\n");
+	instr_out(ctx, 5, "index bias\n");
+
+	return 6;
+}
+
+static int
+gen7_3DPRIMITIVE(struct drm_intel_decode *ctx)
+{
+	bool indirect = !!(ctx->data[0] & (1 << 10));
+
+	instr_out(ctx, 0,
+		  "3DPRIMITIVE: %s%s\n",
+		  indirect ? " indirect" : "",
+		  (ctx->data[0] & (1 << 8)) ? " predicated" : "");
+	instr_out(ctx, 1, "%s %s\n",
+		  get_965_prim_type(ctx->data[1] & 0x3f),
+		  (ctx->data[1] & (1 << 8)) ? "random" : "sequential");
+	instr_out(ctx, 2, indirect ? "ignored" : "vertex count\n");
+	instr_out(ctx, 3, indirect ? "ignored" : "start vertex\n");
+	instr_out(ctx, 4, indirect ? "ignored" : "instance count\n");
+	instr_out(ctx, 5, indirect ? "ignored" : "start instance\n");
+	instr_out(ctx, 6, indirect ? "ignored" : "index bias\n");
+
+	return 7;
+}
+
 static int
 decode_3d_965(struct drm_intel_decode *ctx)
 {
@@ -2893,7 +3073,8 @@ decode_3d_965(struct drm_intel_decode *ctx)
 		{ 0x7805, 0x00ff, 3, 3, "3DSTATE_URB" },
 		{ 0x7804, 0x00ff, 3, 3, "3DSTATE_CLEAR_PARAMS" },
 		{ 0x7806, 0x00ff, 3, 3, "3DSTATE_STENCIL_BUFFER" },
-		{ 0x7807, 0x00ff, 4, 4, "3DSTATE_HIER_DEPTH_BUFFER" },
+		{ 0x7807, 0x00ff, 4, 4, "3DSTATE_HIER_DEPTH_BUFFER", 6 },
+		{ 0x7807, 0x00ff, 3, 3, "3DSTATE_HIER_DEPTH_BUFFER", 7, gen7_3DSTATE_HIER_DEPTH_BUFFER },
 		{ 0x7808, 0x00ff, 5, 257, "3DSTATE_VERTEX_BUFFERS" },
 		{ 0x7809, 0x00ff, 3, 256, "3DSTATE_VERTEX_ELEMENTS" },
 		{ 0x780a, 0x00ff, 3, 3, "3DSTATE_INDEX_BUFFER" },
@@ -2907,8 +3088,8 @@ decode_3d_965(struct drm_intel_decode *ctx)
 		{ 0x7812, 0x00ff, 4, 4, "3DSTATE_CLIP" },
 		{ 0x7813, 0x00ff, 20, 20, "3DSTATE_SF", 6 },
 		{ 0x7813, 0x00ff, 7, 7, "3DSTATE_SF", 7 },
-		{ 0x7814, 0x00ff, 3, 3, "3DSTATE_WM", 7 },
-		{ 0x7814, 0x00ff, 9, 9, "3DSTATE_WM" },
+		{ 0x7814, 0x00ff, 3, 3, "3DSTATE_WM", 7, gen7_3DSTATE_WM },
+		{ 0x7814, 0x00ff, 9, 9, "3DSTATE_WM", 6, gen6_3DSTATE_WM },
 		{ 0x7815, 0x00ff, 5, 5, "3DSTATE_CONSTANT_VS_STATE", 6 },
 		{ 0x7815, 0x00ff, 7, 7, "3DSTATE_CONSTANT_VS", 7, gen7_3DSTATE_CONSTANT_VS },
 		{ 0x7816, 0x00ff, 5, 5, "3DSTATE_CONSTANT_GS_STATE", 6 },
@@ -2958,8 +3139,8 @@ decode_3d_965(struct drm_intel_decode *ctx)
 		{ 0x7917, 0x00ff, 2, 2+128*2, "3DSTATE_SO_DECL_LIST" },
 		{ 0x7918, 0x00ff, 4, 4, "3DSTATE_SO_BUFFER" },
 		{ 0x7a00, 0x00ff, 4, 6, "PIPE_CONTROL" },
-		{ 0x7b00, 0x00ff, 7, 7, "3DPRIMITIVE", 7 },
-		{ 0x7b00, 0x00ff, 6, 6, "3DPRIMITIVE" },
+		{ 0x7b00, 0x00ff, 7, 7, NULL, 7, gen7_3DPRIMITIVE },
+		{ 0x7b00, 0x00ff, 6, 6, NULL, 0, gen4_3DPRIMITIVE },
 	}, *opcode_3d = NULL;
 
 	opcode = (data[0] & 0xffff0000) >> 16;
@@ -2984,7 +3165,7 @@ decode_3d_965(struct drm_intel_decode *ctx)
 
 		if (len < opcode_3d->min_len ||
 		    len > opcode_3d->max_len) {
-			fprintf(out, "Bad length %d in %s, expeted %d-%d\n",
+			fprintf(out, "Bad length %d in %s, expected %d-%d\n",
 				len, opcode_3d->name,
 				opcode_3d->min_len, opcode_3d->max_len);
 		}
@@ -3303,46 +3484,6 @@ decode_3d_965(struct drm_intel_decode *ctx)
 
 		return len;
 
-	case 0x7814:
-		instr_out(ctx, 0, "3DSTATE_WM\n");
-		instr_out(ctx, 1, "kernel start pointer 0\n");
-		instr_out(ctx, 2,
-			  "SPF=%d, VME=%d, Sampler Count %d, "
-			  "Binding table count %d\n", (data[2] >> 31) & 1,
-			  (data[2] >> 30) & 1, (data[2] >> 27) & 7,
-			  (data[2] >> 18) & 0xff);
-		instr_out(ctx, 3, "scratch offset\n");
-		instr_out(ctx, 4,
-			  "Depth Clear %d, Depth Resolve %d, HiZ Resolve %d, "
-			  "Dispatch GRF start[0] %d, start[1] %d, start[2] %d\n",
-			  (data[4] & (1 << 30)) != 0,
-			  (data[4] & (1 << 28)) != 0,
-			  (data[4] & (1 << 27)) != 0, (data[4] >> 16) & 0x7f,
-			  (data[4] >> 8) & 0x7f, (data[4] & 0x7f));
-		instr_out(ctx, 5,
-			  "MaxThreads %d, PS KillPixel %d, PS computed Z %d, "
-			  "PS use sourceZ %d, Thread Dispatch %d, PS use sourceW %d, Dispatch32 %d, "
-			  "Dispatch16 %d, Dispatch8 %d\n",
-			  ((data[5] >> 25) & 0x7f) + 1,
-			  (data[5] & (1 << 22)) != 0,
-			  (data[5] & (1 << 21)) != 0,
-			  (data[5] & (1 << 20)) != 0,
-			  (data[5] & (1 << 19)) != 0, (data[5] & (1 << 8)) != 0,
-			  (data[5] & (1 << 2)) != 0, (data[5] & (1 << 1)) != 0,
-			  (data[5] & (1 << 0)) != 0);
-		instr_out(ctx, 6,
-			  "Num SF output %d, Pos XY offset %d, ZW interp mode %d , "
-			  "Barycentric interp mode 0x%x, Point raster rule %d, Multisample mode %d, "
-			  "Multisample Dispatch mode %d\n",
-			  (data[6] >> 20) & 0x3f, (data[6] >> 18) & 3,
-			  (data[6] >> 16) & 3, (data[6] >> 10) & 0x3f,
-			  (data[6] & (1 << 9)) != 0, (data[6] >> 1) & 3,
-			  (data[6] & 1));
-		instr_out(ctx, 7, "kernel start pointer 1\n");
-		instr_out(ctx, 8, "kernel start pointer 2\n");
-
-		return len;
-
 	case 0x7900:
 		instr_out(ctx, 0, "3DSTATE_DRAWING_RECTANGLE\n");
 		instr_out(ctx, 1, "top left: %d,%d\n",
@@ -3487,20 +3628,6 @@ decode_3d_965(struct drm_intel_decode *ctx)
 			instr_out(ctx, 3, "immediate dword high\n");
 			return len;
 		}
-	case 0x7b00:
-		if (ctx->gen == 7)
-			break;
-
-		instr_out(ctx, 0,
-			  "3DPRIMITIVE: %s %s\n",
-			  get_965_prim_type(data[0]),
-			  (data[0] & (1 << 15)) ? "random" : "sequential");
-		instr_out(ctx, 1, "vertex count\n");
-		instr_out(ctx, 2, "start vertex\n");
-		instr_out(ctx, 3, "instance count\n");
-		instr_out(ctx, 4, "start instance\n");
-		instr_out(ctx, 5, "index bias\n");
-		return len;
 	}
 
 	if (opcode_3d) {

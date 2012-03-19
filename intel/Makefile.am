@@ -28,6 +28,7 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/intel \
 	$(PTHREADSTUBS_CFLAGS) \
 	$(PCIACCESS_CFLAGS) \
+	$(VALGRIND_CFLAGS) \
 	-I$(top_srcdir)/include/drm
 
 libdrm_intel_la_LTLIBRARIES = libdrm_intel.la
@@ -52,6 +53,7 @@ intel_bufmgr_gem_o_CFLAGS = $(AM_CFLAGS) -c99
 
 libdrm_intelincludedir = ${includedir}/libdrm
 libdrm_intelinclude_HEADERS = intel_bufmgr.h \
+			      intel_aub.h \
 			      intel_debug.h
 
 # This may be interesting even outside of "make check", due to the -dump option.
