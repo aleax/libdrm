@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -39,12 +40,25 @@ struct drm_intel_decode {
 	/** PCI device ID. */
 	uint32_t devid;
 
-	/** GPU address of the start of the batchbuffer data. */
+	/**
+	 * Shorthand device identifier: 3 is 915, 4 is 965, 5 is
+	 * Ironlake, etc.
+	 */
+	int gen;
+
+	/** GPU address of the start of the current packet. */
 	uint32_t hw_offset;
-	/** CPU Virtual address of the start of the batchbuffer data. */
+	/** CPU virtual address of the start of the current packet. */
 	uint32_t *data;
-	/** Number of DWORDs of batchbuffer data. */
+	/** DWORDs of remaining batchbuffer data starting from the packet. */
 	uint32_t count;
+
+	/** GPU address of the start of the batchbuffer data. */
+	uint32_t base_hw_offset;
+	/** CPU Virtual address of the start of the batchbuffer data. */
+	uint32_t *base_data;
+	/** Number of DWORDs of batchbuffer data. */
+	uint32_t base_count;
 
 	/** @{
 	 * GPU head and tail pointers, which will be noted in the dump, or ~0.
@@ -59,6 +73,8 @@ struct drm_intel_decode {
 	 * and is used by the intel-gpu-tools.
 	 */
 	bool dump_past_end;
+
+	bool overflowed;
 };
 
 static FILE *out;
@@ -74,8 +90,7 @@ static uint32_t tail_offset = 0xffffffff;	/* undefined */
 #define BUFFER_FAIL(_count, _len, _name) do {			\
     fprintf(out, "Buffer size too small in %s (%d < %d)\n",	\
 	    (_name), (_count), (_len));				\
-    (*failures)++;						\
-    return count;						\
+    return _count;						\
 } while (0)
 
 static float int_as_float(uint32_t intval)
@@ -90,16 +105,24 @@ static float int_as_float(uint32_t intval)
 }
 
 static void
-instr_out(uint32_t *data, uint32_t hw_offset, unsigned int index,
-	  const char *fmt, ...) __attribute__((format(__printf__, 4, 5)));
+instr_out(struct drm_intel_decode *ctx, unsigned int index,
+	  const char *fmt, ...) __attribute__((format(__printf__, 3, 4)));
 
 static void
-instr_out(uint32_t *data, uint32_t hw_offset, unsigned int index,
+instr_out(struct drm_intel_decode *ctx, unsigned int index,
 	  const char *fmt, ...)
 {
 	va_list va;
 	const char *parseinfo;
-	uint32_t offset = hw_offset + index * 4;
+	uint32_t offset = ctx->hw_offset + index * 4;
+
+	if (index > ctx->count) {
+		if (!ctx->overflowed) {
+			fprintf(out, "ERROR: Decode attempted to continue beyond end of batchbuffer\n");
+			ctx->overflowed = true;
+		}
+		return;
+	}
 
 	if (offset == head_offset)
 		parseinfo = "HEAD";
@@ -109,17 +132,18 @@ instr_out(uint32_t *data, uint32_t hw_offset, unsigned int index,
 		parseinfo = "    ";
 
 	fprintf(out, "0x%08x: %s 0x%08x: %s", offset, parseinfo,
-		data[index], index == 0 ? "" : "   ");
+		ctx->data[index], index == 0 ? "" : "   ");
 	va_start(va, fmt);
 	vfprintf(out, fmt, va);
 	va_end(va);
 }
 
 static int
-decode_mi(uint32_t *data, uint32_t count, uint32_t hw_offset, int *failures)
+decode_mi(struct drm_intel_decode *ctx)
 {
 	unsigned int opcode, len = -1;
 	const char *post_sync_op = "";
+	uint32_t *data = ctx->data;
 
 	struct {
 		uint32_t opcode;
@@ -174,33 +198,33 @@ decode_mi(uint32_t *data, uint32_t count, uint32_t hw_offset, int *failures)
 
 	switch ((data[0] & 0x1f800000) >> 23) {
 	case 0x0a:
-		instr_out(data, hw_offset, 0, "MI_BATCH_BUFFER_END\n");
+		instr_out(ctx, 0, "MI_BATCH_BUFFER_END\n");
 		return -1;
 	case 0x16:
-		instr_out(data, hw_offset, 0, "MI_SEMAPHORE_MBOX%s%s%s%s %u\n",
+		instr_out(ctx, 0, "MI_SEMAPHORE_MBOX%s%s%s%s %u\n",
 			  data[0] & (1 << 22) ? " global gtt," : "",
 			  data[0] & (1 << 21) ? " update semaphore," : "",
 			  data[0] & (1 << 20) ? " compare semaphore," : "",
 			  data[0] & (1 << 18) ? " use compare reg" : "",
 			  (data[0] & (0x3 << 16)) >> 16);
-		instr_out(data, hw_offset, 1, "value\n");
-		instr_out(data, hw_offset, 2, "address\n");
+		instr_out(ctx, 1, "value\n");
+		instr_out(ctx, 2, "address\n");
 		return len;
 	case 0x21:
-		instr_out(data, hw_offset, 0, "MI_STORE_DATA_INDEX%s\n",
+		instr_out(ctx, 0, "MI_STORE_DATA_INDEX%s\n",
 			  data[0] & (1 << 21) ? " use per-process HWS," : "");
-		instr_out(data, hw_offset, 1, "index\n");
-		instr_out(data, hw_offset, 2, "dword\n");
+		instr_out(ctx, 1, "index\n");
+		instr_out(ctx, 2, "dword\n");
 		if (len == 4)
-			instr_out(data, hw_offset, 3, "upper dword\n");
+			instr_out(ctx, 3, "upper dword\n");
 		return len;
 	case 0x00:
 		if (data[0] & (1 << 22))
-			instr_out(data, hw_offset, 0,
+			instr_out(ctx, 0,
 				  "MI_NOOP write NOPID reg, val=0x%x\n",
 				  data[0] & ((1 << 22) - 1));
 		else
-			instr_out(data, hw_offset, 0, "MI_NOOP\n");
+			instr_out(ctx, 0, "MI_NOOP\n");
 		return len;
 	case 0x26:
 		switch (data[0] & (0x3 << 14)) {
@@ -217,7 +241,7 @@ decode_mi(uint32_t *data, uint32_t count, uint32_t hw_offset, int *failures)
 			post_sync_op = "write TIMESTAMP";
 			break;
 		}
-		instr_out(data, hw_offset, 0,
+		instr_out(ctx, 0,
 			  "MI_FLUSH_DW%s%s%s%s post_sync_op='%s' %s%s\n",
 			  data[0] & (1 << 22) ?
 			  " enable protected mem (BCS-only)," : "",
@@ -229,12 +253,12 @@ decode_mi(uint32_t *data, uint32_t count, uint32_t hw_offset, int *failures)
 			  data[0] & (1 << 7) ?
 			  " invalidate video state (BCS-only)," : "");
 		if (data[0] & (1 << 21))
-			instr_out(data, hw_offset, 1, "hws index\n");
+			instr_out(ctx, 1, "hws index\n");
 		else
-			instr_out(data, hw_offset, 1, "address\n");
-		instr_out(data, hw_offset, 2, "dword\n");
+			instr_out(ctx, 1, "address\n");
+		instr_out(ctx, 2, "dword\n");
 		if (len == 4)
-			instr_out(data, hw_offset, 3, "upper dword\n");
+			instr_out(ctx, 3, "upper dword\n");
 		return len;
 	}
 
@@ -243,40 +267,37 @@ decode_mi(uint32_t *data, uint32_t count, uint32_t hw_offset, int *failures)
 		if ((data[0] & 0x1f800000) >> 23 == opcodes_mi[opcode].opcode) {
 			unsigned int i;
 
-			instr_out(data, hw_offset, 0, "%s\n",
+			instr_out(ctx, 0, "%s\n",
 				  opcodes_mi[opcode].name);
 			for (i = 1; i < len; i++) {
-				if (i >= count)
-					BUFFER_FAIL(count, len,
-						    opcodes_mi[opcode].name);
-				instr_out(data, hw_offset, i, "dword %d\n", i);
+				instr_out(ctx, i, "dword %d\n", i);
 			}
 
 			return len;
 		}
 	}
 
-	instr_out(data, hw_offset, 0, "MI UNKNOWN\n");
-	(*failures)++;
+	instr_out(ctx, 0, "MI UNKNOWN\n");
 	return 1;
 }
 
 static void
-decode_2d_br00(uint32_t *data, uint32_t count, uint32_t hw_offset,
-	       const char *cmd)
+decode_2d_br00(struct drm_intel_decode *ctx, const char *cmd)
 {
-	instr_out(data, hw_offset, 0,
+	instr_out(ctx, 0,
 		  "%s (rgb %sabled, alpha %sabled, src tile %d, dst tile %d)\n",
 		  cmd,
-		  (data[count] & (1 << 20)) ? "en" : "dis",
-		  (data[count] & (1 << 21)) ? "en" : "dis",
-		  (data[count] >> 15) & 1, (data[count] >> 11) & 1);
+		  (ctx->data[0] & (1 << 20)) ? "en" : "dis",
+		  (ctx->data[0] & (1 << 21)) ? "en" : "dis",
+		  (ctx->data[0] >> 15) & 1,
+		  (ctx->data[0] >> 11) & 1);
 }
 
-static void decode_2d_br01(uint32_t *data, uint32_t count, uint32_t hw_offset)
+static void
+decode_2d_br01(struct drm_intel_decode *ctx)
 {
 	const char *format;
-	switch ((data[count] >> 24) & 0x3) {
+	switch ((ctx->data[1] >> 24) & 0x3) {
 	case 0:
 		format = "8";
 		break;
@@ -291,22 +312,24 @@ static void decode_2d_br01(uint32_t *data, uint32_t count, uint32_t hw_offset)
 		break;
 	}
 
-	instr_out(data, hw_offset, count, "format %s, pitch %d, rop 0x%02x, "
+	instr_out(ctx, 1,
+		  "format %s, pitch %d, rop 0x%02x, "
 		  "clipping %sabled, %s%s \n",
 		  format,
-		  (short)(data[count] & 0xffff),
-		  (data[count] >> 16) & 0xff,
-		  data[count] & (1 << 30) ? "en" : "dis",
-		  data[count] & (1 << 31) ? "solid pattern enabled, " : "",
-		  data[count] & (1 << 31) ?
+		  (short)(ctx->data[1] & 0xffff),
+		  (ctx->data[1] >> 16) & 0xff,
+		  ctx->data[1] & (1 << 30) ? "en" : "dis",
+		  ctx->data[1] & (1 << 31) ? "solid pattern enabled, " : "",
+		  ctx->data[1] & (1 << 31) ?
 		  "mono pattern transparency enabled, " : "");
 
 }
 
 static int
-decode_2d(uint32_t *data, uint32_t count, uint32_t hw_offset, int *failures)
+decode_2d(struct drm_intel_decode *ctx)
 {
 	unsigned int opcode, len;
+	uint32_t *data = ctx->data;
 
 	struct {
 		uint32_t opcode;
@@ -343,7 +366,7 @@ decode_2d(uint32_t *data, uint32_t count, uint32_t hw_offset, int *failures)
 
 	switch ((data[0] & 0x1fc00000) >> 22) {
 	case 0x25:
-		instr_out(data, hw_offset, 0,
+		instr_out(ctx, 0,
 			  "XY_SCANLINES_BLT (pattern seed (%d, %d), dst tile %d)\n",
 			  (data[0] >> 12) & 0x8,
 			  (data[0] >> 8) & 0x8, (data[0] >> 11) & 1);
@@ -351,108 +374,95 @@ decode_2d(uint32_t *data, uint32_t count, uint32_t hw_offset, int *failures)
 		len = (data[0] & 0x000000ff) + 2;
 		if (len != 3)
 			fprintf(out, "Bad count in XY_SCANLINES_BLT\n");
-		if (count < 3)
-			BUFFER_FAIL(count, len, "XY_SCANLINES_BLT");
 
-		instr_out(data, hw_offset, 1, "dest (%d,%d)\n",
+		instr_out(ctx, 1, "dest (%d,%d)\n",
 			  data[1] & 0xffff, data[1] >> 16);
-		instr_out(data, hw_offset, 2, "dest (%d,%d)\n",
+		instr_out(ctx, 2, "dest (%d,%d)\n",
 			  data[2] & 0xffff, data[2] >> 16);
 		return len;
 	case 0x01:
-		decode_2d_br00(data, 0, hw_offset, "XY_SETUP_BLT");
+		decode_2d_br00(ctx, "XY_SETUP_BLT");
 
 		len = (data[0] & 0x000000ff) + 2;
 		if (len != 8)
 			fprintf(out, "Bad count in XY_SETUP_BLT\n");
-		if (count < 8)
-			BUFFER_FAIL(count, len, "XY_SETUP_BLT");
 
-		decode_2d_br01(data, 1, hw_offset);
-		instr_out(data, hw_offset, 2, "cliprect (%d,%d)\n",
+		decode_2d_br01(ctx);
+		instr_out(ctx, 2, "cliprect (%d,%d)\n",
 			  data[2] & 0xffff, data[2] >> 16);
-		instr_out(data, hw_offset, 3, "cliprect (%d,%d)\n",
+		instr_out(ctx, 3, "cliprect (%d,%d)\n",
 			  data[3] & 0xffff, data[3] >> 16);
-		instr_out(data, hw_offset, 4, "setup dst offset 0x%08x\n",
+		instr_out(ctx, 4, "setup dst offset 0x%08x\n",
 			  data[4]);
-		instr_out(data, hw_offset, 5, "setup background color\n");
-		instr_out(data, hw_offset, 6, "setup foreground color\n");
-		instr_out(data, hw_offset, 7, "color pattern offset\n");
+		instr_out(ctx, 5, "setup background color\n");
+		instr_out(ctx, 6, "setup foreground color\n");
+		instr_out(ctx, 7, "color pattern offset\n");
 		return len;
 	case 0x03:
-		decode_2d_br00(data, 0, hw_offset, "XY_SETUP_CLIP_BLT");
+		decode_2d_br00(ctx, "XY_SETUP_CLIP_BLT");
 
 		len = (data[0] & 0x000000ff) + 2;
 		if (len != 3)
 			fprintf(out, "Bad count in XY_SETUP_CLIP_BLT\n");
-		if (count < 3)
-			BUFFER_FAIL(count, len, "XY_SETUP_CLIP_BLT");
 
-		instr_out(data, hw_offset, 1, "cliprect (%d,%d)\n",
+		instr_out(ctx, 1, "cliprect (%d,%d)\n",
 			  data[1] & 0xffff, data[2] >> 16);
-		instr_out(data, hw_offset, 2, "cliprect (%d,%d)\n",
+		instr_out(ctx, 2, "cliprect (%d,%d)\n",
 			  data[2] & 0xffff, data[3] >> 16);
 		return len;
 	case 0x11:
-		decode_2d_br00(data, 0, hw_offset,
-			       "XY_SETUP_MONO_PATTERN_SL_BLT");
+		decode_2d_br00(ctx, "XY_SETUP_MONO_PATTERN_SL_BLT");
 
 		len = (data[0] & 0x000000ff) + 2;
 		if (len != 9)
 			fprintf(out,
 				"Bad count in XY_SETUP_MONO_PATTERN_SL_BLT\n");
-		if (count < 9)
-			BUFFER_FAIL(count, len, "XY_SETUP_MONO_PATTERN_SL_BLT");
 
-		decode_2d_br01(data, 1, hw_offset);
-		instr_out(data, hw_offset, 2, "cliprect (%d,%d)\n",
+		decode_2d_br01(ctx);
+		instr_out(ctx, 2, "cliprect (%d,%d)\n",
 			  data[2] & 0xffff, data[2] >> 16);
-		instr_out(data, hw_offset, 3, "cliprect (%d,%d)\n",
+		instr_out(ctx, 3, "cliprect (%d,%d)\n",
 			  data[3] & 0xffff, data[3] >> 16);
-		instr_out(data, hw_offset, 4, "setup dst offset 0x%08x\n",
+		instr_out(ctx, 4, "setup dst offset 0x%08x\n",
 			  data[4]);
-		instr_out(data, hw_offset, 5, "setup background color\n");
-		instr_out(data, hw_offset, 6, "setup foreground color\n");
-		instr_out(data, hw_offset, 7, "mono pattern dw0\n");
-		instr_out(data, hw_offset, 8, "mono pattern dw1\n");
+		instr_out(ctx, 5, "setup background color\n");
+		instr_out(ctx, 6, "setup foreground color\n");
+		instr_out(ctx, 7, "mono pattern dw0\n");
+		instr_out(ctx, 8, "mono pattern dw1\n");
 		return len;
 	case 0x50:
-		decode_2d_br00(data, 0, hw_offset, "XY_COLOR_BLT");
+		decode_2d_br00(ctx, "XY_COLOR_BLT");
 
 		len = (data[0] & 0x000000ff) + 2;
 		if (len != 6)
 			fprintf(out, "Bad count in XY_COLOR_BLT\n");
-		if (count < 6)
-			BUFFER_FAIL(count, len, "XY_COLOR_BLT");
 
-		decode_2d_br01(data, 1, hw_offset);
-		instr_out(data, hw_offset, 2, "(%d,%d)\n",
+		decode_2d_br01(ctx);
+		instr_out(ctx, 2, "(%d,%d)\n",
 			  data[2] & 0xffff, data[2] >> 16);
-		instr_out(data, hw_offset, 3, "(%d,%d)\n",
+		instr_out(ctx, 3, "(%d,%d)\n",
 			  data[3] & 0xffff, data[3] >> 16);
-		instr_out(data, hw_offset, 4, "offset 0x%08x\n", data[4]);
-		instr_out(data, hw_offset, 5, "color\n");
+		instr_out(ctx, 4, "offset 0x%08x\n", data[4]);
+		instr_out(ctx, 5, "color\n");
 		return len;
 	case 0x53:
-		decode_2d_br00(data, 0, hw_offset, "XY_SRC_COPY_BLT");
+		decode_2d_br00(ctx, "XY_SRC_COPY_BLT");
 
 		len = (data[0] & 0x000000ff) + 2;
 		if (len != 8)
 			fprintf(out, "Bad count in XY_SRC_COPY_BLT\n");
-		if (count < 8)
-			BUFFER_FAIL(count, len, "XY_SRC_COPY_BLT");
 
-		decode_2d_br01(data, 1, hw_offset);
-		instr_out(data, hw_offset, 2, "dst (%d,%d)\n",
+		decode_2d_br01(ctx);
+		instr_out(ctx, 2, "dst (%d,%d)\n",
 			  data[2] & 0xffff, data[2] >> 16);
-		instr_out(data, hw_offset, 3, "dst (%d,%d)\n",
+		instr_out(ctx, 3, "dst (%d,%d)\n",
 			  data[3] & 0xffff, data[3] >> 16);
-		instr_out(data, hw_offset, 4, "dst offset 0x%08x\n", data[4]);
-		instr_out(data, hw_offset, 5, "src (%d,%d)\n",
+		instr_out(ctx, 4, "dst offset 0x%08x\n", data[4]);
+		instr_out(ctx, 5, "src (%d,%d)\n",
 			  data[5] & 0xffff, data[5] >> 16);
-		instr_out(data, hw_offset, 6, "src pitch %d\n",
+		instr_out(ctx, 6, "src pitch %d\n",
 			  (short)(data[6] & 0xffff));
-		instr_out(data, hw_offset, 7, "src offset 0x%08x\n", data[7]);
+		instr_out(ctx, 7, "src offset 0x%08x\n", data[7]);
 		return len;
 	}
 
@@ -462,7 +472,7 @@ decode_2d(uint32_t *data, uint32_t count, uint32_t hw_offset, int *failures)
 			unsigned int i;
 
 			len = 1;
-			instr_out(data, hw_offset, 0, "%s\n",
+			instr_out(ctx, 0, "%s\n",
 				  opcodes_2d[opcode].name);
 			if (opcodes_2d[opcode].max_len > 1) {
 				len = (data[0] & 0x000000ff) + 2;
@@ -474,51 +484,47 @@ decode_2d(uint32_t *data, uint32_t count, uint32_t hw_offset, int *failures)
 			}
 
 			for (i = 1; i < len; i++) {
-				if (i >= count)
-					BUFFER_FAIL(count, len,
-						    opcodes_2d[opcode].name);
-				instr_out(data, hw_offset, i, "dword %d\n", i);
+				instr_out(ctx, i, "dword %d\n", i);
 			}
 
 			return len;
 		}
 	}
 
-	instr_out(data, hw_offset, 0, "2D UNKNOWN\n");
-	(*failures)++;
+	instr_out(ctx, 0, "2D UNKNOWN\n");
 	return 1;
 }
 
 static int
-decode_3d_1c(uint32_t *data, uint32_t count, uint32_t hw_offset, int *failures)
+decode_3d_1c(struct drm_intel_decode *ctx)
 {
+	uint32_t *data = ctx->data;
 	uint32_t opcode;
 
 	opcode = (data[0] & 0x00f80000) >> 19;
 
 	switch (opcode) {
 	case 0x11:
-		instr_out(data, hw_offset, 0,
+		instr_out(ctx, 0,
 			  "3DSTATE_DEPTH_SUBRECTANGLE_DISABLE\n");
 		return 1;
 	case 0x10:
-		instr_out(data, hw_offset, 0, "3DSTATE_SCISSOR_ENABLE %s\n",
+		instr_out(ctx, 0, "3DSTATE_SCISSOR_ENABLE %s\n",
 			  data[0] & 1 ? "enabled" : "disabled");
 		return 1;
 	case 0x01:
-		instr_out(data, hw_offset, 0, "3DSTATE_MAP_COORD_SET_I830\n");
+		instr_out(ctx, 0, "3DSTATE_MAP_COORD_SET_I830\n");
 		return 1;
 	case 0x0a:
-		instr_out(data, hw_offset, 0, "3DSTATE_MAP_CUBE_I830\n");
+		instr_out(ctx, 0, "3DSTATE_MAP_CUBE_I830\n");
 		return 1;
 	case 0x05:
-		instr_out(data, hw_offset, 0, "3DSTATE_MAP_TEX_STREAM_I830\n");
+		instr_out(ctx, 0, "3DSTATE_MAP_TEX_STREAM_I830\n");
 		return 1;
 	}
 
-	instr_out(data, hw_offset, 0, "3D UNKNOWN: 3d_1c opcode = 0x%x\n",
+	instr_out(ctx, 0, "3D UNKNOWN: 3d_1c opcode = 0x%x\n",
 		  opcode);
-	(*failures)++;
 	return 1;
 }
 
@@ -750,78 +756,78 @@ i915_get_instruction_addr(uint32_t src_type, uint32_t src_nr, char *name)
 }
 
 static void
-i915_decode_alu1(uint32_t *data, uint32_t hw_offset,
+i915_decode_alu1(struct drm_intel_decode *ctx,
 		 int i, char *instr_prefix, const char *op_name)
 {
 	char dst[100], src0[100];
 
-	i915_get_instruction_dst(data, i, dst, 1);
-	i915_get_instruction_src0(data, i, src0);
+	i915_get_instruction_dst(ctx->data, i, dst, 1);
+	i915_get_instruction_src0(ctx->data, i, src0);
 
-	instr_out(data, hw_offset, i++, "%s: %s %s, %s\n", instr_prefix,
+	instr_out(ctx, i++, "%s: %s %s, %s\n", instr_prefix,
 		  op_name, dst, src0);
-	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
-	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+	instr_out(ctx, i++, "%s\n", instr_prefix);
+	instr_out(ctx, i++, "%s\n", instr_prefix);
 }
 
 static void
-i915_decode_alu2(uint32_t *data, uint32_t hw_offset,
+i915_decode_alu2(struct drm_intel_decode *ctx,
 		 int i, char *instr_prefix, const char *op_name)
 {
 	char dst[100], src0[100], src1[100];
 
-	i915_get_instruction_dst(data, i, dst, 1);
-	i915_get_instruction_src0(data, i, src0);
-	i915_get_instruction_src1(data, i, src1);
+	i915_get_instruction_dst(ctx->data, i, dst, 1);
+	i915_get_instruction_src0(ctx->data, i, src0);
+	i915_get_instruction_src1(ctx->data, i, src1);
 
-	instr_out(data, hw_offset, i++, "%s: %s %s, %s, %s\n", instr_prefix,
+	instr_out(ctx, i++, "%s: %s %s, %s, %s\n", instr_prefix,
 		  op_name, dst, src0, src1);
-	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
-	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+	instr_out(ctx, i++, "%s\n", instr_prefix);
+	instr_out(ctx, i++, "%s\n", instr_prefix);
 }
 
 static void
-i915_decode_alu3(uint32_t *data, uint32_t hw_offset,
+i915_decode_alu3(struct drm_intel_decode *ctx,
 		 int i, char *instr_prefix, const char *op_name)
 {
 	char dst[100], src0[100], src1[100], src2[100];
 
-	i915_get_instruction_dst(data, i, dst, 1);
-	i915_get_instruction_src0(data, i, src0);
-	i915_get_instruction_src1(data, i, src1);
-	i915_get_instruction_src2(data, i, src2);
+	i915_get_instruction_dst(ctx->data, i, dst, 1);
+	i915_get_instruction_src0(ctx->data, i, src0);
+	i915_get_instruction_src1(ctx->data, i, src1);
+	i915_get_instruction_src2(ctx->data, i, src2);
 
-	instr_out(data, hw_offset, i++, "%s: %s %s, %s, %s, %s\n", instr_prefix,
+	instr_out(ctx, i++, "%s: %s %s, %s, %s, %s\n", instr_prefix,
 		  op_name, dst, src0, src1, src2);
-	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
-	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+	instr_out(ctx, i++, "%s\n", instr_prefix);
+	instr_out(ctx, i++, "%s\n", instr_prefix);
 }
 
 static void
-i915_decode_tex(uint32_t *data, uint32_t hw_offset, int i,
+i915_decode_tex(struct drm_intel_decode *ctx, int i,
 		const char *instr_prefix, const char *tex_name)
 {
-	uint32_t t0 = data[i];
-	uint32_t t1 = data[i + 1];
+	uint32_t t0 = ctx->data[i];
+	uint32_t t1 = ctx->data[i + 1];
 	char dst_name[100];
 	char addr_name[100];
 	int sampler_nr;
 
-	i915_get_instruction_dst(data, i, dst_name, 0);
+	i915_get_instruction_dst(ctx->data, i, dst_name, 0);
 	i915_get_instruction_addr((t1 >> 24) & 0x7,
 				  (t1 >> 17) & 0xf, addr_name);
 	sampler_nr = t0 & 0xf;
 
-	instr_out(data, hw_offset, i++, "%s: %s %s, S%d, %s\n", instr_prefix,
+	instr_out(ctx, i++, "%s: %s %s, S%d, %s\n", instr_prefix,
 		  tex_name, dst_name, sampler_nr, addr_name);
-	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
-	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+	instr_out(ctx, i++, "%s\n", instr_prefix);
+	instr_out(ctx, i++, "%s\n", instr_prefix);
 }
 
 static void
-i915_decode_dcl(uint32_t *data, uint32_t hw_offset, int i, char *instr_prefix)
+i915_decode_dcl(struct drm_intel_decode *ctx, int i, char *instr_prefix)
 {
-	uint32_t d0 = data[i];
+	uint32_t d0 = ctx->data[i];
 	const char *sampletype;
 	int dcl_nr = (d0 >> 14) & 0xf;
 	const char *dcl_x = d0 & (1 << 10) ? "x" : "";
@@ -847,7 +853,7 @@ i915_decode_dcl(uint32_t *data, uint32_t hw_offset, int i, char *instr_prefix)
 				fprintf(out, "bad T%d.%s dcl mask\n", dcl_nr,
 					dcl_mask);
 			}
-			instr_out(data, hw_offset, i++, "%s: DCL T%d%s\n",
+			instr_out(ctx, i++, "%s: DCL T%d%s\n",
 				  instr_prefix, dcl_nr, dcl_mask);
 		} else {
 			if (strcmp(dcl_mask, ".xz") == 0)
@@ -861,21 +867,21 @@ i915_decode_dcl(uint32_t *data, uint32_t hw_offset, int i, char *instr_prefix)
 					dcl_mask);
 
 			if (dcl_nr == 8) {
-				instr_out(data, hw_offset, i++,
+				instr_out(ctx, i++,
 					  "%s: DCL DIFFUSE%s\n", instr_prefix,
 					  dcl_mask);
 			} else if (dcl_nr == 9) {
-				instr_out(data, hw_offset, i++,
+				instr_out(ctx, i++,
 					  "%s: DCL SPECULAR%s\n", instr_prefix,
 					  dcl_mask);
 			} else if (dcl_nr == 10) {
-				instr_out(data, hw_offset, i++,
+				instr_out(ctx, i++,
 					  "%s: DCL FOG%s\n", instr_prefix,
 					  dcl_mask);
 			}
 		}
-		instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
-		instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+		instr_out(ctx, i++, "%s\n", instr_prefix);
+		instr_out(ctx, i++, "%s\n", instr_prefix);
 		break;
 	case 3:
 		switch ((d0 >> 22) & 0x3) {
@@ -894,105 +900,105 @@ i915_decode_dcl(uint32_t *data, uint32_t hw_offset, int i, char *instr_prefix)
 		}
 		if (dcl_nr > 15)
 			fprintf(out, "bad S%d dcl register number\n", dcl_nr);
-		instr_out(data, hw_offset, i++, "%s: DCL S%d %s\n",
+		instr_out(ctx, i++, "%s: DCL S%d %s\n",
 			  instr_prefix, dcl_nr, sampletype);
-		instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
-		instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+		instr_out(ctx, i++, "%s\n", instr_prefix);
+		instr_out(ctx, i++, "%s\n", instr_prefix);
 		break;
 	default:
-		instr_out(data, hw_offset, i++, "%s: DCL RESERVED%d\n",
+		instr_out(ctx, i++, "%s: DCL RESERVED%d\n",
 			  instr_prefix, dcl_nr);
-		instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
-		instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+		instr_out(ctx, i++, "%s\n", instr_prefix);
+		instr_out(ctx, i++, "%s\n", instr_prefix);
 	}
 }
 
 static void
-i915_decode_instruction(uint32_t *data, uint32_t hw_offset,
+i915_decode_instruction(struct drm_intel_decode *ctx,
 			int i, char *instr_prefix)
 {
-	switch ((data[i] >> 24) & 0x1f) {
+	switch ((ctx->data[i] >> 24) & 0x1f) {
 	case 0x0:
-		instr_out(data, hw_offset, i++, "%s: NOP\n", instr_prefix);
-		instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
-		instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+		instr_out(ctx, i++, "%s: NOP\n", instr_prefix);
+		instr_out(ctx, i++, "%s\n", instr_prefix);
+		instr_out(ctx, i++, "%s\n", instr_prefix);
 		break;
 	case 0x01:
-		i915_decode_alu2(data, hw_offset, i, instr_prefix, "ADD");
+		i915_decode_alu2(ctx, i, instr_prefix, "ADD");
 		break;
 	case 0x02:
-		i915_decode_alu1(data, hw_offset, i, instr_prefix, "MOV");
+		i915_decode_alu1(ctx, i, instr_prefix, "MOV");
 		break;
 	case 0x03:
-		i915_decode_alu2(data, hw_offset, i, instr_prefix, "MUL");
+		i915_decode_alu2(ctx, i, instr_prefix, "MUL");
 		break;
 	case 0x04:
-		i915_decode_alu3(data, hw_offset, i, instr_prefix, "MAD");
+		i915_decode_alu3(ctx, i, instr_prefix, "MAD");
 		break;
 	case 0x05:
-		i915_decode_alu3(data, hw_offset, i, instr_prefix, "DP2ADD");
+		i915_decode_alu3(ctx, i, instr_prefix, "DP2ADD");
 		break;
 	case 0x06:
-		i915_decode_alu2(data, hw_offset, i, instr_prefix, "DP3");
+		i915_decode_alu2(ctx, i, instr_prefix, "DP3");
 		break;
 	case 0x07:
-		i915_decode_alu2(data, hw_offset, i, instr_prefix, "DP4");
+		i915_decode_alu2(ctx, i, instr_prefix, "DP4");
 		break;
 	case 0x08:
-		i915_decode_alu1(data, hw_offset, i, instr_prefix, "FRC");
+		i915_decode_alu1(ctx, i, instr_prefix, "FRC");
 		break;
 	case 0x09:
-		i915_decode_alu1(data, hw_offset, i, instr_prefix, "RCP");
+		i915_decode_alu1(ctx, i, instr_prefix, "RCP");
 		break;
 	case 0x0a:
-		i915_decode_alu1(data, hw_offset, i, instr_prefix, "RSQ");
+		i915_decode_alu1(ctx, i, instr_prefix, "RSQ");
 		break;
 	case 0x0b:
-		i915_decode_alu1(data, hw_offset, i, instr_prefix, "EXP");
+		i915_decode_alu1(ctx, i, instr_prefix, "EXP");
 		break;
 	case 0x0c:
-		i915_decode_alu1(data, hw_offset, i, instr_prefix, "LOG");
+		i915_decode_alu1(ctx, i, instr_prefix, "LOG");
 		break;
 	case 0x0d:
-		i915_decode_alu2(data, hw_offset, i, instr_prefix, "CMP");
+		i915_decode_alu2(ctx, i, instr_prefix, "CMP");
 		break;
 	case 0x0e:
-		i915_decode_alu2(data, hw_offset, i, instr_prefix, "MIN");
+		i915_decode_alu2(ctx, i, instr_prefix, "MIN");
 		break;
 	case 0x0f:
-		i915_decode_alu2(data, hw_offset, i, instr_prefix, "MAX");
+		i915_decode_alu2(ctx, i, instr_prefix, "MAX");
 		break;
 	case 0x10:
-		i915_decode_alu1(data, hw_offset, i, instr_prefix, "FLR");
+		i915_decode_alu1(ctx, i, instr_prefix, "FLR");
 		break;
 	case 0x11:
-		i915_decode_alu1(data, hw_offset, i, instr_prefix, "MOD");
+		i915_decode_alu1(ctx, i, instr_prefix, "MOD");
 		break;
 	case 0x12:
-		i915_decode_alu1(data, hw_offset, i, instr_prefix, "TRC");
+		i915_decode_alu1(ctx, i, instr_prefix, "TRC");
 		break;
 	case 0x13:
-		i915_decode_alu2(data, hw_offset, i, instr_prefix, "SGE");
+		i915_decode_alu2(ctx, i, instr_prefix, "SGE");
 		break;
 	case 0x14:
-		i915_decode_alu2(data, hw_offset, i, instr_prefix, "SLT");
+		i915_decode_alu2(ctx, i, instr_prefix, "SLT");
 		break;
 	case 0x15:
-		i915_decode_tex(data, hw_offset, i, instr_prefix, "TEXLD");
+		i915_decode_tex(ctx, i, instr_prefix, "TEXLD");
 		break;
 	case 0x16:
-		i915_decode_tex(data, hw_offset, i, instr_prefix, "TEXLDP");
+		i915_decode_tex(ctx, i, instr_prefix, "TEXLDP");
 		break;
 	case 0x17:
-		i915_decode_tex(data, hw_offset, i, instr_prefix, "TEXLDB");
+		i915_decode_tex(ctx, i, instr_prefix, "TEXLDB");
 		break;
 	case 0x19:
-		i915_decode_dcl(data, hw_offset, i, instr_prefix);
+		i915_decode_dcl(ctx, i, instr_prefix);
 		break;
 	default:
-		instr_out(data, hw_offset, i++, "%s: unknown\n", instr_prefix);
-		instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
-		instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+		instr_out(ctx, i++, "%s: unknown\n", instr_prefix);
+		instr_out(ctx, i++, "%s\n", instr_prefix);
+		instr_out(ctx, i++, "%s\n", instr_prefix);
 		break;
 	}
 }
@@ -1168,12 +1174,13 @@ decode_sample_filter(uint32_t mode)
 }
 
 static int
-decode_3d_1d(uint32_t *data, uint32_t count,
-	     uint32_t hw_offset, uint32_t devid, int *failures)
+decode_3d_1d(struct drm_intel_decode *ctx)
 {
 	unsigned int len, i, c, idx, word, map, sampler, instr;
 	const char *format, *zformat, *type;
 	uint32_t opcode;
+	uint32_t *data = ctx->data;
+	uint32_t devid = ctx->devid;
 
 	struct {
 		uint32_t opcode;
@@ -1210,67 +1217,44 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 		 * required in another, and 0 length LOAD_INDIRECTs
 		 * appear to cause no harm at least.
 		 */
-		instr_out(data, hw_offset, 0, "3DSTATE_LOAD_INDIRECT\n");
+		instr_out(ctx, 0, "3DSTATE_LOAD_INDIRECT\n");
 		len = (data[0] & 0x000000ff) + 1;
 		i = 1;
 		if (data[0] & (0x01 << 8)) {
-			if (i + 2 >= count)
-				BUFFER_FAIL(count, len,
-					    "3DSTATE_LOAD_INDIRECT");
-			instr_out(data, hw_offset, i++, "SIS.0\n");
-			instr_out(data, hw_offset, i++, "SIS.1\n");
+			instr_out(ctx, i++, "SIS.0\n");
+			instr_out(ctx, i++, "SIS.1\n");
 		}
 		if (data[0] & (0x02 << 8)) {
-			if (i + 1 >= count)
-				BUFFER_FAIL(count, len,
-					    "3DSTATE_LOAD_INDIRECT");
-			instr_out(data, hw_offset, i++, "DIS.0\n");
+			instr_out(ctx, i++, "DIS.0\n");
 		}
 		if (data[0] & (0x04 << 8)) {
-			if (i + 2 >= count)
-				BUFFER_FAIL(count, len,
-					    "3DSTATE_LOAD_INDIRECT");
-			instr_out(data, hw_offset, i++, "SSB.0\n");
-			instr_out(data, hw_offset, i++, "SSB.1\n");
+			instr_out(ctx, i++, "SSB.0\n");
+			instr_out(ctx, i++, "SSB.1\n");
 		}
 		if (data[0] & (0x08 << 8)) {
-			if (i + 2 >= count)
-				BUFFER_FAIL(count, len,
-					    "3DSTATE_LOAD_INDIRECT");
-			instr_out(data, hw_offset, i++, "MSB.0\n");
-			instr_out(data, hw_offset, i++, "MSB.1\n");
+			instr_out(ctx, i++, "MSB.0\n");
+			instr_out(ctx, i++, "MSB.1\n");
 		}
 		if (data[0] & (0x10 << 8)) {
-			if (i + 2 >= count)
-				BUFFER_FAIL(count, len,
-					    "3DSTATE_LOAD_INDIRECT");
-			instr_out(data, hw_offset, i++, "PSP.0\n");
-			instr_out(data, hw_offset, i++, "PSP.1\n");
+			instr_out(ctx, i++, "PSP.0\n");
+			instr_out(ctx, i++, "PSP.1\n");
 		}
 		if (data[0] & (0x20 << 8)) {
-			if (i + 2 >= count)
-				BUFFER_FAIL(count, len,
-					    "3DSTATE_LOAD_INDIRECT");
-			instr_out(data, hw_offset, i++, "PSC.0\n");
-			instr_out(data, hw_offset, i++, "PSC.1\n");
+			instr_out(ctx, i++, "PSC.0\n");
+			instr_out(ctx, i++, "PSC.1\n");
 		}
 		if (len != i) {
 			fprintf(out, "Bad count in 3DSTATE_LOAD_INDIRECT\n");
-			(*failures)++;
 			return len;
 		}
 		return len;
 	case 0x04:
-		instr_out(data, hw_offset, 0,
+		instr_out(ctx, 0,
 			  "3DSTATE_LOAD_STATE_IMMEDIATE_1\n");
 		len = (data[0] & 0x0000000f) + 2;
 		i = 1;
 		for (word = 0; word <= 8; word++) {
 			if (data[0] & (1 << (4 + word))) {
-				if (i >= count)
-					BUFFER_FAIL(count, len,
-						    "3DSTATE_LOAD_STATE_IMMEDIATE_1");
-
 				/* save vertex state for decode */
 				if (!IS_GEN2(devid)) {
 					int tex_num;
@@ -1286,7 +1270,7 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 
 					switch (word) {
 					case 0:
-						instr_out(data, hw_offset, i,
+						instr_out(ctx, i,
 							  "S0: vbo offset: 0x%08x%s\n",
 							  data[i] & (~1),
 							  data[i] & 1 ?
@@ -1294,7 +1278,7 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 							  : "");
 						break;
 					case 1:
-						instr_out(data, hw_offset, i,
+						instr_out(ctx, i,
 							  "S1: vertex width: %i, vertex pitch: %i\n",
 							  (data[i] >> 24) &
 							  0x3f,
@@ -1302,7 +1286,7 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 							  0x3f);
 						break;
 					case 2:
-						instr_out(data, hw_offset, i,
+						instr_out(ctx, i,
 							  "S2: texcoord formats: ");
 						for (tex_num = 0;
 						     tex_num < 8; tex_num++) {
@@ -1350,7 +1334,7 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 
 						break;
 					case 3:
-						instr_out(data, hw_offset, i,
+						instr_out(ctx, i,
 							  "S3: not documented\n");
 						break;
 					case 4:
@@ -1411,8 +1395,7 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 								    "XYWF,";
 								break;
 							}
-							instr_out(data,
-								  hw_offset, i,
+							instr_out(ctx, i,
 								  "S4: point_width=%i, line_width=%.1f,"
 								  "%s%s%s%s%s cullmode=%s, vfmt=%s%s%s%s%s%s "
 								  "%s%s%s%s%s\n",
@@ -1507,8 +1490,7 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 						}
 					case 5:
 						{
-							instr_out(data,
-								  hw_offset, i,
+							instr_out(ctx, i,
 								  "S5:%s%s%s%s%s"
 								  "%s%s%s%s stencil_ref=0x%x, stencil_test=%s, "
 								  "stencil_fail=%s, stencil_pass_z_fail=%s, "
@@ -1603,7 +1585,7 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 						}
 						break;
 					case 6:
-						instr_out(data, hw_offset, i,
+						instr_out(ctx, i,
 							  "S6: %salpha_test=%s, alpha_ref=0x%x, "
 							  "depth_test=%s, %ssrc_blnd_fct=%s, dst_blnd_fct=%s, "
 							  "%s%stristrip_provoking_vertex=%i\n",
@@ -1636,13 +1618,13 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 							  data[i] & (0x3));
 						break;
 					case 7:
-						instr_out(data, hw_offset, i,
+						instr_out(ctx, i,
 							  "S7: depth offset constant: 0x%08x\n",
 							  data[i]);
 						break;
 					}
 				} else {
-					instr_out(data, hw_offset, i,
+					instr_out(ctx, i,
 						  "S%d: 0x%08x\n", i, data[i]);
 				}
 				i++;
@@ -1651,37 +1633,32 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 		if (len != i) {
 			fprintf(out,
 				"Bad count in 3DSTATE_LOAD_STATE_IMMEDIATE_1\n");
-			(*failures)++;
 		}
 		return len;
 	case 0x03:
-		instr_out(data, hw_offset, 0,
+		instr_out(ctx, 0,
 			  "3DSTATE_LOAD_STATE_IMMEDIATE_2\n");
 		len = (data[0] & 0x0000000f) + 2;
 		i = 1;
 		for (word = 6; word <= 14; word++) {
 			if (data[0] & (1 << word)) {
-				if (i >= count)
-					BUFFER_FAIL(count, len,
-						    "3DSTATE_LOAD_STATE_IMMEDIATE_2");
-
 				if (word == 6)
-					instr_out(data, hw_offset, i++,
+					instr_out(ctx, i++,
 						  "TBCF\n");
 				else if (word >= 7 && word <= 10) {
-					instr_out(data, hw_offset, i++,
+					instr_out(ctx, i++,
 						  "TB%dC\n", word - 7);
-					instr_out(data, hw_offset, i++,
+					instr_out(ctx, i++,
 						  "TB%dA\n", word - 7);
 				} else if (word >= 11 && word <= 14) {
-					instr_out(data, hw_offset, i,
+					instr_out(ctx, i,
 						  "TM%dS0: offset=0x%08x, %s\n",
 						  word - 11,
 						  data[i] & 0xfffffffe,
 						  data[i] & 1 ? "use fence" :
 						  "");
 					i++;
-					instr_out(data, hw_offset, i,
+					instr_out(ctx, i,
 						  "TM%dS1: height=%i, width=%i, %s\n",
 						  word - 11, data[i] >> 21,
 						  (data[i] >> 10) & 0x3ff,
@@ -1690,14 +1667,14 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 								 "x-tiled") :
 						  "");
 					i++;
-					instr_out(data, hw_offset, i,
+					instr_out(ctx, i,
 						  "TM%dS2: pitch=%i, \n",
 						  word - 11,
 						  ((data[i] >> 21) + 1) * 4);
 					i++;
-					instr_out(data, hw_offset, i++,
+					instr_out(ctx, i++,
 						  "TM%dS3\n", word - 11);
-					instr_out(data, hw_offset, i++,
+					instr_out(ctx, i++,
 						  "TM%dS4: dflt color\n",
 						  word - 11);
 				}
@@ -1706,13 +1683,12 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 		if (len != i) {
 			fprintf(out,
 				"Bad count in 3DSTATE_LOAD_STATE_IMMEDIATE_2\n");
-			(*failures)++;
 		}
 		return len;
 	case 0x00:
-		instr_out(data, hw_offset, 0, "3DSTATE_MAP_STATE\n");
+		instr_out(ctx, 0, "3DSTATE_MAP_STATE\n");
 		len = (data[0] & 0x0000003f) + 2;
-		instr_out(data, hw_offset, 1, "mask\n");
+		instr_out(ctx, 1, "mask\n");
 
 		i = 2;
 		for (map = 0; map <= 15; map++) {
@@ -1720,12 +1696,8 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 				int width, height, pitch, dword;
 				const char *tiling;
 
-				if (i + 3 >= count)
-					BUFFER_FAIL(count, len,
-						    "3DSTATE_MAP_STATE");
-
 				dword = data[i];
-				instr_out(data, hw_offset, i++,
+				instr_out(ctx, i++,
 					  "map %d MS2 %s%s%s\n", map,
 					  dword & (1 << 31) ?
 					  "untrusted surface, " : "",
@@ -1892,7 +1864,7 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 					break;
 				}
 				dword = data[i];
-				instr_out(data, hw_offset, i++,
+				instr_out(ctx, i++,
 					  "map %d MS3 [width=%d, height=%d, format=%s%s, tiling=%s%s]\n",
 					  map, width, height, type, format,
 					  tiling,
@@ -1902,7 +1874,7 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 				dword = data[i];
 				pitch =
 				    4 * (((dword >> 21) & ((1 << 11) - 1)) + 1);
-				instr_out(data, hw_offset, i++,
+				instr_out(ctx, i++,
 					  "map %d MS4 [pitch=%d, max_lod=%i, vol_depth=%i, cube_face_ena=%x, %s]\n",
 					  map, pitch, (dword >> 9) & 0x3f,
 					  dword & 0xff, (dword >> 15) & 0x3f,
@@ -1912,31 +1884,27 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 		}
 		if (len != i) {
 			fprintf(out, "Bad count in 3DSTATE_MAP_STATE\n");
-			(*failures)++;
 			return len;
 		}
 		return len;
 	case 0x06:
-		instr_out(data, hw_offset, 0,
+		instr_out(ctx, 0,
 			  "3DSTATE_PIXEL_SHADER_CONSTANTS\n");
 		len = (data[0] & 0x000000ff) + 2;
 
 		i = 2;
 		for (c = 0; c <= 31; c++) {
 			if (data[1] & (1 << c)) {
-				if (i + 4 >= count)
-					BUFFER_FAIL(count, len,
-						    "3DSTATE_PIXEL_SHADER_CONSTANTS");
-				instr_out(data, hw_offset, i, "C%d.X = %f\n", c,
+				instr_out(ctx, i, "C%d.X = %f\n", c,
 					  int_as_float(data[i]));
 				i++;
-				instr_out(data, hw_offset, i, "C%d.Y = %f\n",
+				instr_out(ctx, i, "C%d.Y = %f\n",
 					  c, int_as_float(data[i]));
 				i++;
-				instr_out(data, hw_offset, i, "C%d.Z = %f\n",
+				instr_out(ctx, i, "C%d.Z = %f\n",
 					  c, int_as_float(data[i]));
 				i++;
-				instr_out(data, hw_offset, i, "C%d.W = %f\n",
+				instr_out(ctx, i, "C%d.W = %f\n",
 					  c, int_as_float(data[i]));
 				i++;
 			}
@@ -1944,26 +1912,21 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 		if (len != i) {
 			fprintf(out,
 				"Bad count in 3DSTATE_PIXEL_SHADER_CONSTANTS\n");
-			(*failures)++;
 		}
 		return len;
 	case 0x05:
-		instr_out(data, hw_offset, 0, "3DSTATE_PIXEL_SHADER_PROGRAM\n");
+		instr_out(ctx, 0, "3DSTATE_PIXEL_SHADER_PROGRAM\n");
 		len = (data[0] & 0x000000ff) + 2;
 		if ((len - 1) % 3 != 0 || len > 370) {
 			fprintf(out,
 				"Bad count in 3DSTATE_PIXEL_SHADER_PROGRAM\n");
-			(*failures)++;
 		}
 		i = 1;
 		for (instr = 0; instr < (len - 1) / 3; instr++) {
 			char instr_prefix[10];
 
-			if (i + 3 >= count)
-				BUFFER_FAIL(count, len,
-					    "3DSTATE_PIXEL_SHADER_PROGRAM");
 			sprintf(instr_prefix, "PS%03d", instr);
-			i915_decode_instruction(data, hw_offset, i,
+			i915_decode_instruction(ctx, i,
 						instr_prefix);
 			i += 3;
 		}
@@ -1971,17 +1934,15 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 	case 0x01:
 		if (IS_GEN2(devid))
 			break;
-		instr_out(data, hw_offset, 0, "3DSTATE_SAMPLER_STATE\n");
-		instr_out(data, hw_offset, 1, "mask\n");
+		instr_out(ctx, 0, "3DSTATE_SAMPLER_STATE\n");
+		instr_out(ctx, 1, "mask\n");
 		len = (data[0] & 0x0000003f) + 2;
 		i = 2;
 		for (sampler = 0; sampler <= 15; sampler++) {
 			if (data[1] & (1 << sampler)) {
 				uint32_t dword;
 				const char *mip_filter = "";
-				if (i + 3 >= count)
-					BUFFER_FAIL(count, len,
-						    "3DSTATE_SAMPLER_STATE");
+
 				dword = data[i];
 				switch ((dword >> 20) & 0x3) {
 				case 0:
@@ -1994,7 +1955,7 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 					mip_filter = "linear";
 					break;
 				}
-				instr_out(data, hw_offset, i++,
+				instr_out(ctx, i++,
 					  "sampler %d SS2:%s%s%s "
 					  "base_mip_level=%i, mip_filter=%s, mag_filter=%s, min_filter=%s "
 					  "lod_bias=%.2f,%s max_aniso=%i, shadow_func=%s\n",
@@ -2013,7 +1974,7 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 					  dword & (1 << 3) ? 4 : 2,
 					  decode_compare_func(dword));
 				dword = data[i];
-				instr_out(data, hw_offset, i++,
+				instr_out(ctx, i++,
 					  "sampler %d SS3: min_lod=%.2f,%s "
 					  "tcmode_x=%s, tcmode_y=%s, tcmode_z=%s,%s texmap_idx=%i,%s\n",
 					  sampler,
@@ -2029,14 +1990,13 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 					  dword & (1 << 0) ? " deinterlacer," :
 					  "");
 				dword = data[i];
-				instr_out(data, hw_offset, i++,
+				instr_out(ctx, i++,
 					  "sampler %d SS4: border color\n",
 					  sampler);
 			}
 		}
 		if (len != i) {
 			fprintf(out, "Bad count in 3DSTATE_SAMPLER_STATE\n");
-			(*failures)++;
 		}
 		return len;
 	case 0x85:
@@ -2045,11 +2005,8 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 		if (len != 2)
 			fprintf(out,
 				"Bad count in 3DSTATE_DEST_BUFFER_VARIABLES\n");
-		if (count < 2)
-			BUFFER_FAIL(count, len,
-				    "3DSTATE_DEST_BUFFER_VARIABLES");
 
-		instr_out(data, hw_offset, 0,
+		instr_out(ctx, 0,
 			  "3DSTATE_DEST_BUFFER_VARIABLES\n");
 
 		switch ((data[1] >> 8) & 0xf) {
@@ -2104,7 +2061,7 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 			zformat = "BAD";
 			break;
 		}
-		instr_out(data, hw_offset, 1,
+		instr_out(ctx, 1,
 			  "%s format, %s depth format, early Z %sabled\n",
 			  format, zformat,
 			  (data[1] & (1 << 31)) ? "en" : "dis");
@@ -2118,8 +2075,6 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 			if (len != 3)
 				fprintf(out,
 					"Bad count in 3DSTATE_BUFFER_INFO\n");
-			if (count < 3)
-				BUFFER_FAIL(count, len, "3DSTATE_BUFFER_INFO");
 
 			switch ((data[1] >> 24) & 0x7) {
 			case 0x3:
@@ -2139,12 +2094,12 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 			else if (data[1] & (1 << 22))
 				tiling = data[1] & (1 << 21) ? "Y" : "X";
 
-			instr_out(data, hw_offset, 0, "3DSTATE_BUFFER_INFO\n");
-			instr_out(data, hw_offset, 1,
+			instr_out(ctx, 0, "3DSTATE_BUFFER_INFO\n");
+			instr_out(ctx, 1,
 				  "%s, tiling = %s, pitch=%d\n", name, tiling,
 				  data[1] & 0xffff);
 
-			instr_out(data, hw_offset, 2, "address\n");
+			instr_out(ctx, 2, "address\n");
 			return len;
 		}
 	case 0x81:
@@ -2153,13 +2108,11 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 		if (len != 3)
 			fprintf(out,
 				"Bad count in 3DSTATE_SCISSOR_RECTANGLE\n");
-		if (count < 3)
-			BUFFER_FAIL(count, len, "3DSTATE_SCISSOR_RECTANGLE");
 
-		instr_out(data, hw_offset, 0, "3DSTATE_SCISSOR_RECTANGLE\n");
-		instr_out(data, hw_offset, 1, "(%d,%d)\n",
+		instr_out(ctx, 0, "3DSTATE_SCISSOR_RECTANGLE\n");
+		instr_out(ctx, 1, "(%d,%d)\n",
 			  data[1] & 0xffff, data[1] >> 16);
-		instr_out(data, hw_offset, 2, "(%d,%d)\n",
+		instr_out(ctx, 2, "(%d,%d)\n",
 			  data[2] & 0xffff, data[2] >> 16);
 
 		return len;
@@ -2169,17 +2122,15 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 		if (len != 5)
 			fprintf(out,
 				"Bad count in 3DSTATE_DRAWING_RECTANGLE\n");
-		if (count < 5)
-			BUFFER_FAIL(count, len, "3DSTATE_DRAWING_RECTANGLE");
 
-		instr_out(data, hw_offset, 0, "3DSTATE_DRAWING_RECTANGLE\n");
-		instr_out(data, hw_offset, 1, "%s\n",
+		instr_out(ctx, 0, "3DSTATE_DRAWING_RECTANGLE\n");
+		instr_out(ctx, 1, "%s\n",
 			  data[1] & (1 << 30) ? "depth ofs disabled " : "");
-		instr_out(data, hw_offset, 2, "(%d,%d)\n",
+		instr_out(ctx, 2, "(%d,%d)\n",
 			  data[2] & 0xffff, data[2] >> 16);
-		instr_out(data, hw_offset, 3, "(%d,%d)\n",
+		instr_out(ctx, 3, "(%d,%d)\n",
 			  data[3] & 0xffff, data[3] >> 16);
-		instr_out(data, hw_offset, 4, "(%d,%d)\n",
+		instr_out(ctx, 4, "(%d,%d)\n",
 			  data[4] & 0xffff, data[4] >> 16);
 
 		return len;
@@ -2188,21 +2139,19 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 
 		if (len != 7)
 			fprintf(out, "Bad count in 3DSTATE_CLEAR_PARAMETERS\n");
-		if (count < 7)
-			BUFFER_FAIL(count, len, "3DSTATE_CLEAR_PARAMETERS");
 
-		instr_out(data, hw_offset, 0, "3DSTATE_CLEAR_PARAMETERS\n");
-		instr_out(data, hw_offset, 1, "prim_type=%s, clear=%s%s%s\n",
+		instr_out(ctx, 0, "3DSTATE_CLEAR_PARAMETERS\n");
+		instr_out(ctx, 1, "prim_type=%s, clear=%s%s%s\n",
 			  data[1] & (1 << 16) ? "CLEAR_RECT" : "ZONE_INIT",
 			  data[1] & (1 << 2) ? "color," : "",
 			  data[1] & (1 << 1) ? "depth," : "",
 			  data[1] & (1 << 0) ? "stencil," : "");
-		instr_out(data, hw_offset, 2, "clear color\n");
-		instr_out(data, hw_offset, 3, "clear depth/stencil\n");
-		instr_out(data, hw_offset, 4, "color value (rgba8888)\n");
-		instr_out(data, hw_offset, 5, "depth value %f\n",
+		instr_out(ctx, 2, "clear color\n");
+		instr_out(ctx, 3, "clear depth/stencil\n");
+		instr_out(ctx, 4, "color value (rgba8888)\n");
+		instr_out(ctx, 5, "depth value %f\n",
 			  int_as_float(data[5]));
-		instr_out(data, hw_offset, 6, "clear stencil\n");
+		instr_out(ctx, 6, "clear stencil\n");
 		return len;
 	}
 
@@ -2214,7 +2163,7 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 		if (((data[0] & 0x00ff0000) >> 16) == opcode_3d_1d->opcode) {
 			len = 1;
 
-			instr_out(data, hw_offset, 0, "%s\n",
+			instr_out(ctx, 0, "%s\n",
 				  opcode_3d_1d->name);
 			if (opcode_3d_1d->max_len > 1) {
 				len = (data[0] & 0x0000ffff) + 2;
@@ -2222,31 +2171,27 @@ decode_3d_1d(uint32_t *data, uint32_t count,
 				    len > opcode_3d_1d->max_len) {
 					fprintf(out, "Bad count in %s\n",
 						opcode_3d_1d->name);
-					(*failures)++;
 				}
 			}
 
 			for (i = 1; i < len; i++) {
-				if (i >= count)
-					BUFFER_FAIL(count, len,
-						    opcode_3d_1d->name);
-				instr_out(data, hw_offset, i, "dword %d\n", i);
+				instr_out(ctx, i, "dword %d\n", i);
 			}
 
 			return len;
 		}
 	}
 
-	instr_out(data, hw_offset, 0, "3D UNKNOWN: 3d_1d opcode = 0x%x\n",
+	instr_out(ctx, 0, "3D UNKNOWN: 3d_1d opcode = 0x%x\n",
 		  opcode);
-	(*failures)++;
 	return 1;
 }
 
 static int
-decode_3d_primitive(uint32_t *data, uint32_t count, uint32_t hw_offset,
-		    int *failures)
+decode_3d_primitive(struct drm_intel_decode *ctx)
 {
+	uint32_t *data = ctx->data;
+	uint32_t count = ctx->count;
 	char immediate = (data[0] & (1 << 23)) == 0;
 	unsigned int len, i, j, ret;
 	const char *primtype;
@@ -2297,14 +2242,14 @@ decode_3d_primitive(uint32_t *data, uint32_t count, uint32_t hw_offset,
 	/* XXX: 3DPRIM_DIB not supported */
 	if (immediate) {
 		len = (data[0] & 0x0003ffff) + 2;
-		instr_out(data, hw_offset, 0, "3DPRIMITIVE inline %s\n",
+		instr_out(ctx, 0, "3DPRIMITIVE inline %s\n",
 			  primtype);
 		if (count < len)
 			BUFFER_FAIL(count, len, "3DPRIMITIVE inline");
 		if (!saved_s2_set || !saved_s4_set) {
 			fprintf(out, "unknown vertex format\n");
 			for (i = 1; i < len; i++) {
-				instr_out(data, hw_offset, i,
+				instr_out(ctx, i,
 					  "           vertex data (%f float)\n",
 					  int_as_float(data[i]));
 			}
@@ -2315,7 +2260,7 @@ decode_3d_primitive(uint32_t *data, uint32_t count, uint32_t hw_offset,
 
 #define VERTEX_OUT(fmt, ...) do {					\
     if (i < len)							\
-	instr_out(data, hw_offset, i, " V%d."fmt"\n", vertex, __VA_ARGS__); \
+	instr_out(ctx, i, " V%d."fmt"\n", vertex, __VA_ARGS__); \
     else								\
 	fprintf(out, " missing data in V%d\n", vertex);			\
     i++;								\
@@ -2438,7 +2383,7 @@ decode_3d_primitive(uint32_t *data, uint32_t count, uint32_t hw_offset,
 				BUFFER_FAIL(count, (len + 1) / 2 + 1,
 					    "3DPRIMITIVE random indirect");
 			}
-			instr_out(data, hw_offset, 0,
+			instr_out(ctx, 0,
 				  "3DPRIMITIVE random indirect %s (%d)\n",
 				  primtype, len);
 			if (len == 0) {
@@ -2447,18 +2392,18 @@ decode_3d_primitive(uint32_t *data, uint32_t count, uint32_t hw_offset,
 				 */
 				for (i = 1; i < count; i++) {
 					if ((data[i] & 0xffff) == 0xffff) {
-						instr_out(data, hw_offset, i,
+						instr_out(ctx, i,
 							  "    indices: (terminator)\n");
 						ret = i;
 						goto out;
 					} else if ((data[i] >> 16) == 0xffff) {
-						instr_out(data, hw_offset, i,
+						instr_out(ctx, i,
 							  "    indices: 0x%04x, (terminator)\n",
 							  data[i] & 0xffff);
 						ret = i;
 						goto out;
 					} else {
-						instr_out(data, hw_offset, i,
+						instr_out(ctx, i,
 							  "    indices: 0x%04x, 0x%04x\n",
 							  data[i] & 0xffff,
 							  data[i] >> 16);
@@ -2466,18 +2411,17 @@ decode_3d_primitive(uint32_t *data, uint32_t count, uint32_t hw_offset,
 				}
 				fprintf(out,
 					"3DPRIMITIVE: no terminator found in index buffer\n");
-				(*failures)++;
 				ret = count;
 				goto out;
 			} else {
 				/* fixed size vertex index buffer */
 				for (j = 1, i = 0; i < len; i += 2, j++) {
 					if (i * 2 == len - 1) {
-						instr_out(data, hw_offset, j,
+						instr_out(ctx, j,
 							  "    indices: 0x%04x\n",
 							  data[j] & 0xffff);
 					} else {
-						instr_out(data, hw_offset, j,
+						instr_out(ctx, j,
 							  "    indices: 0x%04x, 0x%04x\n",
 							  data[j] & 0xffff,
 							  data[j] >> 16);
@@ -2488,13 +2432,10 @@ decode_3d_primitive(uint32_t *data, uint32_t count, uint32_t hw_offset,
 			goto out;
 		} else {
 			/* sequential vertex access */
-			if (count < 2)
-				BUFFER_FAIL(count, 2,
-					    "3DPRIMITIVE seq indirect");
-			instr_out(data, hw_offset, 0,
+			instr_out(ctx, 0,
 				  "3DPRIMITIVE sequential indirect %s, %d starting from "
 				  "%d\n", primtype, len, data[1] & 0xffff);
-			instr_out(data, hw_offset, 1, "           start\n");
+			instr_out(ctx, 1, "           start\n");
 			ret = 2;
 			goto out;
 		}
@@ -2507,11 +2448,11 @@ out:
 }
 
 static int
-decode_3d(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid,
-	  int *failures)
+decode_3d(struct drm_intel_decode *ctx)
 {
 	uint32_t opcode;
 	unsigned int idx;
+	uint32_t *data = ctx->data;
 
 	struct {
 		uint32_t opcode;
@@ -2534,11 +2475,11 @@ decode_3d(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid,
 
 	switch (opcode) {
 	case 0x1f:
-		return decode_3d_primitive(data, count, hw_offset, failures);
+		return decode_3d_primitive(ctx);
 	case 0x1d:
-		return decode_3d_1d(data, count, hw_offset, devid, failures);
+		return decode_3d_1d(ctx);
 	case 0x1c:
-		return decode_3d_1c(data, count, hw_offset, failures);
+		return decode_3d_1c(ctx);
 	}
 
 	for (idx = 0; idx < ARRAY_SIZE(opcodes_3d); idx++) {
@@ -2546,7 +2487,7 @@ decode_3d(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid,
 		if (opcode == opcode_3d->opcode) {
 			unsigned int len = 1, i;
 
-			instr_out(data, hw_offset, 0, "%s\n", opcode_3d->name);
+			instr_out(ctx, 0, "%s\n", opcode_3d->name);
 			if (opcode_3d->max_len > 1) {
 				len = (data[0] & 0xff) + 2;
 				if (len < opcode_3d->min_len ||
@@ -2557,17 +2498,13 @@ decode_3d(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid,
 			}
 
 			for (i = 1; i < len; i++) {
-				if (i >= count)
-					BUFFER_FAIL(count, len,
-						    opcode_3d->name);
-				instr_out(data, hw_offset, i, "dword %d\n", i);
+				instr_out(ctx, i, "dword %d\n", i);
 			}
 			return len;
 		}
 	}
 
-	instr_out(data, hw_offset, 0, "3D UNKNOWN: 3d opcode = 0x%x\n", opcode);
-	(*failures)++;
+	instr_out(ctx, 0, "3D UNKNOWN: 3d opcode = 0x%x\n", opcode);
 	return 1;
 }
 
@@ -2640,10 +2577,8 @@ static const char *get_965_element_component(uint32_t data, int component)
 	}
 }
 
-static const char *get_965_prim_type(uint32_t data)
+static const char *get_965_prim_type(uint32_t primtype)
 {
-	uint32_t primtype = (data >> 10) & 0x1f;
-
 	switch (primtype) {
 	case 0x01:
 		return "point list";
@@ -2693,15 +2628,13 @@ static const char *get_965_prim_type(uint32_t data)
 }
 
 static int
-i965_decode_urb_fence(uint32_t *data, uint32_t hw_offset, int len, uint32_t count,
-		      int *failures)
+i965_decode_urb_fence(struct drm_intel_decode *ctx, int len)
 {
 	uint32_t vs_fence, clip_fence, gs_fence, sf_fence, vfe_fence, cs_fence;
+	uint32_t *data = ctx->data;
 
 	if (len != 3)
 		fprintf(out, "Bad count in URB_FENCE\n");
-	if (count < 3)
-		BUFFER_FAIL(count, len, "URB_FENCE");
 
 	vs_fence = data[1] & 0x3ff;
 	gs_fence = (data[1] >> 10) & 0x3ff;
@@ -2710,17 +2643,17 @@ i965_decode_urb_fence(uint32_t *data, uint32_t hw_offset, int len, uint32_t coun
 	vfe_fence = (data[2] >> 10) & 0x3ff;
 	cs_fence = (data[2] >> 20) & 0x7ff;
 
-	instr_out(data, hw_offset, 0, "URB_FENCE: %s%s%s%s%s%s\n",
+	instr_out(ctx, 0, "URB_FENCE: %s%s%s%s%s%s\n",
 		  (data[0] >> 13) & 1 ? "cs " : "",
 		  (data[0] >> 12) & 1 ? "vfe " : "",
 		  (data[0] >> 11) & 1 ? "sf " : "",
 		  (data[0] >> 10) & 1 ? "clip " : "",
 		  (data[0] >> 9) & 1 ? "gs " : "",
 		  (data[0] >> 8) & 1 ? "vs " : "");
-	instr_out(data, hw_offset, 1,
+	instr_out(ctx, 1,
 		  "vs fence: %d, clip_fence: %d, gs_fence: %d\n",
 		  vs_fence, clip_fence, gs_fence);
-	instr_out(data, hw_offset, 2,
+	instr_out(ctx, 2,
 		  "sf fence: %d, vfe_fence: %d, cs_fence: %d\n",
 		  sf_fence, vfe_fence, cs_fence);
 	if (gs_fence < vs_fence)
@@ -2736,122 +2669,530 @@ i965_decode_urb_fence(uint32_t *data, uint32_t hw_offset, int len, uint32_t coun
 }
 
 static void
-state_base_out(uint32_t *data, uint32_t hw_offset, unsigned int index,
+state_base_out(struct drm_intel_decode *ctx, unsigned int index,
 	       const char *name)
 {
-	if (data[index] & 1) {
-		instr_out(data, hw_offset, index,
+	if (ctx->data[index] & 1) {
+		instr_out(ctx, index,
 			  "%s state base address 0x%08x\n", name,
-			  data[index] & ~1);
+			  ctx->data[index] & ~1);
 	} else {
-		instr_out(data, hw_offset, index, "%s state base not updated\n",
+		instr_out(ctx, index, "%s state base not updated\n",
 			  name);
 	}
 }
 
 static void
-state_max_out(uint32_t *data, uint32_t hw_offset, unsigned int index,
+state_max_out(struct drm_intel_decode *ctx, unsigned int index,
 	      const char *name)
 {
-	if (data[index] & 1) {
-		if (data[index] == 1) {
-			instr_out(data, hw_offset, index,
+	if (ctx->data[index] & 1) {
+		if (ctx->data[index] == 1) {
+			instr_out(ctx, index,
 				  "%s state upper bound disabled\n", name);
 		} else {
-			instr_out(data, hw_offset, index,
+			instr_out(ctx, index,
 				  "%s state upper bound 0x%08x\n", name,
-				  data[index] & ~1);
+				  ctx->data[index] & ~1);
 		}
 	} else {
-		instr_out(data, hw_offset, index,
+		instr_out(ctx, index,
 			  "%s state upper bound not updated\n", name);
 	}
 }
 
 static int
-decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid,
-	      int *failures)
+gen7_3DSTATE_VIEWPORT_STATE_POINTERS_CC(struct drm_intel_decode *ctx)
+{
+	instr_out(ctx, 0, "3DSTATE_VIEWPORT_STATE_POINTERS_CC\n");
+	instr_out(ctx, 1, "pointer to CC viewport\n");
+
+	return 2;
+}
+
+static int
+gen7_3DSTATE_VIEWPORT_STATE_POINTERS_SF_CLIP(struct drm_intel_decode *ctx)
+{
+	instr_out(ctx, 0, "3DSTATE_VIEWPORT_STATE_POINTERS_SF_CLIP\n");
+	instr_out(ctx, 1, "pointer to SF_CLIP viewport\n");
+
+	return 2;
+}
+
+static int
+gen7_3DSTATE_BLEND_STATE_POINTERS(struct drm_intel_decode *ctx)
+{
+	instr_out(ctx, 0, "3DSTATE_BLEND_STATE_POINTERS\n");
+	instr_out(ctx, 1, "pointer to BLEND_STATE at 0x%08x (%s)\n",
+		  ctx->data[1] & ~1,
+		  (ctx->data[1] & 1) ? "changed" : "unchanged");
+
+	return 2;
+}
+
+static int
+gen7_3DSTATE_DEPTH_STENCIL_STATE_POINTERS(struct drm_intel_decode *ctx)
+{
+	instr_out(ctx, 0, "3DSTATE_DEPTH_STENCIL_STATE_POINTERS\n");
+	instr_out(ctx, 1,
+		  "pointer to DEPTH_STENCIL_STATE at 0x%08x (%s)\n",
+		  ctx->data[1] & ~1,
+		  (ctx->data[1] & 1) ? "changed" : "unchanged");
+
+	return 2;
+}
+
+static int
+gen7_3DSTATE_HIER_DEPTH_BUFFER(struct drm_intel_decode *ctx)
+{
+	instr_out(ctx, 0, "3DSTATE_HIER_DEPTH_BUFFER\n");
+	instr_out(ctx, 1, "pitch %db\n",
+		  (ctx->data[1] & 0x1ffff) + 1);
+	instr_out(ctx, 2, "pointer to HiZ buffer\n");
+
+	return 3;
+}
+
+static int
+gen6_3DSTATE_CC_STATE_POINTERS(struct drm_intel_decode *ctx)
+{
+	instr_out(ctx, 0, "3DSTATE_CC_STATE_POINTERS\n");
+	instr_out(ctx, 1, "blend change %d\n", ctx->data[1] & 1);
+	instr_out(ctx, 2, "depth stencil change %d\n",
+		  ctx->data[2] & 1);
+	instr_out(ctx, 3, "cc change %d\n", ctx->data[3] & 1);
+
+	return 4;
+}
+
+static int
+gen7_3DSTATE_CC_STATE_POINTERS(struct drm_intel_decode *ctx)
+{
+	instr_out(ctx, 0, "3DSTATE_CC_STATE_POINTERS\n");
+	instr_out(ctx, 1, "pointer to COLOR_CALC_STATE at 0x%08x "
+		  "(%s)\n",
+		  ctx->data[1] & ~1,
+		  (ctx->data[1] & 1) ? "changed" : "unchanged");
+
+	return 2;
+}
+
+static int
+gen7_3DSTATE_URB_unit(struct drm_intel_decode *ctx, const char *unit)
+{
+    int start_kb = ((ctx->data[1] >> 25) & 0x3f) * 8;
+    /* the field is # of 512-bit rows - 1, we print bytes */
+    int entry_size = (((ctx->data[1] >> 16) & 0x1ff) + 1);
+    int nr_entries = ctx->data[1] & 0xffff;
+
+    instr_out(ctx, 0, "3DSTATE_URB_%s\n", unit);
+    instr_out(ctx, 1,
+	      "%dKB start, size=%d 64B rows, nr_entries=%d, total size %dB\n",
+	      start_kb, entry_size, nr_entries, nr_entries * 64 * entry_size);
+
+    return 2;
+}
+
+static int
+gen7_3DSTATE_URB_VS(struct drm_intel_decode *ctx)
+{
+	return gen7_3DSTATE_URB_unit(ctx, "VS");
+}
+
+static int
+gen7_3DSTATE_URB_HS(struct drm_intel_decode *ctx)
+{
+	return gen7_3DSTATE_URB_unit(ctx, "HS");
+}
+
+static int
+gen7_3DSTATE_URB_DS(struct drm_intel_decode *ctx)
+{
+	return gen7_3DSTATE_URB_unit(ctx, "DS");
+}
+
+static int
+gen7_3DSTATE_URB_GS(struct drm_intel_decode *ctx)
+{
+	return gen7_3DSTATE_URB_unit(ctx, "GS");
+}
+
+static int
+gen7_3DSTATE_CONSTANT(struct drm_intel_decode *ctx, const char *unit)
+{
+	int rlen[4];
+
+	rlen[0] = (ctx->data[1] >> 0) & 0xffff;
+	rlen[1] = (ctx->data[1] >> 16) & 0xffff;
+	rlen[2] = (ctx->data[2] >> 0) & 0xffff;
+	rlen[3] = (ctx->data[2] >> 16) & 0xffff;
+
+	instr_out(ctx, 0, "3DSTATE_CONSTANT_%s\n", unit);
+	instr_out(ctx, 1, "len 0 = %d, len 1 = %d\n", rlen[0], rlen[1]);
+	instr_out(ctx, 2, "len 2 = %d, len 3 = %d\n", rlen[2], rlen[3]);
+	instr_out(ctx, 3, "pointer to constbuf 0\n");
+	instr_out(ctx, 4, "pointer to constbuf 1\n");
+	instr_out(ctx, 5, "pointer to constbuf 2\n");
+	instr_out(ctx, 6, "pointer to constbuf 3\n");
+
+	return 7;
+}
+
+static int
+gen7_3DSTATE_CONSTANT_VS(struct drm_intel_decode *ctx)
+{
+	return gen7_3DSTATE_CONSTANT(ctx, "VS");
+}
+
+static int
+gen7_3DSTATE_CONSTANT_GS(struct drm_intel_decode *ctx)
+{
+	return gen7_3DSTATE_CONSTANT(ctx, "GS");
+}
+
+static int
+gen7_3DSTATE_CONSTANT_PS(struct drm_intel_decode *ctx)
+{
+	return gen7_3DSTATE_CONSTANT(ctx, "PS");
+}
+
+static int
+gen7_3DSTATE_CONSTANT_DS(struct drm_intel_decode *ctx)
+{
+	return gen7_3DSTATE_CONSTANT(ctx, "DS");
+}
+
+static int
+gen7_3DSTATE_CONSTANT_HS(struct drm_intel_decode *ctx)
+{
+	return gen7_3DSTATE_CONSTANT(ctx, "HS");
+}
+
+
+static int
+gen6_3DSTATE_WM(struct drm_intel_decode *ctx)
+{
+	instr_out(ctx, 0, "3DSTATE_WM\n");
+	instr_out(ctx, 1, "kernel start pointer 0\n");
+	instr_out(ctx, 2,
+		  "SPF=%d, VME=%d, Sampler Count %d, "
+		  "Binding table count %d\n",
+		  (ctx->data[2] >> 31) & 1,
+		  (ctx->data[2] >> 30) & 1,
+		  (ctx->data[2] >> 27) & 7,
+		  (ctx->data[2] >> 18) & 0xff);
+	instr_out(ctx, 3, "scratch offset\n");
+	instr_out(ctx, 4,
+		  "Depth Clear %d, Depth Resolve %d, HiZ Resolve %d, "
+		  "Dispatch GRF start[0] %d, start[1] %d, start[2] %d\n",
+		  (ctx->data[4] & (1 << 30)) != 0,
+		  (ctx->data[4] & (1 << 28)) != 0,
+		  (ctx->data[4] & (1 << 27)) != 0,
+		  (ctx->data[4] >> 16) & 0x7f,
+		  (ctx->data[4] >> 8) & 0x7f,
+		  (ctx->data[4] & 0x7f));
+	instr_out(ctx, 5,
+		  "MaxThreads %d, PS KillPixel %d, PS computed Z %d, "
+		  "PS use sourceZ %d, Thread Dispatch %d, PS use sourceW %d, "
+		  "Dispatch32 %d, Dispatch16 %d, Dispatch8 %d\n",
+		  ((ctx->data[5] >> 25) & 0x7f) + 1,
+		  (ctx->data[5] & (1 << 22)) != 0,
+		  (ctx->data[5] & (1 << 21)) != 0,
+		  (ctx->data[5] & (1 << 20)) != 0,
+		  (ctx->data[5] & (1 << 19)) != 0,
+		  (ctx->data[5] & (1 << 8)) != 0,
+		  (ctx->data[5] & (1 << 2)) != 0,
+		  (ctx->data[5] & (1 << 1)) != 0,
+		  (ctx->data[5] & (1 << 0)) != 0);
+	instr_out(ctx, 6,
+		  "Num SF output %d, Pos XY offset %d, ZW interp mode %d , "
+		  "Barycentric interp mode 0x%x, Point raster rule %d, "
+		  "Multisample mode %d, "
+		  "Multisample Dispatch mode %d\n",
+		  (ctx->data[6] >> 20) & 0x3f,
+		  (ctx->data[6] >> 18) & 3,
+		  (ctx->data[6] >> 16) & 3,
+		  (ctx->data[6] >> 10) & 0x3f,
+		  (ctx->data[6] & (1 << 9)) != 0,
+		  (ctx->data[6] >> 1) & 3,
+		  (ctx->data[6] & 1));
+	instr_out(ctx, 7, "kernel start pointer 1\n");
+	instr_out(ctx, 8, "kernel start pointer 2\n");
+
+	return 9;
+}
+
+static int
+gen7_3DSTATE_WM(struct drm_intel_decode *ctx)
+{
+	const char *computed_depth = "";
+	const char *early_depth = "";
+	const char *zw_interp = "";
+
+	switch ((ctx->data[1] >> 23) & 0x3) {
+	case 0:
+		computed_depth = "";
+		break;
+	case 1:
+		computed_depth = "computed depth";
+		break;
+	case 2:
+		computed_depth = "computed depth >=";
+		break;
+	case 3:
+		computed_depth = "computed depth <=";
+		break;
+	}
+
+	switch ((ctx->data[1] >> 21) & 0x3) {
+	case 0:
+		early_depth = "";
+		break;
+	case 1:
+		early_depth = ", EDSC_PSEXEC";
+		break;
+	case 2:
+		early_depth = ", EDSC_PREPS";
+		break;
+	case 3:
+		early_depth = ", BAD EDSC";
+		break;
+	}
+
+	switch ((ctx->data[1] >> 17) & 0x3) {
+	case 0:
+		early_depth = "";
+		break;
+	case 1:
+		early_depth = ", BAD ZW interp";
+		break;
+	case 2:
+		early_depth = ", ZW centroid";
+		break;
+	case 3:
+		early_depth = ", ZW sample";
+		break;
+	}
+
+	instr_out(ctx, 0, "3DSTATE_WM\n");
+	instr_out(ctx, 1, "(%s%s%s%s%s%s)%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+		  (ctx->data[1] & (1 << 11)) ? "PP " : "",
+		  (ctx->data[1] & (1 << 12)) ? "PC " : "",
+		  (ctx->data[1] & (1 << 13)) ? "PS " : "",
+		  (ctx->data[1] & (1 << 14)) ? "NPP " : "",
+		  (ctx->data[1] & (1 << 15)) ? "NPC " : "",
+		  (ctx->data[1] & (1 << 16)) ? "NPS " : "",
+		  (ctx->data[1] & (1 << 30)) ? ", depth clear" : "",
+		  (ctx->data[1] & (1 << 29)) ? "" : ", disabled",
+		  (ctx->data[1] & (1 << 28)) ? ", depth resolve" : "",
+		  (ctx->data[1] & (1 << 27)) ? ", hiz resolve" : "",
+		  (ctx->data[1] & (1 << 25)) ? ", kill" : "",
+		  computed_depth,
+		  early_depth,
+		  zw_interp,
+		  (ctx->data[1] & (1 << 20)) ? ", source depth" : "",
+		  (ctx->data[1] & (1 << 19)) ? ", source W" : "",
+		  (ctx->data[1] & (1 << 10)) ? ", coverage" : "",
+		  (ctx->data[1] & (1 << 4)) ? ", poly stipple" : "",
+		  (ctx->data[1] & (1 << 3)) ? ", line stipple" : "",
+		  (ctx->data[1] & (1 << 2)) ? ", point UL" : ", point UR"
+		  );
+	instr_out(ctx, 2, "MS\n");
+
+	return 3;
+}
+
+static int
+gen4_3DPRIMITIVE(struct drm_intel_decode *ctx)
+{
+	instr_out(ctx, 0,
+		  "3DPRIMITIVE: %s %s\n",
+		  get_965_prim_type((ctx->data[0] >> 10) & 0x1f),
+		  (ctx->data[0] & (1 << 15)) ? "random" : "sequential");
+	instr_out(ctx, 1, "vertex count\n");
+	instr_out(ctx, 2, "start vertex\n");
+	instr_out(ctx, 3, "instance count\n");
+	instr_out(ctx, 4, "start instance\n");
+	instr_out(ctx, 5, "index bias\n");
+
+	return 6;
+}
+
+static int
+gen7_3DPRIMITIVE(struct drm_intel_decode *ctx)
+{
+	bool indirect = !!(ctx->data[0] & (1 << 10));
+
+	instr_out(ctx, 0,
+		  "3DPRIMITIVE: %s%s\n",
+		  indirect ? " indirect" : "",
+		  (ctx->data[0] & (1 << 8)) ? " predicated" : "");
+	instr_out(ctx, 1, "%s %s\n",
+		  get_965_prim_type(ctx->data[1] & 0x3f),
+		  (ctx->data[1] & (1 << 8)) ? "random" : "sequential");
+	instr_out(ctx, 2, indirect ? "ignored" : "vertex count\n");
+	instr_out(ctx, 3, indirect ? "ignored" : "start vertex\n");
+	instr_out(ctx, 4, indirect ? "ignored" : "instance count\n");
+	instr_out(ctx, 5, indirect ? "ignored" : "start instance\n");
+	instr_out(ctx, 6, indirect ? "ignored" : "index bias\n");
+
+	return 7;
+}
+
+static int
+decode_3d_965(struct drm_intel_decode *ctx)
 {
 	uint32_t opcode;
-	unsigned int idx, len;
+	unsigned int len;
 	unsigned int i, j, sba_len;
 	const char *desc1 = NULL;
+	uint32_t *data = ctx->data;
+	uint32_t devid = ctx->devid;
 
 	struct {
 		uint32_t opcode;
+		uint32_t len_mask;
 		int unsigned min_len;
 		int unsigned max_len;
 		const char *name;
+		int gen;
+		int (*func)(struct drm_intel_decode *ctx);
 	} opcodes_3d[] = {
-		{ 0x6000, 3, 3, "URB_FENCE" },
-		{ 0x6001, 2, 2, "CS_URB_STATE" },
-		{ 0x6002, 2, 2, "CONSTANT_BUFFER" },
-		{ 0x6101, 6, 6, "STATE_BASE_ADDRESS" },
-		{ 0x6102, 2, 2, "STATE_SIP" },
-		{ 0x6104, 1, 1, "3DSTATE_PIPELINE_SELECT" },
-		{ 0x680b, 1, 1, "3DSTATE_VF_STATISTICS" },
-		{ 0x6904, 1, 1, "3DSTATE_PIPELINE_SELECT" },
-		{ 0x7800, 7, 7, "3DSTATE_PIPELINED_POINTERS" },
-		{ 0x7801, 6, 6, "3DSTATE_BINDING_TABLE_POINTERS" },
-		{ 0x7808, 5, 257, "3DSTATE_VERTEX_BUFFERS" },
-		{ 0x7809, 3, 256, "3DSTATE_VERTEX_ELEMENTS" },
-		{ 0x780a, 3, 3, "3DSTATE_INDEX_BUFFER" },
-		{ 0x780b, 1, 1, "3DSTATE_VF_STATISTICS" },
-		{ 0x7900, 4, 4, "3DSTATE_DRAWING_RECTANGLE" },
-		{ 0x7901, 5, 5, "3DSTATE_CONSTANT_COLOR" },
-		{ 0x7905, 5, 7, "3DSTATE_DEPTH_BUFFER" },
-		{ 0x7906, 2, 2, "3DSTATE_POLY_STIPPLE_OFFSET" },
-		{ 0x7907, 33, 33, "3DSTATE_POLY_STIPPLE_PATTERN" },
-		{ 0x7908, 3, 3, "3DSTATE_LINE_STIPPLE" },
-		{ 0x7909, 2, 2, "3DSTATE_GLOBAL_DEPTH_OFFSET_CLAMP" },
-		{ 0x7909, 2, 2, "3DSTATE_CLEAR_PARAMS" },
-		{ 0x790a, 3, 3, "3DSTATE_AA_LINE_PARAMETERS" },
-		{ 0x790b, 4, 4, "3DSTATE_GS_SVB_INDEX" },
-		{ 0x790d, 3, 3, "3DSTATE_MULTISAMPLE" },
-		{ 0x7910, 2, 2, "3DSTATE_CLEAR_PARAMS" },
-		{ 0x7b00, 6, 6, "3DPRIMITIVE" },
-		{ 0x7802, 4, 4, "3DSTATE_SAMPLER_STATE_POINTERS" },
-		{ 0x7805, 3, 3, "3DSTATE_URB" },
-		{ 0x780d, 4, 4, "3DSTATE_VIEWPORT_STATE_POINTERS" },
-		{ 0x780e, 4, 4, "3DSTATE_CC_STATE_POINTERS" },
-		{ 0x780f, 2, 2, "3DSTATE_SCISSOR_STATE_POINTERS" },
-		{ 0x7810, 6, 6, "3DSTATE_VS_STATE" },
-		{ 0x7811, 7, 7, "3DSTATE_GS_STATE" },
-		{ 0x7812, 4, 4, "3DSTATE_CLIP_STATE" },
-		{ 0x7813, 20, 20, "3DSTATE_SF_STATE" },
-		{ 0x7814, 9, 9, "3DSTATE_WM_STATE" },
-		{ 0x7815, 5, 5, "3DSTATE_CONSTANT_VS_STATE" },
-		{ 0x7816, 5, 5, "3DSTATE_CONSTANT_GS_STATE" },
-		{ 0x7817, 5, 5, "3DSTATE_CONSTANT_PS_STATE" },
-		{ 0x7818, 2, 2, "3DSTATE_SAMPLE_MASK"},
-	}, *opcode_3d;
-
-	len = (data[0] & 0x0000ffff) + 2;
+		{ 0x6000, 0x00ff, 3, 3, "URB_FENCE" },
+		{ 0x6001, 0xffff, 2, 2, "CS_URB_STATE" },
+		{ 0x6002, 0x00ff, 2, 2, "CONSTANT_BUFFER" },
+		{ 0x6101, 0xffff, 6, 10, "STATE_BASE_ADDRESS" },
+		{ 0x6102, 0xffff, 2, 2, "STATE_SIP" },
+		{ 0x6104, 0xffff, 1, 1, "3DSTATE_PIPELINE_SELECT" },
+		{ 0x680b, 0xffff, 1, 1, "3DSTATE_VF_STATISTICS" },
+		{ 0x6904, 0xffff, 1, 1, "3DSTATE_PIPELINE_SELECT" },
+		{ 0x7800, 0xffff, 7, 7, "3DSTATE_PIPELINED_POINTERS" },
+		{ 0x7801, 0x00ff, 4, 6, "3DSTATE_BINDING_TABLE_POINTERS" },
+		{ 0x7802, 0x00ff, 4, 4, "3DSTATE_SAMPLER_STATE_POINTERS" },
+		{ 0x7805, 0x00ff, 7, 7, "3DSTATE_DEPTH_BUFFER", 7 },
+		{ 0x7805, 0x00ff, 3, 3, "3DSTATE_URB" },
+		{ 0x7804, 0x00ff, 3, 3, "3DSTATE_CLEAR_PARAMS" },
+		{ 0x7806, 0x00ff, 3, 3, "3DSTATE_STENCIL_BUFFER" },
+		{ 0x7807, 0x00ff, 4, 4, "3DSTATE_HIER_DEPTH_BUFFER", 6 },
+		{ 0x7807, 0x00ff, 3, 3, "3DSTATE_HIER_DEPTH_BUFFER", 7, gen7_3DSTATE_HIER_DEPTH_BUFFER },
+		{ 0x7808, 0x00ff, 5, 257, "3DSTATE_VERTEX_BUFFERS" },
+		{ 0x7809, 0x00ff, 3, 256, "3DSTATE_VERTEX_ELEMENTS" },
+		{ 0x780a, 0x00ff, 3, 3, "3DSTATE_INDEX_BUFFER" },
+		{ 0x780b, 0xffff, 1, 1, "3DSTATE_VF_STATISTICS" },
+		{ 0x780d, 0x00ff, 4, 4, "3DSTATE_VIEWPORT_STATE_POINTERS" },
+		{ 0x780e, 0xffff, 4, 4, NULL, 6, gen6_3DSTATE_CC_STATE_POINTERS },
+		{ 0x780e, 0x00ff, 2, 2, NULL, 7, gen7_3DSTATE_CC_STATE_POINTERS },
+		{ 0x780f, 0x00ff, 2, 2, "3DSTATE_SCISSOR_POINTERS" },
+		{ 0x7810, 0x00ff, 6, 6, "3DSTATE_VS" },
+		{ 0x7811, 0x00ff, 7, 7, "3DSTATE_GS" },
+		{ 0x7812, 0x00ff, 4, 4, "3DSTATE_CLIP" },
+		{ 0x7813, 0x00ff, 20, 20, "3DSTATE_SF", 6 },
+		{ 0x7813, 0x00ff, 7, 7, "3DSTATE_SF", 7 },
+		{ 0x7814, 0x00ff, 3, 3, "3DSTATE_WM", 7, gen7_3DSTATE_WM },
+		{ 0x7814, 0x00ff, 9, 9, "3DSTATE_WM", 6, gen6_3DSTATE_WM },
+		{ 0x7815, 0x00ff, 5, 5, "3DSTATE_CONSTANT_VS_STATE", 6 },
+		{ 0x7815, 0x00ff, 7, 7, "3DSTATE_CONSTANT_VS", 7, gen7_3DSTATE_CONSTANT_VS },
+		{ 0x7816, 0x00ff, 5, 5, "3DSTATE_CONSTANT_GS_STATE", 6 },
+		{ 0x7816, 0x00ff, 7, 7, "3DSTATE_CONSTANT_GS", 7, gen7_3DSTATE_CONSTANT_GS },
+		{ 0x7817, 0x00ff, 5, 5, "3DSTATE_CONSTANT_PS_STATE", 6 },
+		{ 0x7817, 0x00ff, 7, 7, "3DSTATE_CONSTANT_PS", 7, gen7_3DSTATE_CONSTANT_PS },
+		{ 0x7818, 0xffff, 2, 2, "3DSTATE_SAMPLE_MASK" },
+		{ 0x7819, 0x00ff, 7, 7, "3DSTATE_CONSTANT_HS", 7, gen7_3DSTATE_CONSTANT_HS },
+		{ 0x781a, 0x00ff, 7, 7, "3DSTATE_CONSTANT_DS", 7, gen7_3DSTATE_CONSTANT_DS },
+		{ 0x781b, 0x00ff, 7, 7, "3DSTATE_HS" },
+		{ 0x781c, 0x00ff, 4, 4, "3DSTATE_TE" },
+		{ 0x781d, 0x00ff, 6, 6, "3DSTATE_DS" },
+		{ 0x781e, 0x00ff, 3, 3, "3DSTATE_STREAMOUT" },
+		{ 0x781f, 0x00ff, 14, 14, "3DSTATE_SBE" },
+		{ 0x7820, 0x00ff, 8, 8, "3DSTATE_PS" },
+		{ 0x7821, 0x00ff, 2, 2, NULL, 7, gen7_3DSTATE_VIEWPORT_STATE_POINTERS_SF_CLIP },
+		{ 0x7823, 0x00ff, 2, 2, NULL, 7, gen7_3DSTATE_VIEWPORT_STATE_POINTERS_CC },
+		{ 0x7824, 0x00ff, 2, 2, NULL, 7, gen7_3DSTATE_BLEND_STATE_POINTERS },
+		{ 0x7825, 0x00ff, 2, 2, NULL, 7, gen7_3DSTATE_DEPTH_STENCIL_STATE_POINTERS },
+		{ 0x7826, 0x00ff, 2, 2, "3DSTATE_BINDING_TABLE_POINTERS_VS" },
+		{ 0x7827, 0x00ff, 2, 2, "3DSTATE_BINDING_TABLE_POINTERS_HS" },
+		{ 0x7828, 0x00ff, 2, 2, "3DSTATE_BINDING_TABLE_POINTERS_DS" },
+		{ 0x7829, 0x00ff, 2, 2, "3DSTATE_BINDING_TABLE_POINTERS_GS" },
+		{ 0x782a, 0x00ff, 2, 2, "3DSTATE_BINDING_TABLE_POINTERS_PS" },
+		{ 0x782b, 0x00ff, 2, 2, "3DSTATE_SAMPLER_STATE_POINTERS_VS" },
+		{ 0x782e, 0x00ff, 2, 2, "3DSTATE_SAMPLER_STATE_POINTERS_GS" },
+		{ 0x782f, 0x00ff, 2, 2, "3DSTATE_SAMPLER_STATE_POINTERS_PS" },
+		{ 0x7830, 0x00ff, 2, 2, NULL, 7, gen7_3DSTATE_URB_VS },
+		{ 0x7831, 0x00ff, 2, 2, NULL, 7, gen7_3DSTATE_URB_HS },
+		{ 0x7832, 0x00ff, 2, 2, NULL, 7, gen7_3DSTATE_URB_DS },
+		{ 0x7833, 0x00ff, 2, 2, NULL, 7, gen7_3DSTATE_URB_GS },
+		{ 0x7900, 0xffff, 4, 4, "3DSTATE_DRAWING_RECTANGLE" },
+		{ 0x7901, 0xffff, 5, 5, "3DSTATE_CONSTANT_COLOR" },
+		{ 0x7905, 0xffff, 5, 7, "3DSTATE_DEPTH_BUFFER" },
+		{ 0x7906, 0xffff, 2, 2, "3DSTATE_POLY_STIPPLE_OFFSET" },
+		{ 0x7907, 0xffff, 33, 33, "3DSTATE_POLY_STIPPLE_PATTERN" },
+		{ 0x7908, 0xffff, 3, 3, "3DSTATE_LINE_STIPPLE" },
+		{ 0x7909, 0xffff, 2, 2, "3DSTATE_GLOBAL_DEPTH_OFFSET_CLAMP" },
+		{ 0x7909, 0xffff, 2, 2, "3DSTATE_CLEAR_PARAMS" },
+		{ 0x790a, 0xffff, 3, 3, "3DSTATE_AA_LINE_PARAMETERS" },
+		{ 0x790b, 0xffff, 4, 4, "3DSTATE_GS_SVB_INDEX" },
+		{ 0x790d, 0xffff, 3, 3, "3DSTATE_MULTISAMPLE", 6 },
+		{ 0x790d, 0xffff, 4, 4, "3DSTATE_MULTISAMPLE", 7 },
+		{ 0x7910, 0xffff, 2, 2, "3DSTATE_CLEAR_PARAMS" },
+		{ 0x7912, 0x00ff, 2, 2, "3DSTATE_PUSH_CONSTANT_ALLOC_VS" },
+		{ 0x7916, 0x00ff, 2, 2, "3DSTATE_PUSH_CONSTANT_ALLOC_PS" },
+		{ 0x7917, 0x00ff, 2, 2+128*2, "3DSTATE_SO_DECL_LIST" },
+		{ 0x7918, 0x00ff, 4, 4, "3DSTATE_SO_BUFFER" },
+		{ 0x7a00, 0x00ff, 4, 6, "PIPE_CONTROL" },
+		{ 0x7b00, 0x00ff, 7, 7, NULL, 7, gen7_3DPRIMITIVE },
+		{ 0x7b00, 0x00ff, 6, 6, NULL, 0, gen4_3DPRIMITIVE },
+	}, *opcode_3d = NULL;
 
 	opcode = (data[0] & 0xffff0000) >> 16;
+
+	for (i = 0; i < ARRAY_SIZE(opcodes_3d); i++) {
+		if (opcode != opcodes_3d[i].opcode)
+			continue;
+
+		/* If it's marked as not our gen, skip. */
+		if (opcodes_3d[i].gen && opcodes_3d[i].gen != ctx->gen)
+			continue;
+
+		opcode_3d = &opcodes_3d[i];
+		break;
+	}
+
+	if (opcode_3d) {
+		if (opcode_3d->max_len == 1)
+			len = 1;
+		else
+			len = (data[0] & opcode_3d->len_mask) + 2;
+
+		if (len < opcode_3d->min_len ||
+		    len > opcode_3d->max_len) {
+			fprintf(out, "Bad length %d in %s, expected %d-%d\n",
+				len, opcode_3d->name,
+				opcode_3d->min_len, opcode_3d->max_len);
+		}
+	} else {
+		len = (data[0] & 0x0000ffff) + 2;
+	}
+
 	switch (opcode) {
 	case 0x6000:
-		len = (data[0] & 0x000000ff) + 2;
-		return i965_decode_urb_fence(data, hw_offset, len, count,
-					     failures);
+		return i965_decode_urb_fence(ctx, len);
 	case 0x6001:
-		instr_out(data, hw_offset, 0, "CS_URB_STATE\n");
-		instr_out(data, hw_offset, 1,
+		instr_out(ctx, 0, "CS_URB_STATE\n");
+		instr_out(ctx, 1,
 			  "entry_size: %d [%d bytes], n_entries: %d\n",
 			  (data[1] >> 4) & 0x1f,
 			  (((data[1] >> 4) & 0x1f) + 1) * 64, data[1] & 0x7);
 		return len;
 	case 0x6002:
-		len = (data[0] & 0x000000ff) + 2;
-		instr_out(data, hw_offset, 0, "CONSTANT_BUFFER: %s\n",
+		instr_out(ctx, 0, "CONSTANT_BUFFER: %s\n",
 			  (data[0] >> 8) & 1 ? "valid" : "invalid");
-		instr_out(data, hw_offset, 1,
+		instr_out(ctx, 1,
 			  "offset: 0x%08x, length: %d bytes\n", data[1] & ~0x3f,
 			  ((data[1] & 0x3f) + 1) * 64);
 		return len;
 	case 0x6101:
 		i = 0;
-		instr_out(data, hw_offset, 0, "STATE_BASE_ADDRESS\n");
+		instr_out(ctx, 0, "STATE_BASE_ADDRESS\n");
 		i++;
 
 		if (IS_GEN6(devid) || IS_GEN7(devid))
@@ -2862,112 +3203,85 @@ decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid
 			sba_len = 6;
 		if (len != sba_len)
 			fprintf(out, "Bad count in STATE_BASE_ADDRESS\n");
-		if (len != sba_len)
-			BUFFER_FAIL(count, len, "STATE_BASE_ADDRESS");
 
-		state_base_out(data, hw_offset, i++, "general");
-		state_base_out(data, hw_offset, i++, "surface");
+		state_base_out(ctx, i++, "general");
+		state_base_out(ctx, i++, "surface");
 		if (IS_GEN6(devid) || IS_GEN7(devid))
-			state_base_out(data, hw_offset, i++, "dynamic");
-		state_base_out(data, hw_offset, i++, "indirect");
+			state_base_out(ctx, i++, "dynamic");
+		state_base_out(ctx, i++, "indirect");
 		if (IS_GEN5(devid) || IS_GEN6(devid) || IS_GEN7(devid))
-			state_base_out(data, hw_offset, i++, "instruction");
+			state_base_out(ctx, i++, "instruction");
 
-		state_max_out(data, hw_offset, i++, "general");
+		state_max_out(ctx, i++, "general");
 		if (IS_GEN6(devid) || IS_GEN7(devid))
-			state_max_out(data, hw_offset, i++, "dynamic");
-		state_max_out(data, hw_offset, i++, "indirect");
+			state_max_out(ctx, i++, "dynamic");
+		state_max_out(ctx, i++, "indirect");
 		if (IS_GEN5(devid) || IS_GEN6(devid) || IS_GEN7(devid))
-			state_max_out(data, hw_offset, i++, "instruction");
+			state_max_out(ctx, i++, "instruction");
 
 		return len;
 	case 0x7800:
-		if (len != 7)
-			fprintf(out,
-				"Bad count in 3DSTATE_PIPELINED_POINTERS\n");
-		if (count < 7)
-			BUFFER_FAIL(count, len, "3DSTATE_PIPELINED_POINTERS");
-
-		instr_out(data, hw_offset, 0, "3DSTATE_PIPELINED_POINTERS\n");
-		instr_out(data, hw_offset, 1, "VS state\n");
-		instr_out(data, hw_offset, 2, "GS state\n");
-		instr_out(data, hw_offset, 3, "Clip state\n");
-		instr_out(data, hw_offset, 4, "SF state\n");
-		instr_out(data, hw_offset, 5, "WM state\n");
-		instr_out(data, hw_offset, 6, "CC state\n");
+		instr_out(ctx, 0, "3DSTATE_PIPELINED_POINTERS\n");
+		instr_out(ctx, 1, "VS state\n");
+		instr_out(ctx, 2, "GS state\n");
+		instr_out(ctx, 3, "Clip state\n");
+		instr_out(ctx, 4, "SF state\n");
+		instr_out(ctx, 5, "WM state\n");
+		instr_out(ctx, 6, "CC state\n");
 		return len;
 	case 0x7801:
-		len = (data[0] & 0x000000ff) + 2;
 		if (len != 6 && len != 4)
 			fprintf(out,
 				"Bad count in 3DSTATE_BINDING_TABLE_POINTERS\n");
 		if (len == 6) {
-			if (count < 6)
-				BUFFER_FAIL(count, len,
-					    "3DSTATE_BINDING_TABLE_POINTERS");
-			instr_out(data, hw_offset, 0,
+			instr_out(ctx, 0,
 				  "3DSTATE_BINDING_TABLE_POINTERS\n");
-			instr_out(data, hw_offset, 1, "VS binding table\n");
-			instr_out(data, hw_offset, 2, "GS binding table\n");
-			instr_out(data, hw_offset, 3, "Clip binding table\n");
-			instr_out(data, hw_offset, 4, "SF binding table\n");
-			instr_out(data, hw_offset, 5, "WM binding table\n");
+			instr_out(ctx, 1, "VS binding table\n");
+			instr_out(ctx, 2, "GS binding table\n");
+			instr_out(ctx, 3, "Clip binding table\n");
+			instr_out(ctx, 4, "SF binding table\n");
+			instr_out(ctx, 5, "WM binding table\n");
 		} else {
-			if (count < 4)
-				BUFFER_FAIL(count, len,
-					    "3DSTATE_BINDING_TABLE_POINTERS");
-
-			instr_out(data, hw_offset, 0,
+			instr_out(ctx, 0,
 				  "3DSTATE_BINDING_TABLE_POINTERS: VS mod %d, "
 				  "GS mod %d, PS mod %d\n",
 				  (data[0] & (1 << 8)) != 0,
 				  (data[0] & (1 << 9)) != 0,
 				  (data[0] & (1 << 12)) != 0);
-			instr_out(data, hw_offset, 1, "VS binding table\n");
-			instr_out(data, hw_offset, 2, "GS binding table\n");
-			instr_out(data, hw_offset, 3, "WM binding table\n");
+			instr_out(ctx, 1, "VS binding table\n");
+			instr_out(ctx, 2, "GS binding table\n");
+			instr_out(ctx, 3, "WM binding table\n");
 		}
 
 		return len;
 	case 0x7802:
-		len = (data[0] & 0xff) + 2;
-		if (len != 4)
-			fprintf(out,
-				"Bad count in 3DSTATE_SAMPLER_STATE_POINTERS\n");
-		if (count < 4)
-			BUFFER_FAIL(count, len,
-				    "3DSTATE_SAMPLER_STATE_POINTERS");
-		instr_out(data, hw_offset, 0,
+		instr_out(ctx, 0,
 			  "3DSTATE_SAMPLER_STATE_POINTERS: VS mod %d, "
 			  "GS mod %d, PS mod %d\n", (data[0] & (1 << 8)) != 0,
 			  (data[0] & (1 << 9)) != 0,
 			  (data[0] & (1 << 12)) != 0);
-		instr_out(data, hw_offset, 1, "VS sampler state\n");
-		instr_out(data, hw_offset, 2, "GS sampler state\n");
-		instr_out(data, hw_offset, 3, "WM sampler state\n");
+		instr_out(ctx, 1, "VS sampler state\n");
+		instr_out(ctx, 2, "GS sampler state\n");
+		instr_out(ctx, 3, "WM sampler state\n");
 		return len;
 	case 0x7805:
-		len = (data[0] & 0xff) + 2;
-		if (len != 3)
-			fprintf(out, "Bad count in 3DSTATE_URB\n");
-		if (count < 3)
-			BUFFER_FAIL(count, len, "3DSTATE_URB");
-		instr_out(data, hw_offset, 0, "3DSTATE_URB\n");
-		instr_out(data, hw_offset, 1,
+		/* Actually 3DSTATE_DEPTH_BUFFER on gen7. */
+		if (ctx->gen == 7)
+			break;
+
+		instr_out(ctx, 0, "3DSTATE_URB\n");
+		instr_out(ctx, 1,
 			  "VS entries %d, alloc size %d (1024bit row)\n",
 			  data[1] & 0xffff, ((data[1] >> 16) & 0x07f) + 1);
-		instr_out(data, hw_offset, 2,
+		instr_out(ctx, 2,
 			  "GS entries %d, alloc size %d (1024bit row)\n",
 			  (data[2] >> 8) & 0x3ff, (data[2] & 7) + 1);
 		return len;
 
 	case 0x7808:
-		len = (data[0] & 0xff) + 2;
 		if ((len - 1) % 4 != 0)
 			fprintf(out, "Bad count in 3DSTATE_VERTEX_BUFFERS\n");
-		if (count < len)
-			BUFFER_FAIL(count, len, "3DSTATE_VERTEX_BUFFERS");
-		instr_out(data, hw_offset, 0, "3DSTATE_VERTEX_BUFFERS\n");
+		instr_out(ctx, 0, "3DSTATE_VERTEX_BUFFERS\n");
 
 		for (i = 1; i < len;) {
 			int idx, access;
@@ -2978,27 +3292,24 @@ decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid
 				idx = 27;
 				access = 26;
 			}
-			instr_out(data, hw_offset, i,
+			instr_out(ctx, i,
 				  "buffer %d: %s, pitch %db\n", data[i] >> idx,
 				  data[i] & (1 << access) ? "random" :
 				  "sequential", data[i] & 0x07ff);
 			i++;
-			instr_out(data, hw_offset, i++, "buffer address\n");
-			instr_out(data, hw_offset, i++, "max index\n");
-			instr_out(data, hw_offset, i++, "mbz\n");
+			instr_out(ctx, i++, "buffer address\n");
+			instr_out(ctx, i++, "max index\n");
+			instr_out(ctx, i++, "mbz\n");
 		}
 		return len;
 
 	case 0x7809:
-		len = (data[0] & 0xff) + 2;
 		if ((len + 1) % 2 != 0)
 			fprintf(out, "Bad count in 3DSTATE_VERTEX_ELEMENTS\n");
-		if (count < len)
-			BUFFER_FAIL(count, len, "3DSTATE_VERTEX_ELEMENTS");
-		instr_out(data, hw_offset, 0, "3DSTATE_VERTEX_ELEMENTS\n");
+		instr_out(ctx, 0, "3DSTATE_VERTEX_ELEMENTS\n");
 
 		for (i = 1; i < len;) {
-			instr_out(data, hw_offset, i,
+			instr_out(ctx, i,
 				  "buffer %d: %svalid, type 0x%04x, "
 				  "src offset 0x%04x bytes\n",
 				  data[i] >> (IS_GEN6(devid) ? 26 : 27),
@@ -3006,7 +3317,7 @@ decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid
 				  "" : "in", (data[i] >> 16) & 0x1ff,
 				  data[i] & 0x07ff);
 			i++;
-			instr_out(data, hw_offset, i, "(%s, %s, %s, %s), "
+			instr_out(ctx, i, "(%s, %s, %s, %s), "
 				  "dst offset 0x%02x bytes\n",
 				  get_965_element_component(data[i], 0),
 				  get_965_element_component(data[i], 1),
@@ -3018,74 +3329,38 @@ decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid
 		return len;
 
 	case 0x780d:
-		len = (data[0] & 0xff) + 2;
-		if (len != 4)
-			fprintf(out,
-				"Bad count in 3DSTATE_VIEWPORT_STATE_POINTERS\n");
-		if (count < len)
-			BUFFER_FAIL(count, len,
-				    "3DSTATE_VIEWPORT_STATE_POINTERS");
-		instr_out(data, hw_offset, 0,
+		instr_out(ctx, 0,
 			  "3DSTATE_VIEWPORT_STATE_POINTERS\n");
-		instr_out(data, hw_offset, 1, "clip\n");
-		instr_out(data, hw_offset, 2, "sf\n");
-		instr_out(data, hw_offset, 3, "cc\n");
+		instr_out(ctx, 1, "clip\n");
+		instr_out(ctx, 2, "sf\n");
+		instr_out(ctx, 3, "cc\n");
 		return len;
 
 	case 0x780a:
-		len = (data[0] & 0xff) + 2;
-		if (len != 3)
-			fprintf(out, "Bad count in 3DSTATE_INDEX_BUFFER\n");
-		if (count < len)
-			BUFFER_FAIL(count, len, "3DSTATE_INDEX_BUFFER");
-		instr_out(data, hw_offset, 0, "3DSTATE_INDEX_BUFFER\n");
-		instr_out(data, hw_offset, 1, "beginning buffer address\n");
-		instr_out(data, hw_offset, 2, "ending buffer address\n");
-		return len;
-
-	case 0x780e:
-		len = (data[0] & 0xff) + 2;
-		if (len != 4)
-			fprintf(out,
-				"Bad count in 3DSTATE_CC_STATE_POINTERS\n");
-		if (count < 4)
-			BUFFER_FAIL(count, len, "3DSTATE_CC_STATE_POINTERS");
-		instr_out(data, hw_offset, 0, "3DSTATE_CC_STATE_POINTERS\n");
-		instr_out(data, hw_offset, 1, "blend change %d\n", data[1] & 1);
-		instr_out(data, hw_offset, 2, "depth stencil change %d\n",
-			  data[2] & 1);
-		instr_out(data, hw_offset, 3, "cc change %d\n", data[3] & 1);
+		instr_out(ctx, 0, "3DSTATE_INDEX_BUFFER\n");
+		instr_out(ctx, 1, "beginning buffer address\n");
+		instr_out(ctx, 2, "ending buffer address\n");
 		return len;
 
 	case 0x780f:
-		len = (data[0] & 0xff) + 2;
-		if (len != 2)
-			fprintf(out, "Bad count in 3DSTATE_SCISSOR_POINTERS\n");
-		if (count < 2)
-			BUFFER_FAIL(count, len, "3DSTATE_SCISSOR_POINTERS");
-		instr_out(data, hw_offset, 0, "3DSTATE_SCISSOR_POINTERS\n");
-		instr_out(data, hw_offset, 1, "scissor rect offset\n");
+		instr_out(ctx, 0, "3DSTATE_SCISSOR_POINTERS\n");
+		instr_out(ctx, 1, "scissor rect offset\n");
 		return len;
 
 	case 0x7810:
-		len = (data[0] & 0xff) + 2;
-		if (len != 6)
-			fprintf(out, "Bad count in 3DSTATE_VS\n");
-		if (count < 6)
-			BUFFER_FAIL(count, len, "3DSTATE_VS");
-		instr_out(data, hw_offset, 0, "3DSTATE_VS\n");
-		instr_out(data, hw_offset, 1, "kernel pointer\n");
-		instr_out(data, hw_offset, 2,
+		instr_out(ctx, 0, "3DSTATE_VS\n");
+		instr_out(ctx, 1, "kernel pointer\n");
+		instr_out(ctx, 2,
 			  "SPF=%d, VME=%d, Sampler Count %d, "
 			  "Binding table count %d\n", (data[2] >> 31) & 1,
 			  (data[2] >> 30) & 1, (data[2] >> 27) & 7,
 			  (data[2] >> 18) & 0xff);
-		instr_out(data, hw_offset, 3, "scratch offset\n");
-		instr_out(data, hw_offset, 4,
+		instr_out(ctx, 3, "scratch offset\n");
+		instr_out(ctx, 4,
 			  "Dispatch GRF start %d, VUE read length %d, "
 			  "VUE read offset %d\n", (data[4] >> 20) & 0x1f,
 			  (data[4] >> 11) & 0x3f, (data[4] >> 4) & 0x3f);
-		instr_out(data, hw_offset, 5,
+		instr_out(ctx, 5,
 			  "Max Threads %d, Vertex Cache %sable, "
 			  "VS func %sable\n", ((data[5] >> 25) & 0x7f) + 1,
 			  (data[5] & (1 << 1)) != 0 ? "dis" : "en",
@@ -3093,28 +3368,23 @@ decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid
 		return len;
 
 	case 0x7811:
-		len = (data[0] & 0xff) + 2;
-		if (len != 7)
-			fprintf(out, "Bad count in 3DSTATE_GS\n");
-		if (count < 7)
-			BUFFER_FAIL(count, len, "3DSTATE_GS");
-		instr_out(data, hw_offset, 0, "3DSTATE_GS\n");
-		instr_out(data, hw_offset, 1, "kernel pointer\n");
-		instr_out(data, hw_offset, 2,
+		instr_out(ctx, 0, "3DSTATE_GS\n");
+		instr_out(ctx, 1, "kernel pointer\n");
+		instr_out(ctx, 2,
 			  "SPF=%d, VME=%d, Sampler Count %d, "
 			  "Binding table count %d\n", (data[2] >> 31) & 1,
 			  (data[2] >> 30) & 1, (data[2] >> 27) & 7,
 			  (data[2] >> 18) & 0xff);
-		instr_out(data, hw_offset, 3, "scratch offset\n");
-		instr_out(data, hw_offset, 4,
+		instr_out(ctx, 3, "scratch offset\n");
+		instr_out(ctx, 4,
 			  "Dispatch GRF start %d, VUE read length %d, "
 			  "VUE read offset %d\n", (data[4] & 0xf),
 			  (data[4] >> 11) & 0x3f, (data[4] >> 4) & 0x3f);
-		instr_out(data, hw_offset, 5,
+		instr_out(ctx, 5,
 			  "Max Threads %d, Rendering %sable\n",
 			  ((data[5] >> 25) & 0x7f) + 1,
 			  (data[5] & (1 << 8)) != 0 ? "en" : "dis");
-		instr_out(data, hw_offset, 6,
+		instr_out(ctx, 6,
 			  "Reorder %sable, Discard Adjaceny %sable, "
 			  "GS %sable\n",
 			  (data[6] & (1 << 30)) != 0 ? "en" : "dis",
@@ -3123,16 +3393,11 @@ decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid
 		return len;
 
 	case 0x7812:
-		len = (data[0] & 0xff) + 2;
-		if (len != 4)
-			fprintf(out, "Bad count in 3DSTATE_CLIP\n");
-		if (count < 4)
-			BUFFER_FAIL(count, len, "3DSTATE_CLIP");
-		instr_out(data, hw_offset, 0, "3DSTATE_CLIP\n");
-		instr_out(data, hw_offset, 1,
+		instr_out(ctx, 0, "3DSTATE_CLIP\n");
+		instr_out(ctx, 1,
 			  "UserClip distance cull test mask 0x%x\n",
 			  data[1] & 0xff);
-		instr_out(data, hw_offset, 2,
+		instr_out(ctx, 2,
 			  "Clip %sable, API mode %s, Viewport XY test %sable, "
 			  "Viewport Z test %sable, Guardband test %sable, Clip mode %d, "
 			  "Perspective Divide %sable, Non-Perspective Barycentric %sable, "
@@ -3147,7 +3412,7 @@ decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid
 			  (data[2] & (1 << 8)) != 0 ? "en" : "dis",
 			  (data[2] >> 4) & 3, (data[2] >> 2) & 3,
 			  (data[2] & 3));
-		instr_out(data, hw_offset, 3,
+		instr_out(ctx, 3,
 			  "Min PointWidth %d, Max PointWidth %d, "
 			  "Force Zero RTAIndex %sable, Max VPIndex %d\n",
 			  (data[3] >> 17) & 0x7ff, (data[3] >> 6) & 0x7ff,
@@ -3156,45 +3421,43 @@ decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid
 		return len;
 
 	case 0x7813:
-		len = (data[0] & 0xff) + 2;
-		if (len != 20)
-			fprintf(out, "Bad count in 3DSTATE_SF\n");
-		if (count < 20)
-			BUFFER_FAIL(count, len, "3DSTATE_SF");
-		instr_out(data, hw_offset, 0, "3DSTATE_SF\n");
-		instr_out(data, hw_offset, 1,
+		if (ctx->gen == 7)
+			break;
+
+		instr_out(ctx, 0, "3DSTATE_SF\n");
+		instr_out(ctx, 1,
 			  "Attrib Out %d, Attrib Swizzle %sable, VUE read length %d, "
 			  "VUE read offset %d\n", (data[1] >> 22) & 0x3f,
 			  (data[1] & (1 << 21)) != 0 ? "en" : "dis",
 			  (data[1] >> 11) & 0x1f, (data[1] >> 4) & 0x3f);
-		instr_out(data, hw_offset, 2,
+		instr_out(ctx, 2,
 			  "Legacy Global DepthBias %sable, FrontFace fill %d, BF fill %d, "
 			  "VP transform %sable, FrontWinding_%s\n",
 			  (data[2] & (1 << 11)) != 0 ? "en" : "dis",
 			  (data[2] >> 5) & 3, (data[2] >> 3) & 3,
 			  (data[2] & (1 << 1)) != 0 ? "en" : "dis",
 			  (data[2] & 1) != 0 ? "CCW" : "CW");
-		instr_out(data, hw_offset, 3,
+		instr_out(ctx, 3,
 			  "AA %sable, CullMode %d, Scissor %sable, Multisample m ode %d\n",
 			  (data[3] & (1 << 31)) != 0 ? "en" : "dis",
 			  (data[3] >> 29) & 3,
 			  (data[3] & (1 << 11)) != 0 ? "en" : "dis",
 			  (data[3] >> 8) & 3);
-		instr_out(data, hw_offset, 4,
+		instr_out(ctx, 4,
 			  "Last Pixel %sable, SubPixel Precision %d, Use PixelWidth %d\n",
 			  (data[4] & (1 << 31)) != 0 ? "en" : "dis",
 			  (data[4] & (1 << 12)) != 0 ? 4 : 8,
 			  (data[4] & (1 << 11)) != 0);
-		instr_out(data, hw_offset, 5,
+		instr_out(ctx, 5,
 			  "Global Depth Offset Constant %f\n",
 			  *(float *)(&data[5]));
-		instr_out(data, hw_offset, 6, "Global Depth Offset Scale %f\n",
+		instr_out(ctx, 6, "Global Depth Offset Scale %f\n",
 			  *(float *)(&data[6]));
-		instr_out(data, hw_offset, 7, "Global Depth Offset Clamp %f\n",
+		instr_out(ctx, 7, "Global Depth Offset Clamp %f\n",
 			  *(float *)(&data[7]));
 
 		for (i = 0, j = 0; i < 8; i++, j += 2)
-			instr_out(data, hw_offset, i + 8,
+			instr_out(ctx, i + 8,
 				  "Attrib %d (Override %s%s%s%s, Const Source %d, Swizzle Select %d, "
 				  "Source %d); Attrib %d (Override %s%s%s%s, Const Source %d, Swizzle Select %d, Source %d)\n",
 				  j + 1,
@@ -3211,87 +3474,31 @@ decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid
 				  (data[8 + i] & (1 << 12)) != 0 ? "X" : "",
 				  (data[8 + i] >> 9) & 3,
 				  (data[8 + i] >> 6) & 3, (data[8 + i] & 0x1f));
-		instr_out(data, hw_offset, 16,
+		instr_out(ctx, 16,
 			  "Point Sprite TexCoord Enable\n");
-		instr_out(data, hw_offset, 17, "Const Interp Enable\n");
-		instr_out(data, hw_offset, 18,
+		instr_out(ctx, 17, "Const Interp Enable\n");
+		instr_out(ctx, 18,
 			  "Attrib 7-0 WrapShortest Enable\n");
-		instr_out(data, hw_offset, 19,
+		instr_out(ctx, 19,
 			  "Attrib 15-8 WrapShortest Enable\n");
 
 		return len;
 
-	case 0x7814:
-		len = (data[0] & 0xff) + 2;
-		if (len != 9)
-			fprintf(out, "Bad count in 3DSTATE_WM\n");
-		if (count < 9)
-			BUFFER_FAIL(count, len, "3DSTATE_WM");
-		instr_out(data, hw_offset, 0, "3DSTATE_WM\n");
-		instr_out(data, hw_offset, 1, "kernel start pointer 0\n");
-		instr_out(data, hw_offset, 2,
-			  "SPF=%d, VME=%d, Sampler Count %d, "
-			  "Binding table count %d\n", (data[2] >> 31) & 1,
-			  (data[2] >> 30) & 1, (data[2] >> 27) & 7,
-			  (data[2] >> 18) & 0xff);
-		instr_out(data, hw_offset, 3, "scratch offset\n");
-		instr_out(data, hw_offset, 4,
-			  "Depth Clear %d, Depth Resolve %d, HiZ Resolve %d, "
-			  "Dispatch GRF start[0] %d, start[1] %d, start[2] %d\n",
-			  (data[4] & (1 << 30)) != 0,
-			  (data[4] & (1 << 28)) != 0,
-			  (data[4] & (1 << 27)) != 0, (data[4] >> 16) & 0x7f,
-			  (data[4] >> 8) & 0x7f, (data[4] & 0x7f));
-		instr_out(data, hw_offset, 5,
-			  "MaxThreads %d, PS KillPixel %d, PS computed Z %d, "
-			  "PS use sourceZ %d, Thread Dispatch %d, PS use sourceW %d, Dispatch32 %d, "
-			  "Dispatch16 %d, Dispatch8 %d\n",
-			  ((data[5] >> 25) & 0x7f) + 1,
-			  (data[5] & (1 << 22)) != 0,
-			  (data[5] & (1 << 21)) != 0,
-			  (data[5] & (1 << 20)) != 0,
-			  (data[5] & (1 << 19)) != 0, (data[5] & (1 << 8)) != 0,
-			  (data[5] & (1 << 2)) != 0, (data[5] & (1 << 1)) != 0,
-			  (data[5] & (1 << 0)) != 0);
-		instr_out(data, hw_offset, 6,
-			  "Num SF output %d, Pos XY offset %d, ZW interp mode %d , "
-			  "Barycentric interp mode 0x%x, Point raster rule %d, Multisample mode %d, "
-			  "Multisample Dispatch mode %d\n",
-			  (data[6] >> 20) & 0x3f, (data[6] >> 18) & 3,
-			  (data[6] >> 16) & 3, (data[6] >> 10) & 0x3f,
-			  (data[6] & (1 << 9)) != 0, (data[6] >> 1) & 3,
-			  (data[6] & 1));
-		instr_out(data, hw_offset, 7, "kernel start pointer 1\n");
-		instr_out(data, hw_offset, 8, "kernel start pointer 2\n");
-
-		return len;
-
 	case 0x7900:
-		if (len != 4)
-			fprintf(out,
-				"Bad count in 3DSTATE_DRAWING_RECTANGLE\n");
-		if (count < 4)
-			BUFFER_FAIL(count, len, "3DSTATE_DRAWING_RECTANGLE");
-
-		instr_out(data, hw_offset, 0, "3DSTATE_DRAWING_RECTANGLE\n");
-		instr_out(data, hw_offset, 1, "top left: %d,%d\n",
+		instr_out(ctx, 0, "3DSTATE_DRAWING_RECTANGLE\n");
+		instr_out(ctx, 1, "top left: %d,%d\n",
 			  data[1] & 0xffff, (data[1] >> 16) & 0xffff);
-		instr_out(data, hw_offset, 2, "bottom right: %d,%d\n",
+		instr_out(ctx, 2, "bottom right: %d,%d\n",
 			  data[2] & 0xffff, (data[2] >> 16) & 0xffff);
-		instr_out(data, hw_offset, 3, "origin: %d,%d\n",
+		instr_out(ctx, 3, "origin: %d,%d\n",
 			  (int)data[3] & 0xffff, ((int)data[3] >> 16) & 0xffff);
 
 		return len;
 
 	case 0x7905:
-		if (len < 5 || len > 7)
-			fprintf(out, "Bad count in 3DSTATE_DEPTH_BUFFER\n");
-		if (count < len)
-			BUFFER_FAIL(count, len, "3DSTATE_DEPTH_BUFFER");
-
-		instr_out(data, hw_offset, 0, "3DSTATE_DEPTH_BUFFER\n");
+		instr_out(ctx, 0, "3DSTATE_DEPTH_BUFFER\n");
 		if (IS_GEN5(devid) || IS_GEN6(devid))
-			instr_out(data, hw_offset, 1,
+			instr_out(ctx, 1,
 				  "%s, %s, pitch = %d bytes, %stiled, HiZ %d, Seperate Stencil %d\n",
 				  get_965_surfacetype(data[1] >> 29),
 				  get_965_depthformat((data[1] >> 18) & 0x7),
@@ -3300,24 +3507,24 @@ decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid
 				  (data[1] & (1 << 22)) != 0,
 				  (data[1] & (1 << 21)) != 0);
 		else
-			instr_out(data, hw_offset, 1,
+			instr_out(ctx, 1,
 				  "%s, %s, pitch = %d bytes, %stiled\n",
 				  get_965_surfacetype(data[1] >> 29),
 				  get_965_depthformat((data[1] >> 18) & 0x7),
 				  (data[1] & 0x0001ffff) + 1,
 				  data[1] & (1 << 27) ? "" : "not ");
-		instr_out(data, hw_offset, 2, "depth offset\n");
-		instr_out(data, hw_offset, 3, "%dx%d\n",
+		instr_out(ctx, 2, "depth offset\n");
+		instr_out(ctx, 3, "%dx%d\n",
 			  ((data[3] & 0x0007ffc0) >> 6) + 1,
 			  ((data[3] & 0xfff80000) >> 19) + 1);
-		instr_out(data, hw_offset, 4, "volume depth\n");
+		instr_out(ctx, 4, "volume depth\n");
 		if (len >= 6)
-			instr_out(data, hw_offset, 5, "\n");
+			instr_out(ctx, 5, "\n");
 		if (len >= 7) {
 			if (IS_GEN6(devid))
-				instr_out(data, hw_offset, 6, "\n");
+				instr_out(ctx, 6, "\n");
 			else
-				instr_out(data, hw_offset, 6,
+				instr_out(ctx, 6,
 					  "render target view extent\n");
 		}
 
@@ -3326,11 +3533,8 @@ decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid
 	case 0x7a00:
 		if (IS_GEN6(devid) || IS_GEN7(devid)) {
 			unsigned int i;
-			len = (data[0] & 0xff) + 2;
 			if (len != 4 && len != 5)
 				fprintf(out, "Bad count in PIPE_CONTROL\n");
-			if (count < len)
-				BUFFER_FAIL(count, len, "PIPE_CONTROL");
 
 			switch ((data[1] >> 14) & 0x3) {
 			case 0:
@@ -3346,8 +3550,8 @@ decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid
 				desc1 = "TIMESTAMP write";
 				break;
 			}
-			instr_out(data, hw_offset, 0, "PIPE_CONTROL\n");
-			instr_out(data, hw_offset, 1,
+			instr_out(ctx, 0, "PIPE_CONTROL\n");
+			instr_out(ctx, 1,
 				  "%s, %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 				  desc1,
 				  data[1] & (1 << 20) ? "cs stall, " : "",
@@ -3382,24 +3586,21 @@ decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid
 				  data[1] & (1 << 0) ? "depth cache flush, " :
 				  "");
 			if (len == 5) {
-				instr_out(data, hw_offset, 2,
+				instr_out(ctx, 2,
 					  "destination address\n");
-				instr_out(data, hw_offset, 3,
+				instr_out(ctx, 3,
 					  "immediate dword low\n");
-				instr_out(data, hw_offset, 4,
+				instr_out(ctx, 4,
 					  "immediate dword high\n");
 			} else {
 				for (i = 2; i < len; i++) {
-					instr_out(data, hw_offset, i, "\n");
+					instr_out(ctx, i, "\n");
 				}
 			}
 			return len;
 		} else {
-			len = (data[0] & 0xff) + 2;
 			if (len != 4)
 				fprintf(out, "Bad count in PIPE_CONTROL\n");
-			if (count < len)
-				BUFFER_FAIL(count, len, "PIPE_CONTROL");
 
 			switch ((data[0] >> 14) & 0x3) {
 			case 0:
@@ -3415,75 +3616,46 @@ decode_3d_965(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid
 				desc1 = "TIMESTAMP write";
 				break;
 			}
-			instr_out(data, hw_offset, 0,
+			instr_out(ctx, 0,
 				  "PIPE_CONTROL: %s, %sdepth stall, %sRC write flush, "
 				  "%sinst flush\n",
 				  desc1,
 				  data[0] & (1 << 13) ? "" : "no ",
 				  data[0] & (1 << 12) ? "" : "no ",
 				  data[0] & (1 << 11) ? "" : "no ");
-			instr_out(data, hw_offset, 1, "destination address\n");
-			instr_out(data, hw_offset, 2, "immediate dword low\n");
-			instr_out(data, hw_offset, 3, "immediate dword high\n");
+			instr_out(ctx, 1, "destination address\n");
+			instr_out(ctx, 2, "immediate dword low\n");
+			instr_out(ctx, 3, "immediate dword high\n");
 			return len;
 		}
-	case 0x7b00:
-		len = (data[0] & 0xff) + 2;
-		if (len != 6)
-			fprintf(out, "Bad count in 3DPRIMITIVE\n");
-		if (count < len)
-			BUFFER_FAIL(count, len, "3DPRIMITIVE");
-
-		instr_out(data, hw_offset, 0,
-			  "3DPRIMITIVE: %s %s\n",
-			  get_965_prim_type(data[0]),
-			  (data[0] & (1 << 15)) ? "random" : "sequential");
-		instr_out(data, hw_offset, 1, "vertex count\n");
-		instr_out(data, hw_offset, 2, "start vertex\n");
-		instr_out(data, hw_offset, 3, "instance count\n");
-		instr_out(data, hw_offset, 4, "start instance\n");
-		instr_out(data, hw_offset, 5, "index bias\n");
-		return len;
 	}
 
-	for (idx = 0; idx < ARRAY_SIZE(opcodes_3d); idx++) {
-		opcode_3d = &opcodes_3d[idx];
-		if ((data[0] & 0xffff0000) >> 16 == opcode_3d->opcode) {
+	if (opcode_3d) {
+		if (opcode_3d->func) {
+			return opcode_3d->func(ctx);
+		} else {
 			unsigned int i;
-			len = 1;
 
-			instr_out(data, hw_offset, 0, "%s\n", opcode_3d->name);
-			if (opcode_3d->max_len > 1) {
-				len = (data[0] & 0xff) + 2;
-				if (len < opcode_3d->min_len ||
-				    len > opcode_3d->max_len) {
-					fprintf(out, "Bad count in %s\n",
-						opcode_3d->name);
-				}
-			}
+			instr_out(ctx, 0, "%s\n", opcode_3d->name);
 
 			for (i = 1; i < len; i++) {
-				if (i >= count)
-					BUFFER_FAIL(count, len,
-						    opcode_3d->name);
-				instr_out(data, hw_offset, i, "dword %d\n", i);
+				instr_out(ctx, i, "dword %d\n", i);
 			}
 			return len;
 		}
 	}
 
-	instr_out(data, hw_offset, 0, "3D UNKNOWN: 3d_965 opcode = 0x%x\n",
+	instr_out(ctx, 0, "3D UNKNOWN: 3d_965 opcode = 0x%x\n",
 		  opcode);
-	(*failures)++;
 	return 1;
 }
 
 static int
-decode_3d_i830(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devid,
-	       int *failures)
+decode_3d_i830(struct drm_intel_decode *ctx)
 {
 	unsigned int idx;
 	uint32_t opcode;
+	uint32_t *data = ctx->data;
 
 	struct {
 		uint32_t opcode;
@@ -3513,11 +3685,11 @@ decode_3d_i830(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devi
 
 	switch (opcode) {
 	case 0x1f:
-		return decode_3d_primitive(data, count, hw_offset, failures);
+		return decode_3d_primitive(ctx);
 	case 0x1d:
-		return decode_3d_1d(data, count, hw_offset, devid, failures);
+		return decode_3d_1d(ctx);
 	case 0x1c:
-		return decode_3d_1c(data, count, hw_offset, failures);
+		return decode_3d_1c(ctx);
 	}
 
 	for (idx = 0; idx < ARRAY_SIZE(opcodes_3d); idx++) {
@@ -3525,7 +3697,7 @@ decode_3d_i830(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devi
 		if ((data[0] & 0x1f000000) >> 24 == opcode_3d->opcode) {
 			unsigned int len = 1, i;
 
-			instr_out(data, hw_offset, 0, "%s\n", opcode_3d->name);
+			instr_out(ctx, 0, "%s\n", opcode_3d->name);
 			if (opcode_3d->max_len > 1) {
 				len = (data[0] & 0xff) + 2;
 				if (len < opcode_3d->min_len ||
@@ -3536,18 +3708,14 @@ decode_3d_i830(uint32_t *data, uint32_t count, uint32_t hw_offset, uint32_t devi
 			}
 
 			for (i = 1; i < len; i++) {
-				if (i >= count)
-					BUFFER_FAIL(count, len,
-						    opcode_3d->name);
-				instr_out(data, hw_offset, i, "dword %d\n", i);
+				instr_out(ctx, i, "dword %d\n", i);
 			}
 			return len;
 		}
 	}
 
-	instr_out(data, hw_offset, 0, "3D UNKNOWN: 3d_i830 opcode = 0x%x\n",
+	instr_out(ctx, 0, "3D UNKNOWN: 3d_i830 opcode = 0x%x\n",
 		  opcode);
-	(*failures)++;
 	return 1;
 }
 
@@ -3562,6 +3730,21 @@ drm_intel_decode_context_alloc(uint32_t devid)
 
 	ctx->devid = devid;
 	ctx->out = stdout;
+
+	if (IS_GEN7(devid))
+		ctx->gen = 7;
+	else if (IS_GEN6(devid))
+		ctx->gen = 6;
+	else if (IS_GEN5(devid))
+		ctx->gen = 5;
+	else if (IS_GEN4(devid))
+		ctx->gen = 4;
+	else if (IS_9XX(devid))
+		ctx->gen = 3;
+	else {
+		assert(IS_GEN2(devid));
+		ctx->gen = 2;
+	}
 
 	return ctx;
 }
@@ -3583,9 +3766,9 @@ void
 drm_intel_decode_set_batch_pointer(struct drm_intel_decode *ctx,
 				   void *data, uint32_t hw_offset, int count)
 {
-	ctx->data = data;
-	ctx->hw_offset = hw_offset;
-	ctx->count = count;
+	ctx->base_data = data;
+	ctx->base_hw_offset = hw_offset;
+	ctx->base_count = count;
 }
 
 void
@@ -3615,17 +3798,25 @@ drm_intel_decode(struct drm_intel_decode *ctx)
 {
 	int ret;
 	unsigned int index = 0;
-	int failures = 0;
-	uint32_t *data;
-	uint32_t count, hw_offset;
 	uint32_t devid;
+	int size = ctx->base_count * 4;
+	void *temp;
 
 	if (!ctx)
 		return;
 
-	data = ctx->data;
-	count = ctx->count;
-	hw_offset = ctx->hw_offset;
+	/* Put a scratch page full of obviously undefined data after
+	 * the batchbuffer.  This lets us avoid a bunch of length
+	 * checking in statically sized packets.
+	 */
+	temp = malloc(size + 4096);
+	memcpy(temp, ctx->base_data, size);
+	memset((char *)temp + size, 0xd0, 4096);
+	ctx->data = temp;
+
+	ctx->hw_offset = ctx->base_hw_offset;
+	ctx->count = ctx->base_count;
+
 	devid = ctx->devid;
 	head_offset = ctx->head;
 	tail_offset = ctx->tail;
@@ -3634,11 +3825,12 @@ drm_intel_decode(struct drm_intel_decode *ctx)
 	saved_s2_set = 0;
 	saved_s4_set = 1;
 
-	while (index < count) {
-		switch ((data[index] & 0xe0000000) >> 29) {
+	while (ctx->count > 0) {
+		index = 0;
+
+		switch ((ctx->data[index] & 0xe0000000) >> 29) {
 		case 0x0:
-			ret = decode_mi(data + index, count - index,
-					hw_offset + index * 4, &failures);
+			ret = decode_mi(ctx);
 
 			/* If MI_BATCHBUFFER_END happened, then dump
 			 * the rest of the output in case we some day
@@ -3650,42 +3842,42 @@ drm_intel_decode(struct drm_intel_decode *ctx)
 				if (ctx->dump_past_end) {
 					index++;
 				} else {
-					for (index = index + 1; index < count;
+					for (index = index + 1; index < ctx->count;
 					     index++) {
-						instr_out(data, hw_offset,
-							  index, "\n");
+						instr_out(ctx, index, "\n");
 					}
 				}
 			} else
 				index += ret;
 			break;
 		case 0x2:
-			index += decode_2d(data + index, count - index,
-					   hw_offset + index * 4, &failures);
+			index += decode_2d(ctx);
 			break;
 		case 0x3:
 			if (IS_9XX(devid) && !IS_GEN3(devid)) {
 				index +=
-				    decode_3d_965(data + index, count - index,
-						  hw_offset + index * 4, devid,
-						  &failures);
+				    decode_3d_965(ctx);
 			} else if (IS_GEN3(devid)) {
-				index += decode_3d(data + index, count - index,
-						   hw_offset + index * 4,
-						   devid, &failures);
+				index += decode_3d(ctx);
 			} else {
 				index +=
-				    decode_3d_i830(data + index, count - index,
-						   hw_offset + index * 4, devid,
-						   &failures);
+				    decode_3d_i830(ctx);
 			}
 			break;
 		default:
-			instr_out(data, hw_offset, index, "UNKNOWN\n");
-			failures++;
+			instr_out(ctx, index, "UNKNOWN\n");
 			index++;
 			break;
 		}
 		fflush(out);
+
+		if (ctx->count < index)
+			break;
+
+		ctx->count -= index;
+		ctx->data += index;
+		ctx->hw_offset += 4 * index;
 	}
+
+	free(temp);
 }

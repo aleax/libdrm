@@ -1,12 +1,15 @@
-libdrm (2.4.30-1ubuntu1) precise; urgency=low
+libdrm (2.4.32-1) unstable; urgency=low
 
-  * Merge from Debian unstable, remaining changes:
-    - debian/rules
-    - debian/control:
-      + Build libdrm-intel1 everywhere rather than just {i386,amd64}
-        for Plymouth
+  [ Robert Hooker ]
+  * New upstream release (2.4.31).
+  * Bump libdrm2 and libdrm-radeon1 symbols and shlibs to account for
+    recent changes.
 
- -- Robert Hooker <sarvatt@ubuntu.com>  Fri, 06 Jan 2012 17:00:29 -0500
+  [ Cyril Brulebois ]
+  * New upstream release (2.4.32).
+  * Bump libdrm-intel1's symbols and shlibs accordingly.
+
+ -- Cyril Brulebois <kibi@debian.org>  Mon, 19 Mar 2012 19:56:12 +0000
 
 libdrm (2.4.30-1) unstable; urgency=low
 
@@ -795,6 +798,10 @@ libdrm (2.4.5-1) unstable; urgency=low
   * Don't mention *.la in libdrm-dev.install.
   * Make libdrm-dev depend on libdrm-intel1 on x86.
   * On Linux, let udev create the device files.
+  * Let linux-libc-dev provide some drm headers, drop them from libdrm-dev.
+    Add dependency on linux-libc-dev >= 2.6.28.
+  * Set libdrm2 shlibs to 2.4.3, libdrm-intel1 shlibs to 2.4.5.  Update
+    symbols files.
 
  -- Julien Cristau <jcristau@debian.org>  Tue, 24 Mar 2009 22:20:50 +0100
 

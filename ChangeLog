@@ -1,3 +1,560 @@
+commit 51c3e7d7335ecdf572968db7d3eed661e8a61810
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Mar 16 16:11:10 2012 -0700
+
+    configure: Bump version for 2.4.32.
+
+commit 5de5b7484a3a41554e16c02a544a45db5516b031
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Mar 13 16:49:53 2012 -0700
+
+    intel: Quiet two more valgrind complaints with recent changes.
+    
+    These are more cases where valgrind doesn't understand what gets read
+    or written by our ioctls.
+
+commit 9d18ad254afc2afc41a919b86cd51ea40cfd8f0b
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Mar 2 10:27:55 2012 -0800
+
+    intel: Add per-dword decode of gen7 3DPRIMITIVE.
+
+commit 9b87fd9a3df8c59461bc90b4620526d10f9b5771
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Mar 2 10:18:51 2012 -0800
+
+    intel: Move the gen4-6 3DPRIMITIVE handling out of the switch statement.
+
+commit 99c73378a1b440bcf594742445dfe14ab1e89128
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Feb 10 04:12:15 2012 -0800
+
+    intel: Add support for (possibly) unsynchronized maps.
+    
+    This improves the performance of Mesa's GL_MAP_UNSYNCHRONIZED_BIT path
+    in GL_ARB_map_buffer_range.  Improves Unigine Tropics performance at
+    1024x768 by 2.30482% +/- 0.0492146% (n=61)
+    
+    v2: Fix comment grammar.
+    
+    Reviewed-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 3a8884851b72af012a8cb2beea320f094a58e5eb
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Feb 27 17:26:05 2012 -0800
+
+    intel: Fix error check for I915_PARAM_HAS_LLC.
+    
+    drmIoctl returns -1 on error with errno set to the error value.  Other
+    users of it in this file just check for != 0, and only use errno when
+    they need to send an error value on to the caller of the API.
+
+commit c9ce2edfc8d33e760667529250e86e93ff656c3d
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Mar 9 16:08:23 2012 -0800
+
+    intel: Bump the copyright dates on the bufmgr files.
+    
+    We've been hacking these constantly.
+
+commit 4db16a9480af2c4f36eb8023193cd54545efbe54
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Oct 11 15:59:03 2011 -0700
+
+    intel: Add .aub file output support.
+    
+    This will allow the driver to capture all of its execution state to a
+    file for later debugging.  intel_gpu_dump is limited in that it only
+    captures batchbuffers, and Mesa's captures, while more complete, still
+    capture only a portion of the state involved in execution.
+    
+    This is a squash commit of a long series of hacking as we tried to get
+    the resulting traces to work in the internal simulator.  It contains
+    contributions by Yuanhan Liu and Kenneth Graunke.
+    
+    v2: Drop the MI_FLUSH_ENABLE setup.
+    
+    Reviewed-by: Kenneth Graunke <kenneth@whitecape.org>
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+    Signed-off-by: Yuanhan Liu <yuanhan.liu@linux.intel.com>
+    Signed-off-by: Kenneth Graunke <kenneth@whitecape.org>
+
+commit 6e642db7f4a5628ed63ca3c479f06bd6f2ca3893
+Author: Kenneth Graunke <kenneth@whitecape.org>
+Date:   Tue Oct 11 14:38:34 2011 -0700
+
+    intel: Add support for overriding the PCI ID via an environment variable
+    
+    For example:
+    
+        export INTEL_DEVID_OVERRIDE=0x162
+    
+    If this variable is set, don't actually submit the batchbuffer to the
+    GPU, it probably contains commands for the wrong generation of hardware.
+    
+    v2: Introduce a getter for the overridden devid, and avoid getenv per exec.
+    
+    Reviewed-by: Yuanhan Liu <yuanhan.liu@linux.intel.com>
+    Signed-off-by: Kenneth Graunke <kenneth@whitecape.org>
+    Signed-off-by: Eric Anholt <eric@anholt.net>
+
+commit fd39e61d0edfd30052d5f0b59b9215574e37942f
+Author: David Herrman <dh.herrmann@googlemail.com>
+Date:   Fri Mar 9 13:40:14 2012 -0500
+
+    xf86drmMode.h: Add header protection
+    
+    xf86drmMode.h is missing a header protection. xf86drm.h has one so just
+    copy it and adjust the name.
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Signed-off-by: David Herrmann <dh.herrmann@googlemail.com>
+
+commit f82c77870354ba736774b6c45ccf8a326732243a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Feb 2 17:51:24 2012 -0800
+
+    Make drm/drm_fourcc.h portable to non-linux platforms
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit be30d350b64c1a83473a9ffbedf8e2c680a65fcd
+Author: Matt Turner <mattst88@gmail.com>
+Date:   Thu Mar 1 12:19:59 2012 -0500
+
+    Don't require pciaccess if Intel is disabled
+    
+    Reviewed-by: Eric Anholt <eric@anholt.net>
+    Signed-off-by: Matt Turner <mattst88@gmail.com>
+
+commit 783db34f6d8aded019b005a957fed1b91fd67c7c
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jan 30 15:21:29 2012 -0800
+
+    intel: Import a new batchbuffer for the gen7 test.
+    
+    This one doesn't have the 3DSTATE_HIER_DEPTH_BUFFER bug that the
+    previous one did.
+    
+    Acked-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit b395af0d2d617c29054f1b97973982bbffa33190
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jan 30 15:13:32 2012 -0800
+
+    intel: Add decode for gen7 HIER_DEPTH_BUFFER.
+    
+    Note that the regression test complains here: The batch that was
+    captured included a bug in its packet output, which was later fixed in
+    Mesa.
+    
+    Reviewed-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit e6beaf8ee49dbf165ef2e005931fdf0ce323fcf6
+Author: Eric Anholt <eric@anholt.net>
+Date:   Mon Jan 30 15:04:10 2012 -0800
+
+    intel: Add decode for gen7 3DSTATE_WM.
+    
+    This requires pulling the gen6 3DSTATE_WM out to a function so it
+    doesn't override gen7's handler.
+    
+    v2: Fix pasteo in interpreting ZW interpolation (thanks danvet!).
+    
+    Reviewed-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 259e7b61381551b65ad3b574817dbde2210ff188
+Author: Eric Anholt <eric@anholt.net>
+Date:   Fri Jan 27 13:27:56 2012 -0800
+
+    intel: Fix a typo in decode error message.
+    
+    Reviewed-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 23eeb7e1e45417a5a84f826286dd982dba440cd3
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Feb 9 10:29:22 2012 +0000
+
+    intel: Detect cache domain inconsistency with valgrind
+    
+    Every access to either the GTT or CPU pointer is supposed to be
+    proceeded by a set_domain ioctl so that GEM is able to manage the cache
+    domains correctly and for the following access to be coherent. Of
+    course, some people explicitly want incoherent, non-blocking access
+    which is going to trigger warnings by this patch but are probably better
+    served by explicit suppression.
+    
+    v2: Also mark the pointers as inaccessible following the explicit unmap
+    and implicit unmap upon return to the cache.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+    Reviewed-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 9b3ad51ae5fd9654df8ef75de845a519015150bb
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Mon Feb 13 20:45:53 2012 -0500
+
+    radeon: fix pitch alignment for scanout buffer
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit ced219ebbd3b266ac8326223bad62f994907ae6b
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Mon Feb 13 00:19:17 2012 +0000
+
+    configure: Fix pkg-config test in absence of valgrind
+    
+    The empty string used for the not case is replaced by the default
+    if-else clause and so causes the configure to fail in the absence of
+    valgrind. Which is not quite what was intended.
+    
+    Instead use the common idiom of setting a variable depending on whether
+    the true or false branch is taken and emit the conditional code as a
+    second step.
+    
+    Reported-by: Tobias Jakobi <liquid.acid@gmx.net>
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 90b23cc24c19fbe131d84237c55311cafeb4ca21
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Thu Feb 9 10:23:10 2012 +0000
+
+    intel: Mark up with valgrind intrinsics to reduce false positives
+    
+    In particular, declare the hidden CPU mmaps to valgrind so that it knows
+    about those memory regions.
+    
+    v2: Add an additional VG_CLEAR for the getparam
+    
+    References: https://bugs.freedesktop.org/show_bug.cgi?id=35071
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+    Acked-by: Ben Widawsky <ben@bwidawsk.net>
+    [anholt: Ideally valgrind should just learn about the ioctls, and
+             removing the clear for the non-valgrindified code feels risky.]
+    Reviewed-by: Eric Anholt <eric@anholt.net>
+
+commit 2cfac57d364d0166ed9472b086c16aea376f495a
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Feb 8 10:49:08 2012 +0100
+
+    radeon_cs_setup_bo: Fix accounting if caller specified write and read domains.
+    
+    Only account for the write domain in that case.
+    
+    Fixes https://bugs.freedesktop.org/show_bug.cgi?id=43893 .
+    
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 230ec7d7bbf1e8a7e263d471b21afb08c28eba0c
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Mon Feb 6 15:22:58 2012 -0500
+
+    configure: Bump version for 2.4.31
+
+commit 356b87d8b34daf9aeadd33465141bc212ad6e3ff
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Mon Feb 6 15:22:14 2012 -0500
+
+    radeon: add r600_pci_ids.h to header file
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 10c0837780b2d4a33568c16bb92527e196d6c05e
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Fri Feb 3 12:22:11 2012 -0500
+
+    radeon: fix surface API for good before anyone start relying on it
+    
+    The mipmap level computation was wrong, we need to know the block
+    width, height, depth of compressed texture to properly compute this.
+    Change API to provide block width, height, depth instead of nblk_x,
+    nblk_y, nblk_z.
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 6a720cb8660975acea1100e61a88a92a7cb3856e
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Thu Feb 2 14:17:10 2012 -0500
+
+    radeon: surface fix macro -> micro tile fallback
+    
+    We need to force 1D tiling only on old kernel the fallback was
+    broken along the way.
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 76b4a69aab7cbfb4a087194b6d6ee182c1d5dd7e
+Author: Ville Syrjälä <ville.syrjala at linux.intel.com>
+Date:   Thu Feb 2 14:53:43 2012 -0500
+
+    Using sizeof() on a function parameter with an array type does not
+    work. sizeof() treats such parameters as pointers.
+    
+    Signed-off-by: Ville Syrjälä <ville.syrjala at linux.intel.com>
+
+commit a14c3dd0f9c468d5dba86df5ffa786aea77068a9
+Author: Ville Syrjälä <ville.syrjala at linux.intel.com>
+Date:   Thu Feb 2 14:53:41 2012 -0500
+
+    This function was missing.
+    
+    Signed-off-by: Ville Syrjälä <ville.syrjala at linux.intel.com>
+
+commit df497e9281036ca9397bc5a08a82fdf44dbc12b2
+Author: Ville Syrjälä <ville.syrjala at linux.intel.com>
+Date:   Thu Feb 2 14:53:39 2012 -0500
+
+    drmModeFreeResources() always leaked some memory.
+    drmModeGetPlaneResources() and drmModeGetPlane() leaked in one error
+    path.
+    
+    Signed-off-by: Ville Syrjälä <ville.syrjala at linux.intel.com>
+
+commit c51f7f0e460dcadb9f1a56ecf1615810877c33c8
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Fri Dec 9 21:07:15 2011 -0500
+
+    radeon: add surface allocator helper v10
+    
+    The surface allocator is able to build complete miptree when allocating
+    surface for r600/r700/evergreen/northern islands GPU family. It also
+    compute bo size and alignment for render buffer, depth buffer and
+    scanout buffer.
+    
+    v2 fix r6xx/r7xx 2D tiling width align computation
+    v3 add tile split support and fix 1d texture alignment
+    v4 rework to more properly support compressed format, split surface pixel
+       size and surface element size in separate fields
+    v5 support texture array (still issue on r6xx)
+    v6 split surface value computation and mipmap tree building, rework eg
+       and newer computation
+    v7 add a check for tile split and 2d tiled
+    v8 initialize mode value before testing it in all case, reenable
+       2D macro tile mode on r6xx for cubemap and array. Fix cubemap
+       to force array size to the number of face.
+    v9 fix handling of stencil buffer on evergreen
+    v10 on evergreen depth buffer need to have enough room for a stencil
+        buffer just after depth one
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 151cdcfe685ee280a4344dfc40e6087d74a5590f
+Author: Eugeni Dodonov <eugeni.dodonov@intel.com>
+Date:   Tue Jan 17 15:20:19 2012 -0200
+
+    intel: query for LLC support
+    
+    This adds support for querying the kernel about the LLC support in the
+    hardware.
+    
+    In case the ioctl fails, we assume that it is present on GEN6 and GEN7.
+    
+    v2: fix the return code checking
+    
+    Signed-off-by: Eugeni Dodonov <eugeni.dodonov@intel.com>
+
+commit 82c6938d232327233caac743a07639ac91bceb7e
+Author: Paul Berry <stereotype441@gmail.com>
+Date:   Tue Jan 31 14:44:14 2012 -0800
+
+    intel: Fix build of Intel DRM on x86 systems
+    
+    Commit efd6e81e inadvertently broke the build by looking for "i?86" or
+    "x86_64" in $host_os.  The correct variable to check is $host_cpu.
+    
+    This was preventing libdrm_intel.so from being built.
+    
+    Reviewed-by: Chad Versace <chad.versace@linux.intel.com>
+
+commit efd6e81e2ba112105457887ae18a58dfa4bbc8ef
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Mon Jan 30 15:20:04 2012 -0800
+
+    Don't build Intel DRM if $CHOST is not i?86-* or x86_64-*
+    
+    This fixes a failure in 'make check' found by the tinderbox when trying to
+    build this code on Linux/ppc.  This code is only designed to run on
+    Intel platforms, so don't even bother building it if we're not in that set.
+    
+    Found-by: Tinderbox
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 592ac67626f6d69bd8b518a33e80e9c4d223eba2
+Author: Chad Versace <chad.versace@linux.intel.com>
+Date:   Fri Jan 27 10:02:16 2012 -0800
+
+    intel: Fix bufmgr_gem->gen for gen > 4
+    
+    If the pci_device's actual gen was > 4, then we stupidly set
+    bufmgr_gem->gen = 6. Luckily this caused no bugs, and this fix shouldn't
+    change any behavior, because all checks against the gen currently have one
+    of the forms below:
+        gen == 2
+        gen == 3
+        gen >= 4
+    
+    Reviewed-by: Eric Anholt <eric@anholt.net>
+    Reviewed-by: Eugeni Dodonov <eugeni.dodonov@intel.com>
+    Signed-off-by: Chad Versace <chad.versace@linux.intel.com>
+
+commit b643b0713aefdc0611e47654e88263b53b0de6f5
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jan 4 14:36:13 2012 -0800
+
+    intel: Add minimal decode for remaining gen7 packets in use.
+    
+    This just gets packet name and length in place, with the remainder
+    unfinished.  I've long since finished the work that got me started
+    fixing up the decode.
+
+commit 54b12a085f9e84368fd4ca664138be6ea4120ae2
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jan 4 13:41:55 2012 -0800
+
+    intel: Add decode for gen7 constant buffer packets.
+
+commit 938df6be489cb66c2f90043a8ced9834765e4e8e
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jan 4 12:23:42 2012 -0800
+
+    intel: Add decode for gen7 state pointers.
+    
+    Since CC_STATE_POINTERS for gen6 and 7 are quite different but use the
+    same opcode, move gen6 out to a helper function too, so we can use a
+    helper function for gen7.
+
+commit 6a0b25e66b5515b3831db272211c337bcbdfb39a
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jan 4 12:12:41 2012 -0800
+
+    intel: Add support for parsing gen7 URB packets.
+
+commit ba8ce2da04daabacd598d7f049493b622ac96f58
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jan 4 13:18:42 2012 -0800
+
+    intel: Make most of the logic for 965 3d packet length checks table-driven.
+    
+    This puts the error message in a consistent location relative to the
+    packet, and while I'm here I made the error message a bit more
+    informative.
+    
+    Now, most static length packets need to just declare their length in
+    the table and not worry.
+
+commit b129e10af28016017a9c0e19af8e75a958063b5b
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jan 4 13:00:29 2012 -0800
+
+    intel: Move the logic for getting 965 3d packet length to the packet table.
+    
+    While I'm touching every line of the table, sort it by opcode.
+
+commit 3dcb2d47ee9f3fe15f075e7eb1b80c0c625b4d69
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jan 4 12:06:44 2012 -0800
+
+    intel: Add support for parsing 965 3d packets using helper functions.
+    
+    I want to add packets, without contributing to the switch statement of
+    doom.
+
+commit 5a1c10fe6a50c6b21e616bb77bfb00a9903cc517
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jan 4 12:01:49 2012 -0800
+
+    intel: Parse the correct length for gen7 3DSTATE_MULTISAMPLE.
+
+commit 9695eee8a2b6c749d79980e6057ac231aea6cb6d
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jan 4 12:00:59 2012 -0800
+
+    intel: Put the "gen" shorthand chipset identifier in the context.
+    
+    It's a lot nicer than using IS_WHATEVER(devid) all over the place, and
+    we have this in our other projects too.
+
+commit 028715ee7074691895051296105e8b4cbbfaabb8
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jan 4 12:31:40 2012 -0800
+
+    intel: Avoid the need for most overflow checks by using a scratch page.
+    
+    The overflow checks were all thoroughly untested, and a bunch of the
+    ones I'm deleting were pretty broken.  Now, in the case of overflow,
+    you just decode data of 0xd0d0d0d0, and instr_out prints the warning
+    message instead.  Note that this still has the same issue of being
+    under-tested, but at least it's one place instead of per-packet.
+    
+    A couple of BUFFER_FAIL uses are left where the length to be decoded
+    could be (significantly) larger than a page, and the decode didn't
+    just call instr_out (which doesn't dereference data itself unless it's
+    safe).
+
+commit c1d2946da8f13ea8cbda1e33aeccee4d06015fea
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Dec 20 15:29:03 2011 -0800
+
+    intel: Make instr_out take the decode context.
+    
+    This reduces some of the extra derefs of the pointers.
+
+commit b0371612f45229879c46d6a29adbe6939fbc97d4
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Dec 20 15:19:24 2011 -0800
+
+    intel: Use the context to simplify BR01 decode.
+    
+    Similar to BR00, count was always 1 and was always an index, not a count.
+
+commit 62b410344c010d84ed75cc42e1aeaa6d23e8c396
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Dec 20 15:17:24 2011 -0800
+
+    intel: Use the context to simplify BR00 decode.
+    
+    The count (actually index) was always 0, because BR00 is dword 0.
+
+commit de49fd41e26185da20a9de227e82ff71571f1a0a
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Dec 20 15:15:21 2011 -0800
+
+    intel: Plumb the context through the decode callchain.
+    
+    We still deref the context at the start of every call, but that will
+    change next.
+
+commit a756fa384fdaaa0ae61075cb648554853a91bf22
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Dec 20 15:05:29 2011 -0800
+
+    intel: Drop the code for counting parsing failures.
+    
+    Nothing was consuming it.  If something wants this in the future,
+    would be done using the decode context anyway.
+
+commit 8fb66a7ded7efdb192a1dd09898e91487de493a3
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Dec 20 14:59:38 2011 -0800
+
+    intel: Track the current packet location in the decode context.
+    
+    This is the start of plumbing the context through the decode
+    callchain instead of the current 4 arguments.
+
+commit b5cb7f88de249c6871b0e1d1e4005a7b1f54f088
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jan 4 11:52:32 2012 -0800
+
+    intel: Add a regression test for 2D decode, which I'm about to refactor.
+
+commit 66518ab5653cfdc840cd69e7b653ec05df060584
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Mon Jan 9 10:22:33 2012 -0800
+
+    intel: add sprite ioctl defines and struct for i915 sprite code
+
 commit adf1428915bfd0ee24758a3cbd56ce9b64f6eefb
 Author: Eric Anholt <eric@anholt.net>
 Date:   Fri Jan 6 08:50:31 2012 -0800
