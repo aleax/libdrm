@@ -1,5 +1,6 @@
-libdrm (2.4.32-1ubuntu1) UNRELEASED; urgency=low
+libdrm (2.4.32-1ubuntu1) precise; urgency=low
 
+  [ Robert Hooker ]
   * Merge from Debian unstable, remaining changes:
     - debian/rules
     - debian/control:
@@ -10,7 +11,7 @@ libdrm (2.4.32-1ubuntu1) UNRELEASED; urgency=low
       + Add patch series to reenable building libdrm-intel1 on !i386/amd64,
         (drop when plymouth is updated to 0.8.4.)
 
- -- Robert Hooker <sarvatt@ubuntu.com>  Thu, 22 Mar 2012 13:10:48 -0400
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Thu, 22 Mar 2012 19:59:34 +0200
 
 libdrm (2.4.32-1) unstable; urgency=low
 
