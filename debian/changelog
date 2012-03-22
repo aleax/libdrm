@@ -1,10 +1,14 @@
-libdrm (2.4.32-1ubuntu1) precise; urgency=low
+libdrm (2.4.32-1ubuntu1) UNRELEASED; urgency=low
 
   * Merge from Debian unstable, remaining changes:
     - debian/rules
     - debian/control:
       + Build libdrm-intel1 everywhere rather than just {i386,amd64}
         for Plymouth
+    - 100-revert-intel-fix-build-of-intel-drm.patch
+      101-revert-dont-build-intel-drm.patch
+      + Add patch series to reenable building libdrm-intel1 on !i386/amd64,
+        (drop when plymouth is updated to 0.8.4.)
 
  -- Robert Hooker <sarvatt@ubuntu.com>  Thu, 22 Mar 2012 13:10:48 -0400
 

@@ -1,0 +1,30 @@
+From 1e13e415ca07b27d0ab064ff1ed8b4dd022d2065 Mon Sep 17 00:00:00 2001
+From: Robert Hooker <sarvatt@ubuntu.com>
+Date: Thu, 22 Mar 2012 13:10:03 -0400
+Subject: [PATCH 2/2] Revert "Don't build Intel DRM if $CHOST is not i?86-* or
+ x86_64-*"
+
+This reverts commit efd6e81e2ba112105457887ae18a58dfa4bbc8ef.
+---
+ configure.ac |    5 +----
+ 1 files changed, 1 insertions(+), 4 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 38aae0d..f7f33c6 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -246,10 +246,7 @@ if test "x$INTEL" != "xno" -o "x$RADEON" != "xno"; then
+ 
+     else
+            if test "x$INTEL" != "xno"; then
+-                   case $host_os in
+-                           i?86-*|x86_64-*) INTEL=yes ;;
+-                           *) INTEL=no ;;
+-                   esac
++                   INTEL=yes
+            fi
+            if test "x$RADEON" != "xno"; then
+                    RADEON=yes
+-- 
+1.7.9.1
+
