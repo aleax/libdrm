@@ -1,3 +1,42 @@
+commit a3c34f56b94d4d47cadcd9814c2684c11f800e7d
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Mar 28 17:17:36 2012 -0400
+
+    configure: Bump version for 2.4.33
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit ef1b958cc831df3d33a366d1db2db2c88187229e
+Author: Rob Clark <rob@ti.com>
+Date:   Wed Mar 28 14:39:43 2012 -0500
+
+    omap: add omapdrm support
+    
+    This adds libdrm_omap helper layer (as used by xf86-video-omap,
+    omapdrmtest, etc).
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+    [danvet: pushed for Rob, he doesn't yet have commit access.]
+    Signed-off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 617213357e94299a5e9a3cb1342de55de949d156
+Author: Kenneth Graunke <kenneth@whitecape.org>
+Date:   Mon Mar 19 13:55:19 2012 -0700
+
+    intel: Add some PCI IDs for Haswell.
+    
+    Signed-off-by: Kenneth Graunke <kenneth@whitecape.org>
+    Reviewed-by: Eugeni Dodonov <eugeni.dodonov@intel.com>
+
+commit c50cc24690938db53cd91ae9ff2fa0958693f80d
+Author: Alex Deucher <alexander.deucher@amd.com>
+Date:   Tue Feb 14 11:32:17 2012 -0500
+
+    radeon: add TN surface support
+    
+    Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+
 commit 51c3e7d7335ecdf572968db7d3eed661e8a61810
 Author: Eric Anholt <eric@anholt.net>
 Date:   Fri Mar 16 16:11:10 2012 -0700
