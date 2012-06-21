@@ -182,3 +182,33 @@ Description: Userspace interface to kernel DRM buffer management -- debugging sy
  management interfaces of the kernel DRM hardware drivers.
  .
  This package provides the debugging symbols for the libkms1 package.
+
+Package: libdrm-omap1
+Section: libs
+Architecture: armel armhf
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+Pre-Depends: ${misc:Pre-Depends}
+Multi-Arch: same
+Description: Userspace interface to omap-specific kernel DRM services -- runtime
+ This library implements the userspace interface to the omap-specific kernel
+ DRM services.  DRM stands for "Direct Rendering Manager", which is the
+ kernelspace portion of the "Direct Rendering Infrastructure" (DRI). The DRI is
+ currently used on Linux to provide hardware-accelerated OpenGL drivers.
+
+Package: libdrm-omap1-dbg
+Section: debug
+Priority: extra
+Architecture: armel armhf
+Depends:
+ libdrm-omap1 (= ${binary:Version}),
+ ${misc:Depends},
+Multi-Arch: same
+Description: Userspace interface to omap-specific kernel DRM services -- debugging symbols
+ This library implements the userspace interface to the kernel DRM services.
+ DRM stands for "Direct Rendering Manager", which is the kernelspace portion
+ of the "Direct Rendering Infrastructure" (DRI). The DRI is currently used on
+ Linux to provide hardware-accelerated OpenGL drivers.
+ .
+ This package provides the debugging symbols for the libdrm-omap1 package.

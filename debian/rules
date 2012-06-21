@@ -41,6 +41,18 @@ else
 	confflags += --disable-intel
 endif
 
+# Omap is only on arm
+ifneq (,$(filter arm,$(DEB_HOST_ARCH_CPU)))
+ifneq (,$(filter linux,$(DEB_HOST_ARCH_OS)))
+	OMAP = yes
+endif
+endif
+ifeq ($(OMAP), yes)
+	confflags += --enable-omap-experimental-api
+else
+	confflags += --disable-omap-experimental-api
+endif
+
 ###
 ### Actual build
 ###
@@ -69,6 +81,9 @@ endif
 ifeq ($(RADEON), yes)
 	dh_strip -plibdrm-radeon1 --dbg-package=libdrm-radeon1-dbg
 endif
+ifeq ($(OMAP), yes)
+	dh_strip -plibdrm-omap1 --dbg-package=libdrm-omap1-dbg
+endif
 ifeq ($(LIBKMS), yes)
 	dh_strip -p libkms1 --dbg-package=libkms1-dbg
 endif
@@ -84,6 +99,9 @@ ifeq ($(NOUVEAU), yes)
 endif
 ifeq ($(RADEON), yes)
 	dh_makeshlibs -plibdrm-radeon1 -V'libdrm-radeon1 (>= 2.4.31)' -- -c4
+endif
+ifeq ($(OMAP), yes)
+	dh_makeshlibs -plibdrm-omap1 -V'libdrm-omap1' -- -c4
 endif
 ifeq ($(LIBKMS), yes)
 	dh_makeshlibs -plibkms1 -V'libkms1' -- -c4
