@@ -1,3 +1,10 @@
+libdrm (2.4.33-3) UNRELEASED; urgency=low
+
+  * Add missing dependency on libdrm-omap1 to libdrm-dev (thanks, Robert
+    Hooker!).  Make some arm matching a bit simpler.
+
+ -- Julien Cristau <jcristau@debian.org>  Thu, 21 Jun 2012 23:18:11 +0200
+
 libdrm (2.4.33-2) unstable; urgency=low
 
   [ Sebastian Reichel ]

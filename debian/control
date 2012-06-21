@@ -24,6 +24,7 @@ Depends:
  libdrm-intel1 (= ${binary:Version}) [amd64 i386 kfreebsd-amd64 kfreebsd-i386],
  libdrm-radeon1 (= ${binary:Version}) [linux-any],
  libdrm-nouveau1a (= ${binary:Version}) [linux-any],
+ libdrm-omap1 (= ${binary:Version}) [any-arm],
  libkms1 (= ${binary:Version}) [linux-any],
  ${misc:Depends},
 Replaces:
@@ -185,7 +186,7 @@ Description: Userspace interface to kernel DRM buffer management -- debugging sy
 
 Package: libdrm-omap1
 Section: libs
-Architecture: armel armhf
+Architecture: any-arm
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
@@ -200,7 +201,7 @@ Description: Userspace interface to omap-specific kernel DRM services -- runtime
 Package: libdrm-omap1-dbg
 Section: debug
 Priority: extra
-Architecture: armel armhf
+Architecture: any-arm
 Depends:
  libdrm-omap1 (= ${binary:Version}),
  ${misc:Depends},

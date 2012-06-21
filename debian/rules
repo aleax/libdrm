@@ -43,9 +43,7 @@ endif
 
 # Omap is only on arm
 ifneq (,$(filter arm,$(DEB_HOST_ARCH_CPU)))
-ifneq (,$(filter linux,$(DEB_HOST_ARCH_OS)))
 	OMAP = yes
-endif
 endif
 ifeq ($(OMAP), yes)
 	confflags += --enable-omap-experimental-api
