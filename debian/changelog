@@ -1,8 +1,9 @@
-libdrm (2.4.33-1.1) unstable; urgency=low
+libdrm (2.4.33-2) unstable; urgency=low
 
+  [ Sebastian Reichel ]
   * Build libdrm_omap (closes: #667572).
 
- -- Sebastian Reichel <sre@debian.org>  Sun, 06 May 2012 00:55:13 +0200
+ -- Julien Cristau <jcristau@debian.org>  Thu, 21 Jun 2012 22:39:22 +0200
 
 libdrm (2.4.33-1) unstable; urgency=low
 
