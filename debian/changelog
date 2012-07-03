@@ -1,3 +1,12 @@
+libdrm (2.4.37-1) UNRELEASED; urgency=low
+
+  [ Maarten Lankhorst ]
+  * New upstream release.
+  * Add libdrm-2.4.37-nouveau-1.patch
+    - Allows building libdrm_nouveau.so.1 and 2 simultaneously
+
+ -- Maarten Lankhorst <maarten.lankhorst@canonical.com>  Tue, 03 Jul 2012 10:34:04 +0200
+
 libdrm (2.4.33-3) unstable; urgency=low
 
   * Add missing dependency on libdrm-omap1 to libdrm-dev (thanks, Robert
