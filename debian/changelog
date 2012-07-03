@@ -2,8 +2,12 @@ libdrm (2.4.37-1) UNRELEASED; urgency=low
 
   [ Maarten Lankhorst ]
   * New upstream release.
-  * Add libdrm-2.4.37-nouveau-1.patch
+  * Modify libdrm-2.4.37-nouveau-1.patch from fedora 17
     - Allows building libdrm_nouveau.so.1 and 2 simultaneously
+    - libdrm_nouveau1.{so,pc} links to legacy libdrm_nouveau.so.1
+    - libdrm_nouveau.{so,pc} links to new api libdrm_nouveau.so.2
+    - This is done to allow building upstream unmodified,
+      while retaining compatibility with mesa stable
 
  -- Maarten Lankhorst <maarten.lankhorst@canonical.com>  Tue, 03 Jul 2012 10:34:04 +0200
 

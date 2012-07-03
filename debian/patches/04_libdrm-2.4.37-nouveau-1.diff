@@ -53,7 +53,7 @@ index 0000000..7e6aa13
 +			    nouveau_private.h \
 +			    nouveau_reloc.c
 +
-+libdrm_nouveaucommonincludedir = ${includedir}/nouveau1
++libdrm_nouveaucommonincludedir = ${includedir}/nouveau
 +libdrm_nouveaucommoninclude_HEADERS = \
 +				nouveau_device.h \
 +				nouveau_channel.h \
@@ -88,7 +88,7 @@ index 0000000..8f3d40f
 +Description: Userspace interface to nouveau kernel DRM services
 +Version: 0.6
 +Libs: -L${libdir} -ldrm_nouveau1
-+Cflags: -I${includedir} -I${includedir}/libdrm -I${includedir}/nouveau1
++Cflags: -I${includedir} -I${includedir}/libdrm -I${includedir}/nouveau
 +Requires.private: libdrm
 diff --git a/nouveau-1/nouveau_bo.c b/nouveau-1/nouveau_bo.c
 new file mode 100644
