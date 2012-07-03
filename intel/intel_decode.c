@@ -139,6 +139,90 @@ instr_out(struct drm_intel_decode *ctx, unsigned int index,
 }
 
 static int
+decode_MI_SET_CONTEXT(struct drm_intel_decode *ctx)
+{
+	uint32_t data = ctx->data[1];
+	if (ctx->gen > 7)
+		return 1;
+
+	instr_out(ctx, 0, "MI_SET_CONTEXT\n");
+	instr_out(ctx, 1, "gtt offset = 0x%x%s%s\n",
+		  data & ~0xfff,
+		  data & (1<<1)? ", Force Restore": "",
+		  data & (1<<0)? ", Restore Inhibit": "");
+
+	return 2;
+}
+
+static int
+decode_MI_WAIT_FOR_EVENT(struct drm_intel_decode *ctx)
+{
+	const char *cc_wait;
+	int cc_shift = 0;
+	uint32_t data = ctx->data[0];
+
+	if (ctx->gen <= 5)
+		cc_shift = 9;
+	else
+		cc_shift = 16;
+
+	switch ((data >> cc_shift) & 0x1f) {
+	case 1:
+		cc_wait = ", cc wait 1";
+		break;
+	case 2:
+		cc_wait = ", cc wait 2";
+		break;
+	case 3:
+		cc_wait = ", cc wait 3";
+		break;
+	case 4:
+		cc_wait = ", cc wait 4";
+		break;
+	case 5:
+		cc_wait = ", cc wait 4";
+		break;
+	default:
+		cc_wait = "";
+		break;
+	}
+
+	if (ctx->gen <= 5) {
+		instr_out(ctx, 0, "MI_WAIT_FOR_EVENT%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+			  data & (1<<18)? ", pipe B start vblank wait": "",
+			  data & (1<<17)? ", pipe A start vblank wait": "",
+			  data & (1<<16)? ", overlay flip pending wait": "",
+			  data & (1<<14)? ", pipe B hblank wait": "",
+			  data & (1<<13)? ", pipe A hblank wait": "",
+			  cc_wait,
+			  data & (1<<8)? ", plane C pending flip wait": "",
+			  data & (1<<7)? ", pipe B vblank wait": "",
+			  data & (1<<6)? ", plane B pending flip wait": "",
+			  data & (1<<5)? ", pipe B scan line wait": "",
+			  data & (1<<4)? ", fbc idle wait": "",
+			  data & (1<<3)? ", pipe A vblank wait": "",
+			  data & (1<<2)? ", plane A pending flip wait": "",
+			  data & (1<<1)? ", plane A scan line wait": "");
+	} else {
+		instr_out(ctx, 0, "MI_WAIT_FOR_EVENT%s%s%s%s%s%s%s%s%s%s%s%s\n",
+			  data & (1<<20)? ", sprite C pending flip wait": "", /* ivb */
+			  cc_wait,
+			  data & (1<<13)? ", pipe B hblank wait": "",
+			  data & (1<<11)? ", pipe B vblank wait": "",
+			  data & (1<<10)? ", sprite B pending flip wait": "",
+			  data & (1<<9)? ", plane B pending flip wait": "",
+			  data & (1<<8)? ", plane B scan line wait": "",
+			  data & (1<<5)? ", pipe A hblank wait": "",
+			  data & (1<<3)? ", pipe A vblank wait": "",
+			  data & (1<<2)? ", sprite A pending flip wait": "",
+			  data & (1<<1)? ", plane A pending flip wait": "",
+			  data & (1<<0)? ", plane A scan line wait": "");
+	}
+
+	return 1;
+}
+
+static int
 decode_mi(struct drm_intel_decode *ctx)
 {
 	unsigned int opcode, len = -1;
@@ -151,6 +235,7 @@ decode_mi(struct drm_intel_decode *ctx)
 		unsigned int min_len;
 		unsigned int max_len;
 		const char *name;
+		int (*func)(struct drm_intel_decode *ctx);
 	} opcodes_mi[] = {
 		{ 0x08, 0, 1, 1, "MI_ARB_ON_OFF" },
 		{ 0x0a, 0, 1, 1, "MI_BATCH_BUFFER_END" },
@@ -164,16 +249,16 @@ decode_mi(struct drm_intel_decode *ctx)
 		{ 0x00, 0, 1, 1, "MI_NOOP" },
 		{ 0x11, 0x3f, 2, 2, "MI_OVERLAY_FLIP" },
 		{ 0x07, 0, 1, 1, "MI_REPORT_HEAD" },
-		{ 0x18, 0x3f, 2, 2, "MI_SET_CONTEXT" },
+		{ 0x18, 0x3f, 2, 2, "MI_SET_CONTEXT", decode_MI_SET_CONTEXT },
 		{ 0x20, 0x3f, 3, 4, "MI_STORE_DATA_IMM" },
 		{ 0x21, 0x3f, 3, 4, "MI_STORE_DATA_INDEX" },
 		{ 0x24, 0x3f, 3, 3, "MI_STORE_REGISTER_MEM" },
 		{ 0x02, 0, 1, 1, "MI_USER_INTERRUPT" },
-		{ 0x03, 0, 1, 1, "MI_WAIT_FOR_EVENT" },
+		{ 0x03, 0, 1, 1, "MI_WAIT_FOR_EVENT", decode_MI_WAIT_FOR_EVENT },
 		{ 0x16, 0x7f, 3, 3, "MI_SEMAPHORE_MBOX" },
 		{ 0x26, 0x1f, 3, 4, "MI_FLUSH_DW" },
 		{ 0x0b, 0, 1, 1, "MI_SUSPEND_FLUSH"},
-	};
+	}, *opcode_mi = NULL;
 
 	/* check instruction length */
 	for (opcode = 0; opcode < sizeof(opcodes_mi) / sizeof(opcodes_mi[0]);
@@ -192,9 +277,13 @@ decode_mi(struct drm_intel_decode *ctx)
 						opcodes_mi[opcode].max_len);
 				}
 			}
+			opcode_mi = &opcodes_mi[opcode];
 			break;
 		}
 	}
+
+	if (opcode_mi && opcode_mi->func)
+		return opcode_mi->func(ctx);
 
 	switch ((data[0] & 0x1f800000) >> 23) {
 	case 0x0a:
@@ -3115,6 +3204,8 @@ decode_3d_965(struct drm_intel_decode *ctx)
 		{ 0x7829, 0x00ff, 2, 2, "3DSTATE_BINDING_TABLE_POINTERS_GS" },
 		{ 0x782a, 0x00ff, 2, 2, "3DSTATE_BINDING_TABLE_POINTERS_PS" },
 		{ 0x782b, 0x00ff, 2, 2, "3DSTATE_SAMPLER_STATE_POINTERS_VS" },
+		{ 0x782c, 0x00ff, 2, 2, "3DSTATE_SAMPLER_STATE_POINTERS_HS" },
+		{ 0x782d, 0x00ff, 2, 2, "3DSTATE_SAMPLER_STATE_POINTERS_DS" },
 		{ 0x782e, 0x00ff, 2, 2, "3DSTATE_SAMPLER_STATE_POINTERS_GS" },
 		{ 0x782f, 0x00ff, 2, 2, "3DSTATE_SAMPLER_STATE_POINTERS_PS" },
 		{ 0x7830, 0x00ff, 2, 2, NULL, 7, gen7_3DSTATE_URB_VS },
@@ -3135,6 +3226,9 @@ decode_3d_965(struct drm_intel_decode *ctx)
 		{ 0x790d, 0xffff, 4, 4, "3DSTATE_MULTISAMPLE", 7 },
 		{ 0x7910, 0xffff, 2, 2, "3DSTATE_CLEAR_PARAMS" },
 		{ 0x7912, 0x00ff, 2, 2, "3DSTATE_PUSH_CONSTANT_ALLOC_VS" },
+		{ 0x7913, 0x00ff, 2, 2, "3DSTATE_PUSH_CONSTANT_ALLOC_HS" },
+		{ 0x7914, 0x00ff, 2, 2, "3DSTATE_PUSH_CONSTANT_ALLOC_DS" },
+		{ 0x7915, 0x00ff, 2, 2, "3DSTATE_PUSH_CONSTANT_ALLOC_GS" },
 		{ 0x7916, 0x00ff, 2, 2, "3DSTATE_PUSH_CONSTANT_ALLOC_PS" },
 		{ 0x7917, 0x00ff, 2, 2+128*2, "3DSTATE_SO_DECL_LIST" },
 		{ 0x7918, 0x00ff, 4, 4, "3DSTATE_SO_BUFFER" },
@@ -3312,8 +3406,8 @@ decode_3d_965(struct drm_intel_decode *ctx)
 			instr_out(ctx, i,
 				  "buffer %d: %svalid, type 0x%04x, "
 				  "src offset 0x%04x bytes\n",
-				  data[i] >> (IS_GEN6(devid) ? 26 : 27),
-				  data[i] & (1 << (IS_GEN6(devid) ? 25 : 26)) ?
+				  data[i] >> ((IS_GEN6(devid) || IS_GEN7(devid)) ? 26 : 27),
+				  data[i] & (1 << ((IS_GEN6(devid) || IS_GEN7(devid)) ? 25 : 26)) ?
 				  "" : "in", (data[i] >> 16) & 0x1ff,
 				  data[i] & 0x07ff);
 			i++;

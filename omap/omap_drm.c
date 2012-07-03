@@ -34,6 +34,7 @@
 #include <linux/stddef.h>
 #include <errno.h>
 #include <sys/mman.h>
+#include <fcntl.h>
 
 #include <xf86drm.h>
 
@@ -56,6 +57,7 @@ struct omap_bo {
 	uint32_t	handle;
 	uint32_t	name;		/* flink global handle (DRI2 name) */
 	uint64_t	offset;		/* offset to mmap() */
+	int		fd;		/* dmabuf handle */
 };
 
 struct omap_device * omap_device_new(int fd)
@@ -102,7 +104,7 @@ int omap_set_param(struct omap_device *dev, uint64_t param, uint64_t value)
 static struct omap_bo * omap_bo_new_impl(struct omap_device *dev,
 		union omap_gem_size size, uint32_t flags)
 {
-	struct omap_bo *bo;
+	struct omap_bo *bo = NULL;
 	struct drm_omap_gem_new req = {
 			.size = size,
 			.flags = flags,
@@ -262,6 +264,25 @@ int omap_bo_get_name(struct omap_bo *bo, uint32_t *name)
 uint32_t omap_bo_handle(struct omap_bo *bo)
 {
 	return bo->handle;
+}
+
+int omap_bo_dmabuf(struct omap_bo *bo)
+{
+	if (!bo->fd) {
+		struct drm_prime_handle req = {
+				.handle = bo->handle,
+				.flags = DRM_CLOEXEC,
+		};
+		int ret;
+
+		ret = drmIoctl(bo->dev->fd, DRM_IOCTL_PRIME_HANDLE_TO_FD, &req);
+		if (ret) {
+			return ret;
+		}
+
+		bo->fd = req.fd;
+	}
+	return bo->fd;
 }
 
 uint32_t omap_bo_size(struct omap_bo *bo)
