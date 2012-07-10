@@ -4,7 +4,7 @@ Maintainer: Ubuntu X-SWAT <ubuntu-x@lists.ubuntu.com>
 XSBC-Original-Maintainer: Debian X Strike Force <debian-x@lists.debian.org>
 Uploaders: Cyril Brulebois <kibi@debian.org>
 Build-Depends:
- debhelper (>= 8.1.2ubuntu2),
+ debhelper (>= 9),
  dh-autoreconf,
  quilt,
  libx11-dev,
@@ -25,6 +25,8 @@ Depends:
  libdrm-intel1 (= ${binary:Version}) [linux-any kfreebsd-any],
  libdrm-radeon1 (= ${binary:Version}) [linux-any],
  libdrm-nouveau1a (= ${binary:Version}) [linux-any],
+ libdrm-nouveau2 (= ${binary:Version}) [linux-any],
+ libdrm-omap1 (= ${binary:Version}) [any-arm],
  libkms1 (= ${binary:Version}) [linux-any],
  ${misc:Depends},
 Replaces:
@@ -132,6 +134,34 @@ Description: Userspace interface to nouveau-specific kernel DRM -- debugging sym
  .
  This package provides the debugging symbols for the libdrm-nouveau1a package.
 
+Package: libdrm-nouveau2
+Section: libs
+Architecture: linux-any
+Depends: ${shlibs:Depends},
+ ${misc:Depends},
+Pre-Depends: ${misc:Pre-Depends}
+Multi-Arch: same
+Description: Userspace interface to nouveau-specific kernel DRM services -- runtime
+ This library implements the userspace interface to the nouveau-specific kernel
+ DRM services. DRM stands for "Direct Rendering Manager", which is the
+ kernelspace portion of the "Direct Rendering Infrastructure" (DRI). The DRI is
+ currently used on Linux to provide hardware-accelerated OpenGL drivers.
+
+Package: libdrm-nouveau2-dbg
+Section: debug
+Priority: extra
+Architecture: linux-any
+Depends: libdrm-nouveau2 (= ${binary:Version}),
+ ${misc:Depends},
+Multi-Arch: same
+Description: Userspace interface to nouveau-specific kernel DRM -- debugging symbols
+ This library implements the userspace interface to the kernel DRM services.
+ DRM stands for "Direct Rendering Manager", which is the kernelspace portion
+ of the "Direct Rendering Infrastructure" (DRI). The DRI is currently used on
+ Linux to provide hardware-accelerated OpenGL drivers.
+ .
+ This package provides the debugging symbols for the libdrm-nouveau2 package.
+
 Package: libdrm-radeon1
 Section: libs
 Architecture: linux-any
@@ -183,3 +213,33 @@ Description: Userspace interface to kernel DRM buffer management -- debugging sy
  management interfaces of the kernel DRM hardware drivers.
  .
  This package provides the debugging symbols for the libkms1 package.
+
+Package: libdrm-omap1
+Section: libs
+Architecture: any-arm
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+Pre-Depends: ${misc:Pre-Depends}
+Multi-Arch: same
+Description: Userspace interface to omap-specific kernel DRM services -- runtime
+ This library implements the userspace interface to the omap-specific kernel
+ DRM services.  DRM stands for "Direct Rendering Manager", which is the
+ kernelspace portion of the "Direct Rendering Infrastructure" (DRI). The DRI is
+ currently used on Linux to provide hardware-accelerated OpenGL drivers.
+
+Package: libdrm-omap1-dbg
+Section: debug
+Priority: extra
+Architecture: any-arm
+Depends:
+ libdrm-omap1 (= ${binary:Version}),
+ ${misc:Depends},
+Multi-Arch: same
+Description: Userspace interface to omap-specific kernel DRM services -- debugging symbols
+ This library implements the userspace interface to the kernel DRM services.
+ DRM stands for "Direct Rendering Manager", which is the kernelspace portion
+ of the "Direct Rendering Infrastructure" (DRI). The DRI is currently used on
+ Linux to provide hardware-accelerated OpenGL drivers.
+ .
+ This package provides the debugging symbols for the libdrm-omap1 package.

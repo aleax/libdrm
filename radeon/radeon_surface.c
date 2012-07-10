@@ -68,6 +68,10 @@ enum radeon_family {
     CHIP_TURKS,
     CHIP_CAICOS,
     CHIP_CAYMAN,
+    CHIP_ARUBA,
+    CHIP_TAHITI,
+    CHIP_PITCAIRN,
+    CHIP_VERDE,
     CHIP_LAST,
 };
 
@@ -187,6 +191,7 @@ static int r6_init_hw_info(struct radeon_surface_manager *surf_man)
     if (version && version->version_minor >= 14) {
         surf_man->hw_info.allow_2d = 1;
     }
+    drmFreeVersion(version);
 
     switch ((tiling_config & 0xe) >> 1) {
     case 0:
@@ -202,7 +207,9 @@ static int r6_init_hw_info(struct radeon_surface_manager *surf_man)
         surf_man->hw_info.num_pipes = 8;
         break;
     default:
-        return -EINVAL;
+        surf_man->hw_info.num_pipes = 8;
+        surf_man->hw_info.allow_2d = 0;
+        break;
     }
 
     switch ((tiling_config & 0x30) >> 4) {
@@ -213,7 +220,9 @@ static int r6_init_hw_info(struct radeon_surface_manager *surf_man)
         surf_man->hw_info.num_banks = 8;
         break;
     default:
-        return -EINVAL;
+        surf_man->hw_info.num_banks = 8;
+        surf_man->hw_info.allow_2d = 0;
+        break;
     }
 
     switch ((tiling_config & 0xc0) >> 6) {
@@ -224,7 +233,9 @@ static int r6_init_hw_info(struct radeon_surface_manager *surf_man)
         surf_man->hw_info.group_bytes = 512;
         break;
     default:
-        return -EINVAL;
+        surf_man->hw_info.group_bytes = 256;
+        surf_man->hw_info.allow_2d = 0;
+        break;
     }
     return 0;
 }
@@ -374,6 +385,27 @@ static int r6_surface_init(struct radeon_surface_manager *surf_man,
     /* tiling mode */
     mode = (surf->flags >> RADEON_SURF_MODE_SHIFT) & RADEON_SURF_MODE_MASK;
 
+    /* always enable z & stencil together */
+    if (surf->flags & RADEON_SURF_ZBUFFER) {
+        surf->flags |= RADEON_SURF_SBUFFER;
+    }
+    if (surf->flags & RADEON_SURF_SBUFFER) {
+        surf->flags |= RADEON_SURF_ZBUFFER;
+    }
+    if (surf->flags & RADEON_SURF_ZBUFFER) {
+        /* zbuffer only support 1D or 2D tiled surface */
+        switch (mode) {
+        case RADEON_SURF_MODE_1D:
+        case RADEON_SURF_MODE_2D:
+            break;
+        default:
+            mode = RADEON_SURF_MODE_1D;
+            surf->flags = RADEON_SURF_CLR(surf->flags, MODE);
+            surf->flags |= RADEON_SURF_SET(RADEON_SURF_MODE_1D, MODE);
+            break;
+        }
+    }
+
     /* force 1d on kernel that can't do 2d */
     if (!surf_man->hw_info.allow_2d && mode > RADEON_SURF_MODE_1D) {
         mode = RADEON_SURF_MODE_1D;
@@ -436,9 +468,10 @@ static int eg_init_hw_info(struct radeon_surface_manager *surf_man)
 
     surf_man->hw_info.allow_2d = 0;
     version = drmGetVersion(surf_man->fd);
-    if (version && version->version_minor >= 14) {
+    if (version && version->version_minor >= 16) {
         surf_man->hw_info.allow_2d = 1;
     }
+    drmFreeVersion(version);
 
     switch (tiling_config & 0xf) {
     case 0:
@@ -454,7 +487,9 @@ static int eg_init_hw_info(struct radeon_surface_manager *surf_man)
         surf_man->hw_info.num_pipes = 8;
         break;
     default:
-        return -EINVAL;
+        surf_man->hw_info.num_pipes = 8;
+        surf_man->hw_info.allow_2d = 0;
+        break;
     }
 
     switch ((tiling_config & 0xf0) >> 4) {
@@ -468,7 +503,9 @@ static int eg_init_hw_info(struct radeon_surface_manager *surf_man)
         surf_man->hw_info.num_banks = 16;
         break;
     default:
-        return -EINVAL;
+        surf_man->hw_info.num_banks = 8;
+        surf_man->hw_info.allow_2d = 0;
+        break;
     }
 
     switch ((tiling_config & 0xf00) >> 8) {
@@ -479,7 +516,9 @@ static int eg_init_hw_info(struct radeon_surface_manager *surf_man)
         surf_man->hw_info.group_bytes = 512;
         break;
     default:
-        return -EINVAL;
+        surf_man->hw_info.group_bytes = 256;
+        surf_man->hw_info.allow_2d = 0;
+        break;
     }
 
     switch ((tiling_config & 0xf000) >> 12) {
@@ -493,7 +532,9 @@ static int eg_init_hw_info(struct radeon_surface_manager *surf_man)
         surf_man->hw_info.row_size = 4096;
         break;
     default:
-        return -EINVAL;
+        surf_man->hw_info.row_size = 4096;
+        surf_man->hw_info.allow_2d = 0;
+        break;
     }
     return 0;
 }
@@ -547,8 +588,6 @@ static int eg_surface_init_1d(struct radeon_surface_manager *surf_man,
     tilew = 8;
     xalign = surf_man->hw_info.group_bytes / (tilew * surf->bpe * surf->nsamples);
     if (surf->flags & RADEON_SURF_SBUFFER) {
-        surf->stencil_offset = 0;
-        surf->stencil_tile_split = 0;
         xalign = surf_man->hw_info.group_bytes / (tilew * surf->nsamples);
     }
     xalign = MAX2(tilew, xalign);
@@ -589,7 +628,6 @@ static int eg_surface_init_2d(struct radeon_surface_manager *surf_man,
     unsigned slice_pt;
     unsigned i;
 
-    surf->stencil_offset = 0;
     /* compute tile values */
     tilew = 8;
     tileh = 8;
@@ -725,11 +763,30 @@ static int eg_surface_init(struct radeon_surface_manager *surf_man,
     if (surf->flags & RADEON_SURF_ZBUFFER) {
         surf->flags |= RADEON_SURF_SBUFFER;
     }
+    if (surf->flags & RADEON_SURF_SBUFFER) {
+        surf->flags |= RADEON_SURF_ZBUFFER;
+    }
+    if (surf->flags & RADEON_SURF_ZBUFFER) {
+        /* zbuffer only support 1D or 2D tiled surface */
+        switch (mode) {
+        case RADEON_SURF_MODE_1D:
+        case RADEON_SURF_MODE_2D:
+            break;
+        default:
+            mode = RADEON_SURF_MODE_1D;
+            surf->flags = RADEON_SURF_CLR(surf->flags, MODE);
+            surf->flags |= RADEON_SURF_SET(RADEON_SURF_MODE_1D, MODE);
+            break;
+        }
+    }
 
     r = eg_surface_sanity(surf_man, surf, mode);
     if (r) {
         return r;
     }
+
+    surf->stencil_offset = 0;
+    surf->stencil_tile_split = 0;
 
     /* check tiling mode */
     switch (mode) {

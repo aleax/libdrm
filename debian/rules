@@ -14,7 +14,7 @@ ifeq (linux, $(DEB_HOST_ARCH_OS))
 	confflags += --enable-libkms
 	LIBKMS = yes
 	confflags += --enable-vmwgfx-experimental-api
-	confflags += --enable-nouveau-experimental-api
+	confflags += --enable-nouveau
 	NOUVEAU = yes
 	confflags += --enable-radeon
 	RADEON = yes
@@ -26,7 +26,7 @@ else
 	confflags += --disable-libkms
 	LIBKMS = no
 	confflags += --disable-vmwgfx-experimental-api
-	confflags += --disable-nouveau-experimental-api
+	confflags += --disable-nouveau
 	NOUVEAU = no
 	confflags += --disable-radeon
 	RADEON = no
@@ -36,6 +36,16 @@ ifeq ($(INTEL), yes)
 	confflags += --enable-intel
 else
 	confflags += --disable-intel
+endif
+
+# Omap is only on arm
+ifneq (,$(filter arm,$(DEB_HOST_ARCH_CPU)))
+	OMAP = yes
+endif
+ifeq ($(OMAP), yes)
+	confflags += --enable-omap-experimental-api
+else
+	confflags += --disable-omap-experimental-api
 endif
 
 ###
@@ -53,6 +63,12 @@ override_dh_auto_install:
 
 override_dh_install:
 	find debian/tmp -name '*.la' -delete
+	# Temporary rules for libdrm_nouveau1a
+	rm debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/libdrm_nouveau.a
+	ln -s libdrm_nouveau.so.1 \
+		debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/libdrm_nouveau1.so
+	ln -sf libdrm_nouveau.so.2 \
+		debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/libdrm_nouveau.so
 	dh_install --fail-missing
 
 override_dh_strip:
@@ -62,9 +78,13 @@ ifeq ($(INTEL), yes)
 endif
 ifeq ($(NOUVEAU), yes)
 	dh_strip -plibdrm-nouveau1a --dbg-package=libdrm-nouveau1a-dbg
+	dh_strip -plibdrm-nouveau2 --dbg-package=libdrm-nouveau2-dbg
 endif
 ifeq ($(RADEON), yes)
 	dh_strip -plibdrm-radeon1 --dbg-package=libdrm-radeon1-dbg
+endif
+ifeq ($(OMAP), yes)
+	dh_strip -plibdrm-omap1 --dbg-package=libdrm-omap1-dbg
 endif
 ifeq ($(LIBKMS), yes)
 	dh_strip -p libkms1 --dbg-package=libkms1-dbg
@@ -78,9 +98,13 @@ ifeq ($(INTEL), yes)
 endif
 ifeq ($(NOUVEAU), yes)
 	dh_makeshlibs -plibdrm-nouveau1a -V'libdrm-nouveau1a (>= 2.4.23)' -- -c4
+	dh_makeshlibs -plibdrm-nouveau2 -V'libdrm-nouveau2 (>= 2.4.34)' -- -c4
 endif
 ifeq ($(RADEON), yes)
 	dh_makeshlibs -plibdrm-radeon1 -V'libdrm-radeon1 (>= 2.4.31)' -- -c4
+endif
+ifeq ($(OMAP), yes)
+	dh_makeshlibs -plibdrm-omap1 -V'libdrm-omap1' -- -c4
 endif
 ifeq ($(LIBKMS), yes)
 	dh_makeshlibs -plibkms1 -V'libkms1' -- -c4

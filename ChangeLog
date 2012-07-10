@@ -1,3 +1,710 @@
+commit 1b1a4f0a779f7ab2ba5673b9c9fe2a37047fe765
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Fri Jun 29 11:08:05 2012 -0700
+
+    configure: bump version for release
+    
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+
+commit f7210fa4ecf6a5456aa5a6bcc0584d38b2c8449e
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Fri Jan 13 11:31:52 2012 -0800
+
+    intel/context: create/destroy implementation
+    
+    Add relevant code to set up minimal state and call the appropriate
+    kernel IOCTLs.
+    
+    This was missed in the previous cherry-picking for 2.3.36.
+    
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+
+commit c0ed9b23ecb48b8301f66d2270e638249709e94e
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Thu Jun 28 10:48:31 2012 -0400
+
+    modetest: Dump bit field names
+
+commit a7805194b7b91de01b671beeb724584dca69ad68
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Wed Jun 27 10:10:53 2012 -0700
+
+    intel/decode: fix the reference file for
+    
+    I mistakenly "fixed" a bad decode with
+    
+    commit 7d0a1d5ebbe2c6aecd96eef94b0af038858a0178
+    Author: Ben Widawsky <ben@bwidawsk.net>
+    Date:   Sun Jun 24 20:35:57 2012 -0700
+    
+        intel/decode: VERTEX_ELEMENT_STATE, 1 means valid
+    
+    However the actual fix is just to update the reference file, and
+    include GEN7 in the decode.
+    
+    Props to Eric Anholt for putting the test in distcheck, or else I
+    wouldn't have caught this.
+    
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+
+commit df5cc69daba12379b5c0bfd49cffd67e7ebedea1
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Wed Jun 27 10:19:49 2012 -0700
+
+    Revert "intel/decode: VERTEX_ELEMENT_STATE, 1 means valid"
+    
+    This reverts commit 7d0a1d5ebbe2c6aecd96eef94b0af038858a0178.
+    
+    The actual fix
+
+commit ee2be4fa7ea8c220291bf122cf3cc9b467d9564d
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Sun May 27 16:10:51 2012 -0700
+
+    intel: add decoding of MI_SET_CONTEXT
+    
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+    Reviewed-by: Kenneth Graunke <kenneth@whitecape.org>
+
+commit 3ed38714bd3792ccfc1089dd7bef84ab3dc9697d
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Sun Mar 18 18:28:28 2012 -0700
+
+    intel/context: new execbuf interface for contexts
+    
+    To support this we extract the common execbuf2 functionality to be
+    called with, or without contexts.
+    
+    The context'd execbuf does not support some of the dri1 stuff.
+    
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+    Reviewed-by: Kenneth Graunke <kenneth@whitecape.org>
+
+commit b3b123dfb1e81f254fb419d8eef6f63128e5b9c9
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Fri Jan 13 11:31:31 2012 -0800
+
+    intel/context: Add drm_intel_context type
+    
+    Add an opaque type representing a HW context.
+    
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+    Reviewed-by: Kenneth Graunke <kenneth@whitecape.org>
+
+commit a5b2946889471f6075852949f90f660e43b68532
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Wed Jun 27 09:52:42 2012 -0700
+
+    intel: updated header for contexts
+    
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+    Reviewed-By: Kenneth Graunke <kenneth@whitecape.org>
+
+commit 7d0a1d5ebbe2c6aecd96eef94b0af038858a0178
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Sun Jun 24 20:35:57 2012 -0700
+
+    intel/decode: VERTEX_ELEMENT_STATE, 1 means valid
+    
+    The logic seemed to be inverse to me.
+    
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+
+commit eeedb0dcc48e02727606d416c28bcb9b86915daa
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Sun Jun 24 21:53:50 2012 -0700
+
+    intel/decode: add sampler state pointers for [HD]S
+    
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+
+commit 971c080ac0eb8f0531fe3ebabc5b9e585db992b6
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Tue Jun 5 11:30:48 2012 -0700
+
+    intel: wait render timeout implementation
+    
+    int drm_intel_gem_bo_wait(drm_intel_bo *bo, uint64_t timeout_ns)
+    
+    This should bump the libdrm version. We're waiting for context support
+    so we can do both features in one bump.
+    
+    v2: don't return remaining timeout amount
+    use get param and fallback for older kernels
+    
+    v3: only doing getparam at init
+    prototypes now have a signed input value
+    
+    v4: update comments
+    fall back to correct polling behavior with new userspace and old kernel
+    
+    v5: since the drmIoctl patch was not well received, return appropriate
+    values in this function instead. As Daniel pointed out, the polling
+    case (timeout == 0) should also return -ETIME.
+    
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+    Reviewed-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit ae137f4669ccdbc615d18facebdb804a9af9846b
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Sun Jun 24 17:12:24 2012 -0700
+
+    intel: Add IVB PUSH_CONSTANT decodes
+    
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+
+commit a1d462d2a6f720538eaf1199a94dd27cd04e8a54
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Sun Jun 17 09:18:03 2012 +0100
+
+    radeon/surface: free version after using it.
+    
+    fixes leak in valgrind.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit d1fcfb17b9642ae351b03056a27b328f314ca80a
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Tue Jun 12 18:09:55 2012 -0400
+
+    radeon: force 1D array mode for z/stencil surface
+    
+    On r6xx or evergreen z/stencil surface don't support linear or
+    linear aligned surface, force 1D tiled mode for those.
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 2f56002cc0b5424902dfe2bd4024f7b825ecde67
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Mon Jun 11 15:04:45 2012 -0400
+
+    radeon: enabled 2D tiling for evergreen only on fixed kernel
+    
+    Due to a kernel bug, enabled 2D tiling for evergreen only on
+    newer fixed kernel.
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 325e2e52a96ede6a19e891f769c803cb9ba85e10
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Mon Jun 11 15:01:12 2012 -0400
+
+    radeon: always properly initialize stencil_offset field
+    
+    Reported-by: Vadim Girlin <vadimgirlin@gmail.com>
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 9e0026d35c56374b53a0b3837e24412bc9a4d8c9
+Author: Marcin Slusarz <marcin.slusarz@gmail.com>
+Date:   Sat Jun 9 20:56:37 2012 +0200
+
+    nouveau: silence some remaining valgrind warnings
+    
+    Valgrind can't understand some of the fields passed to ioctls are overwritten
+    by kernel, so we need to initialize them. Almost all of our ioctl wrappers
+    already do it and the cost of remaining 3 is very small.
+    
+    Signed-off-by: Marcin Slusarz <marcin.slusarz@gmail.com>
+
+commit 25e4cb4659c62817aae2ca3b83f2d4f598d6474b
+Author: Rob Clark <rob@ti.com>
+Date:   Tue Jun 5 12:28:47 2012 -0500
+
+    modetest: support plane properties
+    
+    Add support to display plane properties.
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+    Reviewed-by: Paulo Zanoni <paulo.r.zanoni@intel.com>
+
+commit 6df9e6af4b34ef2c5278941ee78de029e4040485
+Author: Rob Clark <rob@ti.com>
+Date:   Tue Jun 5 12:28:38 2012 -0500
+
+    modetest: support bitmask properties
+    
+    Add support to display bitmask properties.
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+    Reviewed-by: Paulo Zanoni <paulo.r.zanoni@intel.com>
+
+commit 7b228e900f59cda3cafb60692be9dd7aced6ad96
+Author: Rob Clark <rob@ti.com>
+Date:   Tue Jun 5 12:28:22 2012 -0500
+
+    Add support for bitmask properties
+    
+    A bitmask property is similar to an enum.  The enum value is a bit
+    position (0-63), and valid property values consist of a mask of
+    zero or more of (1 << enum_val[n]).
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+    Reviewed-by: Paulo Zanoni <paulo.r.zanoni@intel.com>
+
+commit 86dece4cf2f7180b854fbd318fa1a57793f0deac
+Author: Paulo Zanoni <paulo.r.zanoni@intel.com>
+Date:   Tue May 15 18:38:29 2012 -0300
+
+    modetest: print CRTC properties
+    
+    Reviewed-by: Eugeni Dodonov <eugeni.dodonov@intel.com>
+    Reviewed-by: Rob Clark <rob@ti.com>
+    Signed-off-by: Paulo Zanoni <paulo.r.zanoni@intel.com>
+
+commit 8c75703df0fdf65b3851f8eb5822705638decff3
+Author: Paulo Zanoni <paulo.r.zanoni@intel.com>
+Date:   Tue May 15 18:38:28 2012 -0300
+
+    Add support for generic object properties IOCTLs
+    
+    New library calls:
+    - drmModeObjectGetProperties
+    - drmModeFreeObjectProperties
+    - drmModeObjectSetProperties
+    
+    Reviewed-by: Eugeni Dodonov <eugeni.dodonov@intel.com>
+    Reviewed-by: Rob Clark <rob@ti.com>
+    Signed-off-by: Paulo Zanoni <paulo.r.zanoni@intel.com>
+
+commit 247521a8909f4ca889a4bc09755cda9ff200061d
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Jun 8 15:23:46 2012 +0200
+
+    autogen.sh: Restore passing --enable-maintainer-mode to configure.
+    
+    Otherwise build system files aren't automagically regenerated after updating
+    from Git.
+    
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 93a5117d5b05b7b4cd1cb481a10b8565c63fb5ba
+Author: Alex Deucher <alexander.deucher@amd.com>
+Date:   Thu Jun 7 10:45:55 2012 -0400
+
+    configure: bump version for release
+    
+    Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit c2b77a02d4e188cfa6d1b73a721946fd9b1d3577
+Author: Alex Deucher <alexander.deucher@amd.com>
+Date:   Wed Jun 6 09:12:37 2012 -0400
+
+    radeon: fall back to 1D tiling only with broken kernels
+    
+    Certain cards report the the wrong bank setup which causes
+    surface init to fail in the ddx and leads to no accel.
+    If we hit an invalid tiling parameter, just set a default
+    value and disable 2D tiling.
+    
+    Should fix:
+    https://bugs.freedesktop.org/show_bug.cgi?id=43448
+    
+    Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ba6130c2d6f4e9833f4d5b43da01673827b26bd4
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Tue Jun 5 11:30:08 2012 -0700
+
+    intel: wait render header updates
+    
+    make headers_install in kernel. Copy to here.
+    
+    v2: signed ns_timeout
+    
+    Acked-by: Kenneth Graunke <kenneth@whitecape.org>
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+
+commit 69e7469e351b09c4fd92f6f18408a9ad069c38b3
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Tue Jun 5 11:28:01 2012 -0700
+
+    intel: sanitize i915_drm.h
+    
+    run make headers_isntall on d-i-n, copy to here
+    
+    Acked-by: Kenneth Graunke <kenneth@whitecape.org>
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+
+commit c563db07bf6a40d2415b560685ed7604830b9fb7
+Author: Alex Deucher <alexander.deucher@amd.com>
+Date:   Tue Jun 5 10:07:15 2012 -0400
+
+    radeon: add new pci ids
+    
+    Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 481234f2909c0506962a2f42da862da6a9b13fd8
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed May 16 18:49:18 2012 +0200
+
+    radeon: Add Southern Islands PCI IDs.
+    
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit e07b650662ea0529d99741691c47856ef1034c9c
+Author: Inki Dae <inki.dae@samsung.com>
+Date:   Fri May 4 19:13:14 2012 +0900
+
+    libdrm: add exynos drm support
+    
+    this patch adds libdrm_exynos helper layer that inclues some intefaces
+    for exynos specific gem and virtual display driver and also adds exynos
+    module name to modtest and vbltest.
+    
+    Changelog v2:
+    - fixed exynos broken ioctl.
+      the pointer of uint64_t *edid should be removed.
+    - removed unnecessary definitions.
+    - added drm prime interfaces.
+      this feature is used to share a buffer between drivers or memory managers
+      and for this, please, refer to below links:
+    	http://www.mjmwired.net/kernel/Documentation/dma-buf-sharing.txt
+    	http://lwn.net/Articles/488664/
+    
+    this patch is based on a link below:
+    	git://anongit.freedesktop.org/mesa/drm
+    	commit id: d72a44c7c4f5eea9c1e5bb0c36cb9e0224b9ca22
+    
+    Reviewed-by: Rob Clark <rob@ti.com>
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+    Signed-off-by: Inki Dae <inki.dae@samsung.com>
+    Signed-off-by: Kyungmin Park <kyungmin.park@samsung.com>
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit 86451a12ca52e88a9600ed55f56b8cacd1ac0d6d
+Author: Paul Berry <stereotype441@gmail.com>
+Date:   Mon May 7 13:15:12 2012 -0700
+
+    configure: Bump version for 2.4.34.
+
+commit da02f72bc286fd8d669f3860bdd97a8d1a1c3015
+Author: Paul Berry <stereotype441@gmail.com>
+Date:   Fri May 4 12:41:00 2012 -0700
+
+    intel: Add the ability to supply annotations for .aub files.
+    
+    This patch adds a new function,
+    drm_intel_bufmgr_gem_set_aub_annotations(), which can be used to
+    annotate the type and subtype of data stored in various sections of
+    each buffer.  This data is used to populate type and subtype fields
+    when generating the .aub file, which improves the ability of later
+    debugging tools to analyze the contents of the .aub file.
+    
+    If drm_intel_bufmgr_gem_set_aub_annotations() is not called, then we
+    fall back to the old set of annotations (annotate the portion of the
+    batchbuffer that is executed as AUB_TRACE_TYPE_BATCH, and everything
+    else as AUB_TRACE_TYPE_NOTYPE).
+    
+    Reviewed-by: Eric Anholt <eric@anholt.net>
+
+commit cf7cc62a9817a495264bbb037f0175cef9bd7a53
+Author: Anisse Astier <anisse@astier.eu>
+Date:   Thu May 10 17:56:14 2012 +0200
+
+    radeon: Add new R600 PCI ids for surface manager
+    
+    This is the same list of PCI ids added by Alex Deucher in xf86-video-ati commit
+    aacbd629b02cbee3f9e6a0ee452b4e3f21376bd3.
+    
+    This is needed since the addition of the surface allocator helper in
+    commit c51f7f0e460dcadb9f1a56ecf1615810877c33c8 ; it needs to differentiate
+    pre and post-R600 GPUs.
+    Therefore we should maintain another PCI id list.
+    
+    Fixes: https://bugs.freedesktop.org/show_bug.cgi?id=48138
+    Signed-off-by: Anisse Astier <anisse@astier.eu>
+    Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit d72a44c7c4f5eea9c1e5bb0c36cb9e0224b9ca22
+Author: Paulo Zanoni <paulo.r.zanoni@intel.com>
+Date:   Sat Apr 21 17:51:53 2012 -0300
+
+    modetest: print more about our properties
+    
+    In the future we'll have more than just connector properties, so create
+    a dump_prop function that can handle any property (instead of the
+    current dump_props function that only handles connector properties).
+    
+    Also, make this function print a lot more information about the existing
+    properties.
+    
+    Also change the printed indentation of the modes to make the output more
+    readable.
+    
+    The previous function dump_props also segfaulted when we didn't have
+    enought permissions. The new function does not segfault in this case (by
+    checking for the return value of drmModeGetProperty).
+    
+    Reviewed-by: Eugeni Dodonov <eugeni.dodonov@intel.com>
+    Signed-off-by: Paulo Zanoni <paulo.r.zanoni@intel.com>
+    Signed-off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 0ef7644fe5161d3b50f9550ebbf8cbbabd51706f
+Author: Paulo Zanoni <paulo.r.zanoni@intel.com>
+Date:   Sat Apr 21 17:51:52 2012 -0300
+
+    modetest: call drmModeFreePlaneResources
+    
+    24 (16 direct, 8 indirect) bytes in 1 blocks are definitely lost in loss record 2 of 7
+       at 0x402994D: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+       by 0x4A25950: drmMalloc (xf86drm.c:147)
+       by 0x4A2E26D: drmModeGetPlaneResources (xf86drmMode.c:951)
+       by 0x4025FF: dump_planes (modetest.c:276)
+       by 0x4052AF: main (modetest.c:1120)
+    
+    Signed-off-by: Paulo Zanoni <paulo.r.zanoni@intel.com>
+    Signed-off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit a10bcaaf668ab16233df10c2742dcb497e17d588
+Author: Paulo Zanoni <paulo.r.zanoni@intel.com>
+Date:   Sat Apr 21 17:51:51 2012 -0300
+
+    modetest: fix drmModeGetConnector memory leak
+    
+    Don't "continue" without freeing the connector.
+    
+    192 bytes in 6 blocks are indirectly lost in loss record 6 of 12
+       at 0x4C2779D: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+       by 0x4E30DD8: drmMalloc (xf86drm.c:147)
+       by 0x4E35024: drmAllocCpy (xf86drmMode.c:73)
+       by 0x4E35D69: drmModeGetConnector (xf86drmMode.c:507)
+       by 0x402F22: dump_connectors (modetest.c:181)
+       by 0x40261B: main (modetest.c:801)
+    
+    Reviewed-by: Eugeni Dodonov <eugeni.dodonov@intel.com>
+    Signed-off-by: Paulo Zanoni <paulo.r.zanoni@intel.com>
+    Signed-off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 9b44fbd393b8db571badae41881f490145404ae0
+Author: Paulo Zanoni <paulo.r.zanoni@intel.com>
+Date:   Sat Apr 21 17:51:50 2012 -0300
+
+    modetest: fix some compiler warnings
+    
+    Use unsigned int instead of int:
+    - modetest.c:90:1: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+    - modetest.c:98:1: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+    - modetest.c:118:1: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+    - modetest.c:286:16: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+    - modetest.c:303:17: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+    - modetest.c:694:16: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+    - modetest.c:1088:16: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+    
+    The 'fd' variable is global, we don't need to pass it as an argument:
+    - modetest.c:998:40: warning: unused parameter ‘fd’ [-Wunused-parameter]
+    
+    We don't use the 'modeset' variable:
+    - modetest.c:1025:8: warning: variable ‘modeset’ set but not used [-Wunused-but-set-variable]
+    
+    V2: rebase, clear some more warnings
+    
+    Signed-off-by: Paulo Zanoni <paulo.r.zanoni@intel.com>
+    Signed-off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 5288729823ee1c243023758c35fbe8e3a70ccf9c
+Author: Marcin Slusarz <marcin.slusarz@gmail.com>
+Date:   Tue May 1 23:24:45 2012 +0200
+
+    nouveau: fix channel closing
+    
+    Restore code lost in libdrm_nouveau rewrite.
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 754655c795fff1c6267d358e54ad5198aee0cdd6
+Author: Christoph Bumiller <e0425955@student.tuwien.ac.at>
+Date:   Thu Apr 19 20:03:39 2012 +0200
+
+    nouveau: expose notifier handle on nvc0 as well
+    
+    Signed-off-by: Christoph Bumiller <e0425955@student.tuwien.ac.at>
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit d954648b4872e6b40ec8768a14eee818bc7613a8
+Author: Marcin Slusarz <marcin.slusarz@gmail.com>
+Date:   Mon Apr 23 00:31:48 2012 +0200
+
+    nouveau: remove unnecessary EAGAIN loops
+    
+    drmCommandWrite / drmCommandWriteRead already loop on EAGAIN.
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 73b9a2881c37990dee0afb9cb23a6a1e85339ede
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Tue Apr 17 08:35:43 2012 +1000
+
+    nouveau: init nvc0 channel alloc req structure fully
+    
+    Kernel rejects ~0 handles, even though they're not used on NVC0.
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit 292da616fe1f936ca78a3fa8e1b1b19883e343b6
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Fri Dec 9 16:11:06 2011 +1000
+
+    nouveau: pull in major libdrm rewrite
+    
+    Redesigned primarily to allow us to better take advantage of BO's having
+    fixed GPU virtual addresses on GeForce 8 and up, and to reduce the overhead
+    of handling relocations on earlier chipsets.
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+    Signed-off-by: Christoph Bumiller <e0425955@student.tuwien.ac.at>
+
+commit 0d6350002d74848dd3d1e4d28d514a7ac9d580c9
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Sat Dec 17 23:37:20 2011 +1000
+
+    lists: add nicer+unsafe foreach, and list join macros
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+    Signed-off-by: Christoph Bumiller <e0425955@student.tuwien.ac.at>
+
+commit f00efc7ab442f106d3ac7699e80f1f7aee8451f4
+Author: Rob Clark <rob@ti.com>
+Date:   Wed Apr 11 09:51:36 2012 -0500
+
+    omap: add dmabuf support
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit 9b893e4a429d58bf0954ffc09b18890fcfe92941
+Author: Rob Clark <rob@ti.com>
+Date:   Wed Apr 11 09:44:35 2012 -0500
+
+    libdrm: update drm headers from kernel for prime/dmabuf
+    
+    Sync drm.h with from kernel headers for the new PRIME_HANDLE_TO_FD
+    and PRIME_FD_TO_HANDLE ioctls from Dave Airlie's "drm: base prime/
+    dma-buf support (v5)" kernel patch.
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit 67fd052c013a493cd644d2e3495fab8b5823b330
+Author: Rob Clark <rob@ti.com>
+Date:   Tue Apr 10 10:23:50 2012 -0500
+
+    modetest: fix typo
+    
+    Reported-by: Ville Syrjälä <ville.syrjala@linux.intel.com>
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit 2f1e2101b4dc0a6dc1c1d1c59c5cc5fbc54b90cf
+Author: Rob Clark <rob@ti.com>
+Date:   Mon Jan 2 10:31:25 2012 -0600
+
+    modetest: add AR15/XR15 (RGB-1555) formats
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit b83ad866220911e5be1704e6df085705e5ba8eae
+Author: Rob Clark <rob@ti.com>
+Date:   Wed Dec 14 22:24:14 2011 -0600
+
+    modetest: add YUV and multi-planar support
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit d55de747a2bdec5b4885a6c86ea6707e15dfefb5
+Author: Rob Clark <rob@ti.com>
+Date:   Wed Dec 14 21:06:43 2011 -0600
+
+    modetest: add drm_plane support
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit e98ed38ca9c9328f88e0b2fab376020049e4a7fb
+Author: Víctor Manuel Jáquez Leal <vjaquez@igalia.com>
+Date:   Mon Apr 2 18:08:29 2012 +0200
+
+    omap: fix compiler warning
+    
+    When compiling with linaro toolchain version 4.6.2 got this warning.
+    
+      CC     omap_drm.lo
+    omap_drm.c: In function 'omap_bo_new_impl':
+    omap_drm.c:139:6: warning: 'bo' may be used uninitialized in this function [-Wuninitialized]
+    
+    This patch initialize bo to NULL avoiding the warning.
+    
+    Signed-off-by: Víctor Manuel Jáquez Leal <vjaquez@igalia.com>
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit 06eaf09469f2234bf1ca9790dad2ba391ccceb5a
+Author: Rob Clark <rob@ti.com>
+Date:   Tue Apr 3 16:44:43 2012 -0500
+
+    omap: fix license header
+    
+    In syncing with the corresponding kernel header, the wrong license
+    header was inadvertantly copied over.  The intention was for the
+    userspace headers to have a MIT license following the convention
+    of the rest of libdrm, xorg, etc.
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit 437042568301269bb78df2def61436c1cd97411c
+Author: Daniel Vetter <daniel.vetter@ffwll.ch>
+Date:   Mon Apr 2 13:08:09 2012 +0200
+
+    intel/decode: decode MI_WAIT_FOR_EVENT
+    
+    ... and add support to decode MI instructions with functions.
+    
+    Reviewed-by: Eugeni Dodonov <eugeni.dodonov@intel.com>
+    Signed-Off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit e057a56448e2e785f74bc13dbd6ead8572ebed91
+Author: Eugeni Dodonov <eugeni@dodonov.net>
+Date:   Thu Mar 29 21:03:29 2012 -0300
+
+    intel: add Ivy Bridge GT2 server variant
+    
+    We were missing this one and it is being used by Bromolow.
+    
+    Signed-off-by: Eugeni Dodonov <eugeni.dodonov@intel.com>
+
+commit a3c34f56b94d4d47cadcd9814c2684c11f800e7d
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Mar 28 17:17:36 2012 -0400
+
+    configure: Bump version for 2.4.33
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit ef1b958cc831df3d33a366d1db2db2c88187229e
+Author: Rob Clark <rob@ti.com>
+Date:   Wed Mar 28 14:39:43 2012 -0500
+
+    omap: add omapdrm support
+    
+    This adds libdrm_omap helper layer (as used by xf86-video-omap,
+    omapdrmtest, etc).
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+    [danvet: pushed for Rob, he doesn't yet have commit access.]
+    Signed-off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 617213357e94299a5e9a3cb1342de55de949d156
+Author: Kenneth Graunke <kenneth@whitecape.org>
+Date:   Mon Mar 19 13:55:19 2012 -0700
+
+    intel: Add some PCI IDs for Haswell.
+    
+    Signed-off-by: Kenneth Graunke <kenneth@whitecape.org>
+    Reviewed-by: Eugeni Dodonov <eugeni.dodonov@intel.com>
+
+commit c50cc24690938db53cd91ae9ff2fa0958693f80d
+Author: Alex Deucher <alexander.deucher@amd.com>
+Date:   Tue Feb 14 11:32:17 2012 -0500
+
+    radeon: add TN surface support
+    
+    Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+
 commit 51c3e7d7335ecdf572968db7d3eed661e8a61810
 Author: Eric Anholt <eric@anholt.net>
 Date:   Fri Mar 16 16:11:10 2012 -0700
