@@ -1,6 +1,6 @@
-libdrm (2.4.37-1) UNRELEASED; urgency=low
+libdrm (2.4.37-0ubuntu1) quantal; urgency=low
 
-  [ Maarten Lankhorst ]
+  * Pre-sync from Debian experimental branch
   * New upstream release.
   * Modify libdrm-2.4.37-nouveau-1.patch from fedora 17
     - Allows building libdrm_nouveau.so.1 and 2 simultaneously
