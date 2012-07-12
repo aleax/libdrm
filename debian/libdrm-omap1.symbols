@@ -2,6 +2,7 @@ libdrm_omap.so.1 libdrm-omap1 #MINVER#
  omap_bo_cpu_fini@Base 2.4.33
  omap_bo_cpu_prep@Base 2.4.33
  omap_bo_del@Base 2.4.33
+ omap_bo_dmabuf@Base 2.4.34
  omap_bo_from_name@Base 2.4.33
  omap_bo_get_name@Base 2.4.33
  omap_bo_handle@Base 2.4.33
