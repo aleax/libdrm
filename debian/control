@@ -22,7 +22,7 @@ Section: libdevel
 Architecture: any
 Depends:
  libdrm2 (= ${binary:Version}),
- libdrm-intel1 (= ${binary:Version}) [linux-any kfreebsd-any],
+ libdrm-intel1 (= ${binary:Version}) [amd64 i386 kfreebsd-amd64 kfreebsd-i386],
  libdrm-radeon1 (= ${binary:Version}) [linux-any],
  libdrm-nouveau1a (= ${binary:Version}) [linux-any],
  libdrm-nouveau2 (= ${binary:Version}) [linux-any],
@@ -76,7 +76,7 @@ Description: Userspace interface to kernel DRM services -- debugging symbols
 
 Package: libdrm-intel1
 Section: libs
-Architecture: linux-any kfreebsd-any
+Architecture: amd64 i386 kfreebsd-amd64 kfreebsd-i386
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
@@ -91,7 +91,7 @@ Description: Userspace interface to intel-specific kernel DRM services -- runtim
 Package: libdrm-intel1-dbg
 Section: debug
 Priority: extra
-Architecture: linux-any kfreebsd-any
+Architecture: amd64 i386 kfreebsd-amd64 kfreebsd-i386
 Depends:
  libdrm-intel1 (= ${binary:Version}),
  ${misc:Depends},

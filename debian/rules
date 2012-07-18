@@ -18,9 +18,6 @@ ifeq (linux, $(DEB_HOST_ARCH_OS))
 	NOUVEAU = yes
 	confflags += --enable-radeon
 	RADEON = yes
-# Plymouth wants libdrm-intel1, even on architectures where it's guaranteed
-# to be useless.  Satisfy it's depraved yearnings.
-	INTEL = yes
 else
 	confflags += --disable-udev
 	confflags += --disable-libkms
@@ -32,6 +29,12 @@ else
 	RADEON = no
 endif
 
+# Intel is only on x86:
+ifneq (,$(filter amd64 i386,$(DEB_HOST_ARCH_CPU)))
+ifneq (,$(filter linux kfreebsd,$(DEB_HOST_ARCH_OS)))
+	INTEL = yes
+endif
+endif
 ifeq ($(INTEL), yes)
 	confflags += --enable-intel
 else
