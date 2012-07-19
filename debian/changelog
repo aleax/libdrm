@@ -1,3 +1,10 @@
+libdrm (2.4.37-0ubuntu2) quantal; urgency=low
+
+  * debian/libdrm-omap1.symbols:
+    - Add symbol new in 2.4.34.
+
+ -- Maarten Lankhorst <maarten.lankhorst@canonical.com>  Tue, 03 Jul 2012 10:34:04 +0200
+
 libdrm (2.4.37-0ubuntu1) quantal; urgency=low
 
   * Pre-sync from Debian experimental branch
