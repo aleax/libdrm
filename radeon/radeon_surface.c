@@ -154,7 +154,7 @@ static void surf_minify(struct radeon_surface *surf,
     surf->level[level].nblk_x = (surf->level[level].npix_x + surf->blk_w - 1) / surf->blk_w;
     surf->level[level].nblk_y = (surf->level[level].npix_y + surf->blk_h - 1) / surf->blk_h;
     surf->level[level].nblk_z = (surf->level[level].npix_z + surf->blk_d - 1) / surf->blk_d;
-    if (surf->level[level].mode == RADEON_SURF_MODE_2D) {
+    if (surf->nsamples == 1 && surf->level[level].mode == RADEON_SURF_MODE_2D) {
         if (surf->level[level].nblk_x < xalign || surf->level[level].nblk_y < yalign) {
             surf->level[level].mode = RADEON_SURF_MODE_1D;
             return;
@@ -382,17 +382,16 @@ static int r6_surface_init(struct radeon_surface_manager *surf_man,
     unsigned mode;
     int r;
 
+    /* MSAA surfaces support the 2D mode only. */
+    if (surf->nsamples > 1) {
+        surf->flags = RADEON_SURF_CLR(surf->flags, MODE);
+        surf->flags |= RADEON_SURF_SET(RADEON_SURF_MODE_2D, MODE);
+    }
+
     /* tiling mode */
     mode = (surf->flags >> RADEON_SURF_MODE_SHIFT) & RADEON_SURF_MODE_MASK;
 
-    /* always enable z & stencil together */
-    if (surf->flags & RADEON_SURF_ZBUFFER) {
-        surf->flags |= RADEON_SURF_SBUFFER;
-    }
-    if (surf->flags & RADEON_SURF_SBUFFER) {
-        surf->flags |= RADEON_SURF_ZBUFFER;
-    }
-    if (surf->flags & RADEON_SURF_ZBUFFER) {
+    if (surf->flags & (RADEON_SURF_ZBUFFER | RADEON_SURF_SBUFFER)) {
         /* zbuffer only support 1D or 2D tiled surface */
         switch (mode) {
         case RADEON_SURF_MODE_1D:
@@ -408,6 +407,10 @@ static int r6_surface_init(struct radeon_surface_manager *surf_man,
 
     /* force 1d on kernel that can't do 2d */
     if (!surf_man->hw_info.allow_2d && mode > RADEON_SURF_MODE_1D) {
+        if (surf->nsamples > 1) {
+            fprintf(stderr, "radeon: Cannot use 2D tiling for an MSAA surface (%i).\n", __LINE__);
+            return -EFAULT;
+        }
         mode = RADEON_SURF_MODE_1D;
         surf->flags = RADEON_SURF_CLR(surf->flags, MODE);
         surf->flags |= RADEON_SURF_SET(mode, MODE);
@@ -555,7 +558,7 @@ static void eg_surf_minify(struct radeon_surface *surf,
     surf->level[level].nblk_x = (surf->level[level].npix_x + surf->blk_w - 1) / surf->blk_w;
     surf->level[level].nblk_y = (surf->level[level].npix_y + surf->blk_h - 1) / surf->blk_h;
     surf->level[level].nblk_z = (surf->level[level].npix_z + surf->blk_d - 1) / surf->blk_d;
-    if (surf->level[level].mode == RADEON_SURF_MODE_2D) {
+    if (surf->nsamples == 1 && surf->level[level].mode == RADEON_SURF_MODE_2D) {
         if (surf->level[level].nblk_x < mtilew || surf->level[level].nblk_y < mtileh) {
             surf->level[level].mode = RADEON_SURF_MODE_1D;
             return;
@@ -611,7 +614,11 @@ static int eg_surface_init_1d(struct radeon_surface_manager *surf_man,
         }
     }
 
-    if (surf->flags & RADEON_SURF_SBUFFER) {
+    /* The depth and stencil buffers are in separate resources on evergreen.
+     * We allocate them in one buffer next to each other to simplify
+     * communication between the DDX and the Mesa driver. */
+    if ((surf->flags & (RADEON_SURF_ZBUFFER | RADEON_SURF_SBUFFER)) ==
+	(RADEON_SURF_ZBUFFER | RADEON_SURF_SBUFFER)) {
         surf->stencil_offset = ALIGN(surf->bo_size, surf->bo_alignment);
         surf->bo_size = surf->stencil_offset + surf->bo_size / 4;
     }
@@ -663,7 +670,8 @@ static int eg_surface_init_2d(struct radeon_surface_manager *surf_man,
         }
     }
 
-    if (surf->flags & RADEON_SURF_SBUFFER) {
+    if ((surf->flags & (RADEON_SURF_ZBUFFER | RADEON_SURF_SBUFFER)) ==
+	(RADEON_SURF_ZBUFFER | RADEON_SURF_SBUFFER)) {
         surf->stencil_offset = ALIGN(surf->bo_size, surf->bo_alignment);
         surf->bo_size = surf->stencil_offset + surf->bo_size / 4;
     }
@@ -689,6 +697,10 @@ static int eg_surface_sanity(struct radeon_surface_manager *surf_man,
 
     /* force 1d on kernel that can't do 2d */
     if (!surf_man->hw_info.allow_2d && mode > RADEON_SURF_MODE_1D) {
+        if (surf->nsamples > 1) {
+            fprintf(stderr, "radeon: Cannot use 2D tiling for an MSAA surface (%i).\n", __LINE__);
+            return -EFAULT;
+        }
         mode = RADEON_SURF_MODE_1D;
         surf->flags = RADEON_SURF_CLR(surf->flags, MODE);
         surf->flags |= RADEON_SURF_SET(mode, MODE);
@@ -756,17 +768,16 @@ static int eg_surface_init(struct radeon_surface_manager *surf_man,
     unsigned mode;
     int r;
 
+    /* MSAA surfaces support the 2D mode only. */
+    if (surf->nsamples > 1) {
+        surf->flags = RADEON_SURF_CLR(surf->flags, MODE);
+        surf->flags |= RADEON_SURF_SET(RADEON_SURF_MODE_2D, MODE);
+    }
+
     /* tiling mode */
     mode = (surf->flags >> RADEON_SURF_MODE_SHIFT) & RADEON_SURF_MODE_MASK;
 
-    /* for some reason eg need to have room for stencil right after depth */
-    if (surf->flags & RADEON_SURF_ZBUFFER) {
-        surf->flags |= RADEON_SURF_SBUFFER;
-    }
-    if (surf->flags & RADEON_SURF_SBUFFER) {
-        surf->flags |= RADEON_SURF_ZBUFFER;
-    }
-    if (surf->flags & RADEON_SURF_ZBUFFER) {
+    if (surf->flags & (RADEON_SURF_ZBUFFER | RADEON_SURF_SBUFFER)) {
         /* zbuffer only support 1D or 2D tiled surface */
         switch (mode) {
         case RADEON_SURF_MODE_1D:
@@ -835,11 +846,6 @@ static int eg_surface_best(struct radeon_surface_manager *surf_man,
     /* tiling mode */
     mode = (surf->flags >> RADEON_SURF_MODE_SHIFT) & RADEON_SURF_MODE_MASK;
 
-    /* for some reason eg need to have room for stencil right after depth */
-    if (surf->flags & RADEON_SURF_ZBUFFER) {
-        surf->flags |= RADEON_SURF_SBUFFER;
-    }
-
     /* set some default value to avoid sanity check choking on them */
     surf->tile_split = 1024;
     surf->bankw = 1;
@@ -865,12 +871,37 @@ static int eg_surface_best(struct radeon_surface_manager *surf_man,
         return 0;
     }
 
-    /* set tile split to row size, optimize latter for multi-sample surface
-     * tile split >= 256 for render buffer surface. Also depth surface want
-     * smaller value for optimal performances.
-     */
-    surf->tile_split = surf_man->hw_info.row_size;
-    surf->stencil_tile_split = surf_man->hw_info.row_size / 2;
+    /* Tweak TILE_SPLIT for performance here. */
+    if (surf->nsamples > 1) {
+        if (surf->flags & (RADEON_SURF_ZBUFFER | RADEON_SURF_SBUFFER)) {
+            switch (surf->nsamples) {
+            case 2:
+                surf->tile_split = 128;
+                break;
+            case 4:
+                surf->tile_split = 128;
+                break;
+            case 8:
+                surf->tile_split = 256;
+                break;
+            case 16: /* cayman only */
+                surf->tile_split = 512;
+                break;
+            default:
+                fprintf(stderr, "radeon: Wrong number of samples %i (%i)\n",
+                        surf->nsamples, __LINE__);
+                return -EINVAL;
+            }
+            surf->stencil_tile_split = 64;
+        } else {
+            /* tile split must be >= 256 for colorbuffer surfaces */
+            surf->tile_split = MAX2(surf->nsamples * surf->bpe * 64, 256);
+        }
+    } else {
+        /* set tile split to row size */
+        surf->tile_split = surf_man->hw_info.row_size;
+        surf->stencil_tile_split = surf_man->hw_info.row_size / 2;
+    }
 
     /* bankw or bankh greater than 1 increase alignment requirement, not
      * sure if it's worth using smaller bankw & bankh to stick with 2D
