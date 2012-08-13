@@ -11,6 +11,7 @@ libdrm (2.4.38-1) UNRELEASED; urgency=low
 
   [ Timo Aaltonen ]
   * Bump libdrm-intel1's and libdrm-nouveau2's shlibs due to new symbols.
+  * Hardcode the version for libdrm-omap1's shlibs.
 
  -- Maarten Lankhorst <maarten.lankhorst@canonical.com>  Tue, 03 Jul 2012 10:34:04 +0200
 
