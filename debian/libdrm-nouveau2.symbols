@@ -9,7 +9,9 @@ libdrm_nouveau.so.2 libdrm-nouveau2 #MINVER#
  nouveau_bo_name_get@Base 2.4.34
  nouveau_bo_name_ref@Base 2.4.34
  nouveau_bo_new@Base 2.4.34
+ nouveau_bo_prime_handle_ref@Base 2.4.38
  nouveau_bo_ref@Base 2.4.34
+ nouveau_bo_set_prime@Base 2.4.38
  nouveau_bo_wait@Base 2.4.34
  nouveau_bo_wrap@Base 2.4.34
  nouveau_bufctx_del@Base 2.4.34
