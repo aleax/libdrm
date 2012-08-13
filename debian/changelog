@@ -9,6 +9,9 @@ libdrm (2.4.38-1) UNRELEASED; urgency=low
     - This is done to allow building upstream unmodified,
       while retaining compatibility with mesa stable
 
+  [ Timo Aaltonen ]
+  * Bump libdrm-intel1's and libdrm-nouveau2's shlibs due to new symbols.
+
  -- Maarten Lankhorst <maarten.lankhorst@canonical.com>  Tue, 03 Jul 2012 10:34:04 +0200
 
 libdrm (2.4.33-3) unstable; urgency=low
