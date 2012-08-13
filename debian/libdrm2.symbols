@@ -116,6 +116,8 @@ libdrm.so.2 libdrm2 #MINVER#
  drmOpen@Base 2.3.1
  drmOpenControl@Base 2.4.3
  drmOpenOnce@Base 2.3.1
+ drmPrimeFDToHandle@Base 2.4.38
+ drmPrimeHandleToFD@Base 2.4.38
  drmRandom@Base 2.3.1
  drmRandomCreate@Base 2.3.1
  drmRandomDestroy@Base 2.3.1

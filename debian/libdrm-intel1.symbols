@@ -11,6 +11,8 @@ libdrm_intel.so.1 libdrm-intel1 #MINVER#
  drm_intel_bo_fake_disable_backing_store@Base 2.4.1
  drm_intel_bo_flink@Base 2.4.1
  drm_intel_bo_gem_create_from_name@Base 2.4.1
+ drm_intel_bo_gem_create_from_prime@Base 2.4.38
+ drm_intel_bo_gem_export_to_prime@Base 2.4.38
  drm_intel_bo_get_subdata@Base 2.4.1
  drm_intel_bo_get_tiling@Base 2.4.1
  drm_intel_bo_is_reusable@Base 2.4.21
@@ -62,6 +64,7 @@ libdrm_intel.so.1 libdrm-intel1 #MINVER#
  drm_intel_gem_context_destroy@Base 2.4.37
  drm_intel_get_aperture_sizes@Base 2.4.26
  drm_intel_get_pipe_from_crtc_id@Base 2.4.11
+ drm_intel_reg_read@Base 2.4.38
  drm_mmAllocMem@Base 2.4.1
  drm_mmDestroy@Base 2.4.1
  drm_mmDumpMemInfo@Base 2.4.1

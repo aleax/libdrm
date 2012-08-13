@@ -192,6 +192,10 @@ void drm_intel_gem_context_destroy(drm_intel_context *ctx);
 int drm_intel_gem_bo_context_exec(drm_intel_bo *bo, drm_intel_context *ctx,
 				  int used, unsigned int flags);
 
+int drm_intel_bo_gem_export_to_prime(drm_intel_bo *bo, int *prime_fd);
+drm_intel_bo *drm_intel_bo_gem_create_from_prime(drm_intel_bufmgr *bufmgr,
+						int prime_fd, int size);
+
 /* drm_intel_bufmgr_fake.c */
 drm_intel_bufmgr *drm_intel_bufmgr_fake_init(int fd,
 					     unsigned long low_offset,
@@ -237,6 +241,9 @@ void drm_intel_decode_set_head_tail(struct drm_intel_decode *ctx,
 void drm_intel_decode_set_output_file(struct drm_intel_decode *ctx, FILE *out);
 void drm_intel_decode(struct drm_intel_decode *ctx);
 
+int drm_intel_reg_read(drm_intel_bufmgr *bufmgr,
+		       uint32_t offset,
+		       uint64_t *result);
 
 /** @{ Compatibility defines to keep old code building despite the symbol rename
  * from dri_* to drm_intel_*

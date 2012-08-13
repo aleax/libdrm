@@ -1,3 +1,400 @@
+commit d1de6831b9f49b1f450324948b6a4759b3f7ae04
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Sat Aug 11 20:05:24 2012 +0200
+
+    configure: bump version for 2.4.38 release
+
+commit 10481fec55b422843d3f15eef3aa9617ae98843b
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Sat Aug 11 20:02:03 2012 +0200
+
+    tests/modetest: fix distcheck
+
+commit 2607dad20b8dffce96608103def75d26ea0e42b2
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Aug 1 16:43:16 2012 -0700
+
+    intel: Add a function for the new register read ioctl.
+    
+    Reviewed-by: Ben Widawsky <ben@bwidawsk.net>
+
+commit 934ea3b32127ea2a4ba5bf14228af6c60d3437b6
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Aug 1 16:38:19 2012 -0700
+
+    intel: Import updated i915_drm.h.
+    
+    Reviewed-by: Ben Widawsky <ben@bwidawsk.net>
+
+commit 71ebcf4ea372927ba8af425a229c4fa75dc45dd1
+Author: Eric Anholt <eric@anholt.net>
+Date:   Thu Aug 2 11:25:57 2012 -0700
+
+    Drop "-Wunsafe-loop-optimizations".
+    
+    It warns about totally sensible things done in intel_decode.c.  I've
+    never seen this warn do anything useful, and apparently I was the one
+    to introduce it when I added the giant pile of warning flags back in
+    2008.
+    
+    Reviewed-by: Ben Widawsky <ben@bwidawsk.net>
+
+commit 128803a107fde8ce36036e59437a536fc4d46553
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Tue Aug 7 23:38:19 2012 +0200
+
+    radeon: tweak TILE_SPLIT for MSAA surfaces
+    
+    Reviewed-by: Jerome Glisse <jglisse@redhat.com>
+
+commit e14aedce64e365ef1a8726ed8c1ebed881d7a398
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Tue Aug 7 22:50:39 2012 +0200
+
+    radeon: force 2D tiling for MSAA surfaces
+    
+    Reviewed-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 23372955730048bbcddafc74365d911f9a74fb13
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Sun Jul 29 15:20:15 2012 +0200
+
+    radeon: optimize allocation for depth w/o stencil and stencil w/o depth on EG
+    
+    If we don't need stencil, don't allocate it.
+    If we need only stencil (like PIPE_FORMAT_S8_UINT), don't allocate depth.
+    
+    v2: actually do it correctly
+    
+    Reviewed-by: Christian König <christian.koenig@amd.com>
+
+commit ad66c17209811acdae21e44290a449523882a734
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Sun Jul 29 14:10:07 2012 +0200
+
+    radeon: simplify ZS buffer checking on r600
+    
+    Setting those flags has no effect anywhere else.
+    
+    Reviewed-by: Christian König <christian.koenig@amd.com>
+
+commit 93fef04b1e3a83e2f884880ed1c3395f67b038ab
+Author: Paulo Zanoni <paulo.r.zanoni@intel.com>
+Date:   Mon Aug 6 14:55:23 2012 -0300
+
+    intel: add more Haswell PCI IDs
+    
+    Signed-off-by: Paulo Zanoni <paulo.r.zanoni@intel.com>
+    Reviewed-by: Rodrigo Vivi <rodrigo.vivi@gmail.com>
+
+commit 9a2b57d229fe3e6a1c9799e8cd5397969202d223
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Wed Jul 25 16:28:59 2012 +0100
+
+    intel: Bail gracefully if we encounter an unknown Intel device
+    
+    Otherwise we end up with X hitting a fail-loop as the embedded libGL
+    stacks asserts whilst initialising.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+    Acked-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 9f823ca236058d7eb37d54a077170fff2d691b99
+Author: Alex Deucher <alexander.deucher@amd.com>
+Date:   Mon Aug 6 10:32:19 2012 -0400
+
+    radeon: add some new SI pci ids
+    
+    Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit dd944a00815c38af1e7424f67bf71ffb90deceb1
+Author: Alex Deucher <alexander.deucher@amd.com>
+Date:   Mon Aug 6 10:29:24 2012 -0400
+
+    radeon: add some missing evergreen pci ids
+    
+    Noticed by: Harald van Dijk <fdo@gigawatt.nl>
+    
+    Fixes:
+    https://bugs.freedesktop.org/show_bug.cgi?id=53124
+    
+    Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 7e3f08b463bcbae6950c07cc9ea29a7057f28e69
+Author: Eric Anholt <eric@anholt.net>
+Date:   Wed Jul 18 13:45:14 2012 -0700
+
+    intel: Quiet valgrind warnings in context creation.
+
+commit c10b08d95954aecd331e5a43b4861c6c04b8aadd
+Author: Damien Lespiau <damien.lespiau@intel.com>
+Date:   Thu Jul 26 17:50:09 2012 +0100
+
+    intel: Remove two unused variables
+    
+    Signed-off-by: Damien Lespiau <damien.lespiau@intel.com>
+    Reviewed-by: Eric Anholt <eric@anholt.net>
+
+commit ebd7904877d08525beb5039e4ea2f5b6c0a7c23f
+Author: Rob Clark <rob@ti.com>
+Date:   Mon Jul 23 11:35:06 2012 -0500
+
+    modetest: fix uninitialized fourcc
+    
+    If color format for CRTC layer is not specified on commandline, then
+    c->fourcc is unintialized resulting in addfb call failing.
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit db004badef9315ba6a5f165d0974dd5afd5a6178
+Author: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date:   Fri Jul 20 16:37:00 2012 +0200
+
+    modeset: Split buffer allocation to a separate file
+    
+    As the modeset test application is often referred to as an example of
+    the KMS API usage, move test pattern generation and buffer allocation to
+    a separate file to keep it simple and clear.
+    
+    Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+
+commit cc90ffa9b18fc6f925a3a2c36131332b8af558f8
+Author: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date:   Fri Jul 20 14:50:48 2012 +0200
+
+    modetest: Make frame buffer format configurable on the command line
+    
+    Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+
+commit 0375222c714e8b7ba55f12d5cb389383be1cf54d
+Author: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date:   Fri Jul 20 14:50:47 2012 +0200
+
+    modetest: Move connector and plane parsing to separate functions
+    
+    This will make it easier to add additional parameters to the connector
+    and plane arguments.
+    
+    Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+
+commit edcef53685edf5fb94a1171f003b9516a90df368
+Author: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date:   Fri Jul 20 14:50:46 2012 +0200
+
+    modetest: Add test pattern support for missing RGB formats
+    
+    Implement tiles and SMPTE test pattern generation for the RGB565,
+    BGR888, RGB888, ARGB8888, BGRA8888 and BGRX8888 formats.
+    
+    Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+
+commit 86402a2a0cf4f1c4dfa25d36043abd07a8cf8373
+Author: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date:   Fri Jul 20 14:50:45 2012 +0200
+
+    modetest: Add test pattern support for missing planar YUV formats
+    
+    Implement tiles and SMPTE test pattern generation for the NV12, NV21,
+    NV16 and NV61 formats.
+    
+    Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+
+commit 8b6f3e32b8c6235e686525d766402c4fc6afcfba
+Author: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date:   Fri Jul 20 14:50:44 2012 +0200
+
+    modetest: Add test pattern support for missing packed YUV formats
+    
+    Implement tiles and SMPTE test pattern generation for the UYVY, VYUY and
+    YVYU formats.
+    
+    Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+
+commit a94ee624292bff96ea1d38e8a0a3fbeefec42fb6
+Author: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date:   Fri Jul 20 14:50:42 2012 +0200
+
+    modetest: Add SMPTE test pattern
+    
+    Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+
+commit 3fdc1777ee156ebfa4281b49d8783adbbcae3ee1
+Author: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date:   Fri Jul 20 14:50:41 2012 +0200
+
+    modetest: Unify buffer allocation
+    
+    Merge the create_test_buffer() and create_grey_buffer() functions into a
+    single buffer allocation function that takes the pixel format and fill
+    pattern as parameters.
+    
+    Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+
+commit faf26b689d4a2a6d1e851a1ea2fd657406eebfff
+Author: Rob Clark <rob@ti.com>
+Date:   Fri Jul 20 10:26:11 2012 -0500
+
+    intel: fix build error
+    
+      CCLD   test_decode
+    ./.libs/libdrm_intel.so: undefined reference to `drmPrimeHandleToFD'
+    ./.libs/libdrm_intel.so: undefined reference to `drmPrimeFDToHandle'
+    collect2: ld returned 1 exit status
+    
+    From Adam Jackson's explaination:
+    
+      most distros have changed it so ld defaults to --no-copy-dt-needed-entries,
+      so if you use something from libdrm you can't just assume libdrm_intel
+      will bring it in for you, you have to be explicit
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit ff65de96660965e661175f75427cd0020ef1104c
+Author: Dave Airlie <airlied@gmail.com>
+Date:   Sun Jul 15 00:22:46 2012 +0000
+
+    intel: add prime interface for getting/setting a prime bo. (v4)
+    
+    This adds interfaces for the X driver to use to create a
+    prime handle from a buffer, and create a bo from a handle.
+    
+    v2: use Chris's suggested naming (well from at least for consistency)
+    v3: git commit --amend fail
+    v4: fix as per Chris's suggestions, group assignments, add get tiling
+    
+    Reviewed-by: Chris Wilson <chris@chris-wilson.co.uk>
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 13c06cde4e9a4ce275c6cbf477d211344f468dbf
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Jul 16 02:51:37 2012 +0100
+
+    libdrm/nouveau: add prime handle->bo and bo->handle support.
+    
+    This adds prime support to nouveau libdrm.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit cc0a14575d9fd0aafe73cb4aa445eaf024436114
+Author: Dave Airlie <airlied@gmail.com>
+Date:   Sat Jul 14 09:52:17 2012 +0000
+
+    libdrm: add prime fd->handle and handle->fd interfaces
+    
+    These are just basic ioctl wrappers around the prime ioctls,
+    along with the capability reporting.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 41dfb20cdc369bb0da880c371a664f25fe665adb
+Author: Dave Airlie <airlied@gmail.com>
+Date:   Sat Jul 14 09:52:16 2012 +0000
+
+    libdrm: add missing caps from kernel to drm.h
+    
+    This just moves over some missing caps from the kernel.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 22574aa887efa879519328acc09cb01d03374bf4
+Author: Rob Clark <rob@ti.com>
+Date:   Fri Jul 13 16:18:25 2012 -0500
+
+    omap: add refcnting and handle tracking
+    
+    There can be scenarios, especially when re-importing an existing buffer,
+    where you end up with multiple 'struct omap_bo's wrapping a single GEM
+    object handle.  Which causes badness when the first of the evil-clones
+    is omap_bo_del()'d.
+    
+    To do this, introduce reference counting and a hashtable to track the
+    handles per fd.
+    
+    First, to avoid bo's slipping through the crack if multiple 'struct
+    omap_device's are created for one drm fd, a hashtable mapping drm
+    fd to omap_device, and the omap_device itself is reference counted.
+    Per omap_device, we keep a handle_table mapping GEM handle to omap_bo.
+    When buffers are imported from flink name or dmabuf fd, the handle
+    table is consulted, and if an omap_bo already exists, it's refcnt is
+    incremented and it is returned.  For good measure, to avoid the
+    handle_table being deleted before the omap_bo is freed, the omap_bo
+    holds a reference to the omap_device.
+    
+    TODO: check the overhead of the hashtable.  If too much we could maybe
+    get away with only tracking exported and imported bo's in the table.
+    
+    TODO: all the import/export flink/dmabuf operations are generic DRM
+    ioctls.  Really all this functionality could be handled by a generic
+    drm_bo and drm_device "base class" that could be extended by omap,
+    exynos, etc.  That would also allow more common userspace code by
+    avoiding artificial libdrm_omap dependencies.
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit 42f8a68e19ba48a25f5eca2778d997f3d1ad094d
+Author: Rob Clark <rob@ti.com>
+Date:   Mon Jun 11 17:17:17 2012 -0500
+
+    omap: add API to import bo's from dmabuf fd's
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit 8116a32df613df4433aa1b128c58bf2c18479824
+Author: Rob Clark <rob@ti.com>
+Date:   Mon Jun 11 08:52:24 2012 -0500
+
+    omap: clarify dmabuf file descriptor ownership
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit 992e2afd59539d169689bf21d78fac8b5cea4e3c
+Author: Kenneth Graunke <kenneth@whitecape.org>
+Date:   Thu Jul 12 13:41:11 2012 -0700
+
+    intel: Change context create failure message to from fprintf to DBG().
+    
+    Since there is no getparam for hardware context support, Mesa always
+    tries to obtain a context by calling drm_intel_gem_context_create and
+    NULL-checking the result.  On an older kernel without context support,
+    this caused libdrm to print an unwanted message to stderr:
+    
+    DRM_IOCTL_I915_GEM_CONTEXT_CREATE failed: Invalid argument
+    
+    In fact, this caused every Piglit test to fail with a "warn" status due
+    to the unrecognized error message.
+    
+    Change the message to use DBG() rather than fprintf(), so people can
+    still get the debug message, but it won't spam normally.
+    
+    Reviewed-by: Ben Widawsky <ben@bwidawsk.net>
+    Signed-off-by: Kenneth Graunke <kenneth@whitecape.org>
+
+commit 881e69f185d2450ca35964caf254b04e7e8838c1
+Author: Cooper Yuan <cooperyuan@gmail.com>
+Date:   Fri Jul 6 16:26:49 2012 +0200
+
+    libdrm/exynos: padding gem_mmap structure to 64-bit aligned
+
+commit 8fad46b614a156e3a0e65cd0af4c132a5820d29e
+Author: Lauri Kasanen <cand@gmx.com>
+Date:   Sat Jun 30 13:12:45 2012 +0300
+
+    intel: Fix build failure in test_decode.c
+    
+    Hi list
+    
+    The recently released libdrm 2.4.37 does not compile the Intel part:
+    
+    test_decode.c: In function 'compare_batch':
+    test_decode.c:107: error: implicit declaration of function 'open_memstream'
+    
+    PS: Please CC me.
+    
+    Signed-off-by: Lauri Kasanen <cand@gmx.com>
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+
 commit 1b1a4f0a779f7ab2ba5673b9c9fe2a37047fe765
 Author: Ben Widawsky <ben@bwidawsk.net>
 Date:   Fri Jun 29 11:08:05 2012 -0700
