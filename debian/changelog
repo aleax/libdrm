@@ -1,3 +1,10 @@
+libdrm (2.4.38-0ubuntu2) quantal; urgency=low
+
+  * Add libdrm2-udeb; Xserver 1.13 wants libdrm for hotplug config, so
+    will be needed for the 1.13 xserver-xorg-core-udeb.
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Tue, 21 Aug 2012 14:15:30 +1000
+
 libdrm (2.4.38-0ubuntu1) quantal; urgency=low
 
   * Sync from unreleased debian git branch.
