@@ -16,7 +16,10 @@ libdrm (2.4.39-1) UNRELEASED; urgency=low
   [ Christopher James Halse Rogers ]
   * Add libdrm2-udeb; Xserver 1.13 wants libdrm for hotplug config, so
     will be needed for the 1.13 xserver-xorg-core-udeb.
-  
+
+  [ Sven Joachim ]
+  * Bump libdrm-radeon1's symbols and shlibs.
+
  -- Christopher James Halse Rogers <raof@ubuntu.com>  Tue, 21 Aug 2012 14:05:52 +1000
 
 libdrm (2.4.33-3) unstable; urgency=low
