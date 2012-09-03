@@ -1,3 +1,9 @@
+libdrm (2.4.39-0ubuntu1) quantal; urgency=low
+
+  * Sync from unreleased debian git.
+
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Mon, 03 Sep 2012 17:26:35 +0300
+
 libdrm (2.4.39-1) UNRELEASED; urgency=low
 
   [ Maarten Lankhorst ]
