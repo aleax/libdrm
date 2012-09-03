@@ -1,17 +1,4 @@
-libdrm (2.4.38-0ubuntu2) quantal; urgency=low
-
-  * Add libdrm2-udeb; Xserver 1.13 wants libdrm for hotplug config, so
-    will be needed for the 1.13 xserver-xorg-core-udeb.
-
- -- Christopher James Halse Rogers <raof@ubuntu.com>  Tue, 21 Aug 2012 14:15:30 +1000
-
-libdrm (2.4.38-0ubuntu1) quantal; urgency=low
-
-  * Sync from unreleased debian git branch.
-
- -- Timo Aaltonen <tjaalton@ubuntu.com>  Mon, 13 Aug 2012 12:07:10 +0300
-
-libdrm (2.4.38-1) UNRELEASED; urgency=low
+libdrm (2.4.39-1) UNRELEASED; urgency=low
 
   [ Maarten Lankhorst ]
   * New upstream release.
@@ -26,7 +13,15 @@ libdrm (2.4.38-1) UNRELEASED; urgency=low
   * Bump libdrm-intel1's and libdrm-nouveau2's shlibs due to new symbols.
   * Hardcode the version for libdrm-omap1's shlibs.
 
- -- Maarten Lankhorst <maarten.lankhorst@canonical.com>  Tue, 03 Jul 2012 10:34:04 +0200
+  [ Christopher James Halse Rogers ]
+  * Add libdrm2-udeb; Xserver 1.13 wants libdrm for hotplug config, so
+    will be needed for the 1.13 xserver-xorg-core-udeb.
+
+  [ Sven Joachim ]
+  * Bump libdrm-radeon1's symbols and shlibs.
+  * Mark some internal libdrm-nouveau2 symbols as private.
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Tue, 21 Aug 2012 14:05:52 +1000
 
 libdrm (2.4.33-3) unstable; urgency=low
 

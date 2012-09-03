@@ -1,3 +1,71 @@
+commit ae3ac8225fe1c6781ce425c57ef5fb6c5af6ccf4
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Fri Aug 24 17:03:13 2012 +0200
+
+    configure: bump version for 2.4.39 release
+
+commit 853429b939c792c4bc0bc91fdef696e3251b88d9
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Mon Aug 20 17:15:15 2012 +0200
+
+    radeon: align r600 msaa buffers to a multiple of macrotile size * num samples
+    
+    I am not sure whether this is needed, but better be safe than sorry.
+
+commit 58545722d0ee52f112859322466d9366915575b5
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Sun Aug 19 03:54:34 2012 +0200
+
+    radeon: fix allocation of MSAA surfaces on r600-r700
+    
+    Reviewed-by: Jerome Glisse <jglisse@redhat.com>
+
+commit f215d651377d98f5998118c6824aeb2db75513be
+Author: Víctor Manuel Jáquez Leal <vjaquez@igalia.com>
+Date:   Thu Aug 9 13:34:54 2012 +0200
+
+    omap: include omap_drm.h independently
+    
+    omap_drm.h uses data type defined in stdint.h, but that header was
+    not included.
+    
+    omap_drm.h includes drm.h as a local file when it is part of the
+    compiler c flags.
+    
+    This two issues are fixed. New code can include omap_drm.h alone.
+    
+    Signed-off-by: Víctor Manuel Jáquez Leal <vjaquez@igalia.com>
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit 3163cfe4db925429760407e77140e2d595338bc2
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Jun 12 17:31:12 2012 +0100
+
+    radeon: add prime import/export support
+    
+    this adds radeon version of the prime import/export support.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit a9412fa9de219e38df361852a12df37688c891db
+Author: Kenneth Graunke <kenneth@whitecape.org>
+Date:   Sun Aug 12 13:33:05 2012 -0700
+
+    intel: Use VG_CLEAR on the context destroy ioctl as well.
+    
+    Otherwise pad appears uninitialized and valgrind grumbles.
+    
+    Signed-off-by: Kenneth Graunke <kenneth@whitecape.org>
+    Reviewed-by: Eric Anholt <eric@anholt.net>
+
+commit 6fa2b29d226306870eebe93afb2106ca7d79569b
+Author: Tobias Klausmann <tobias.klausmann@mni.thm.de>
+Date:   Sun Aug 12 00:00:40 2012 +0200
+
+    tests/modetest: Add a forgotten return, needed for opensuse buildservice
+    
+    Signed-off-by: Marek Olšák <maraeo@gmail.com>
+
 commit d1de6831b9f49b1f450324948b6a4759b3f7ae04
 Author: Marek Olšák <maraeo@gmail.com>
 Date:   Sat Aug 11 20:05:24 2012 +0200
