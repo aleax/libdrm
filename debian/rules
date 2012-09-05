@@ -66,12 +66,6 @@ override_dh_auto_install:
 
 override_dh_install:
 	find debian/tmp -name '*.la' -delete
-	# Temporary rules for libdrm_nouveau1a
-	rm debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/libdrm_nouveau.a
-	ln -s libdrm_nouveau.so.1 \
-		debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/libdrm_nouveau1.so
-	ln -sf libdrm_nouveau.so.2 \
-		debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/libdrm_nouveau.so
 	dh_install --fail-missing
 
 override_dh_strip:
@@ -80,7 +74,6 @@ ifeq ($(INTEL), yes)
 	dh_strip -plibdrm-intel1 --dbg-package=libdrm-intel1-dbg
 endif
 ifeq ($(NOUVEAU), yes)
-	dh_strip -plibdrm-nouveau1a --dbg-package=libdrm-nouveau1a-dbg
 	dh_strip -plibdrm-nouveau2 --dbg-package=libdrm-nouveau2-dbg
 endif
 ifeq ($(RADEON), yes)
@@ -100,7 +93,6 @@ ifeq ($(INTEL), yes)
 	dh_makeshlibs -plibdrm-intel1 -V'libdrm-intel1 (>= 2.4.38)' -- -c4
 endif
 ifeq ($(NOUVEAU), yes)
-	dh_makeshlibs -plibdrm-nouveau1a -V'libdrm-nouveau1a (>= 2.4.23)' -- -c4
 	dh_makeshlibs -plibdrm-nouveau2 -V'libdrm-nouveau2 (>= 2.4.38)' -- -c4
 endif
 ifeq ($(RADEON), yes)
