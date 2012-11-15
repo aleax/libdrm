@@ -15,6 +15,7 @@ libdrm (2.4.40-1) UNRELEASED; urgency=low
   [ Sven Joachim ]
   * Bump libdrm-radeon1's symbols and shlibs.
   * Mark some internal libdrm-nouveau2 symbols as private.
+  * Drop patch 02_build_libkms_against_in_tree_drm.diff, applied upstream.
 
  -- Christopher James Halse Rogers <raof@ubuntu.com>  Tue, 21 Aug 2012 14:05:52 +1000
 
