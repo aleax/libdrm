@@ -1,19 +1,8 @@
-libdrm (2.4.39-0ubuntu1) quantal; urgency=low
-
-  * Sync from unreleased debian git.
-
- -- Timo Aaltonen <tjaalton@ubuntu.com>  Mon, 03 Sep 2012 17:26:35 +0300
-
-libdrm (2.4.39-1) UNRELEASED; urgency=low
+libdrm (2.4.40-1) experimental; urgency=low
 
   [ Maarten Lankhorst ]
   * New upstream release.
-  * Modify libdrm-2.4.37-nouveau-1.patch from fedora 17
-    - Allows building libdrm_nouveau.so.1 and 2 simultaneously
-    - libdrm_nouveau1.{so,pc} links to legacy libdrm_nouveau.so.1
-    - libdrm_nouveau.{so,pc} links to new api libdrm_nouveau.so.2
-    - This is done to allow building upstream unmodified,
-      while retaining compatibility with mesa stable
+    - Nouveau ABI change, replace libdrm-nouveau1a with libdrm-nouveau2.
 
   [ Timo Aaltonen ]
   * Bump libdrm-intel1's and libdrm-nouveau2's shlibs due to new symbols.
@@ -26,8 +15,15 @@ libdrm (2.4.39-1) UNRELEASED; urgency=low
   [ Sven Joachim ]
   * Bump libdrm-radeon1's symbols and shlibs.
   * Mark some internal libdrm-nouveau2 symbols as private.
+  * Drop patch 02_build_libkms_against_in_tree_drm.diff, applied upstream.
 
- -- Christopher James Halse Rogers <raof@ubuntu.com>  Tue, 21 Aug 2012 14:05:52 +1000
+ -- Julien Cristau <jcristau@debian.org>  Sat, 17 Nov 2012 18:50:33 +0100
+
+libdrm (2.4.39-0ubuntu1) quantal; urgency=low
+
+  * Sync from unreleased debian git.
+
+ -- Timo Aaltonen <tjaalton@ubuntu.com>  Mon, 03 Sep 2012 17:26:35 +0300
 
 libdrm (2.4.33-3) unstable; urgency=low
 

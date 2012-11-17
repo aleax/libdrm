@@ -1,3 +1,257 @@
+commit e01d68f9f3acfc35fe164283904b5d058c2ab378
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Tue Nov 6 01:23:53 2012 +0100
+
+    configure.ac: bump version to 2.4.40 for release
+
+commit 2089a0080edb1b42449ee9a97f2cef7399c16d53
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Nov 5 22:21:42 2012 +0000
+
+    fix make distcheck
+    
+    typo,
+    
+    Reported-by: mareko on irc
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit e32fff8e9ea8d522679eaab21a9555cab134fb36
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Tue Oct 16 02:08:02 2012 +0200
+
+    radeon: fix tile_split of 128-bit surface formats with 8x MSAA
+    
+    The calculation led to the number 8192, which is too high.
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit bc494b310d76f701798aee0f2b0b472d608cbfaf
+Author: Andreas Boll <andreas.boll.dev@gmail.com>
+Date:   Tue Aug 28 12:49:45 2012 +0200
+
+    radeon: fix unused-function warning
+    
+    radeon_cs_gem.c:333:13: warning: 'cs_gem_dump_bof' defined but
+    not used [-Wunused-function]
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit a4cb7233a8da171e53b48b376be5c1265c29a612
+Author: Alex Deucher <alexander.deucher@amd.com>
+Date:   Tue Oct 16 12:58:39 2012 -0400
+
+    radeon: add some new SI pci ids
+    
+    Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit e81acf51013d5d4245417c46ee6b4055c26f1a91
+Author: Rob Clark <rob@ti.com>
+Date:   Sun Oct 14 16:55:32 2012 -0500
+
+    initialize width/height fields in drmModeCrtc
+    
+    If we have valid timings, we can at least set width/height to
+    *something*, which is I think at least less confusing than always
+    seeing width/height of zero.  At least modeprint and modetest
+    seem to expect width/height to mean something.
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit 844d75e5a0b3b8f3466a24256955e886275fb298
+Author: Rob Clark <rob@ti.com>
+Date:   Tue Oct 9 09:48:56 2012 -0500
+
+    update gitignore
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit 28a13f0be734958c74ae5a23d9cf766fa0857a62
+Author: Vincent Penquerc'h <vincent.penquerch@collabora.co.uk>
+Date:   Tue Oct 9 14:48:34 2012 +0100
+
+    omap: release lock also on error paths
+    
+    Signed-off-by: Rob Clark <rob@ti.com>
+
+commit 14db948127e549ea9234e02d8e112de3871f8f9f
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Thu Oct 4 01:21:57 2012 +0000
+
+    configure.ac: Allow forcible disabling of Cairo support
+    
+    We don't want to build libdrm tests with Cairo support under Poky, since
+    they're never used and also cause a build loop from libdrm -> cairo ->
+    mesa-dri -> libdrm.
+    
+    To avoid variance in build results, introduce a --disable-cairo-tests
+    switch.
+    
+    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit a83444c925b18b3db431336360d6915aaf21f727
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Oct 7 10:08:46 2012 +0100
+
+    intel: Silence a trivial compiler warning
+    
+    intel_bufmgr_gem.c: In function 'drm_intel_bo_gem_export_to_prime':
+    intel_bufmgr_gem.c:2477:6: warning: unused variable 'ret' [-Wunused-variable]
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 8cf3475eb5d887c361db372a644d0d1a11e137f8
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Oct 7 10:07:23 2012 +0100
+
+    intel: Correct the word decoding for gen2 3DSTATE_LOAD_STATE_IMMEDIATE_1
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 75830a0d2cbb614ecc3f7e6b516ec595bb41d6a3
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Sun Oct 7 10:05:19 2012 +0100
+
+    intel: Fix "properly test for HAS_LLC"
+    
+    commit 92fd0ce4f659d7b0680543e9e5b96a3c7737a5f3
+    Author: Daniel Vetter <daniel.vetter@ffwll.ch>
+    Date:   Fri Aug 31 11:16:53 2012 +0200
+    
+        intel: properly test for HAS_LLC
+    
+    missed slightly and in effect had no effect on the outcome of checking
+    whether the kernel/chipset supported LLC.
+    
+    Signed-off-by: Chris Wilson <chris@chris-wilson.co.uk>
+
+commit 1aebfdc1121ccb6babb3a63dc0b99d68b4860b04
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Sun Sep 30 19:20:04 2012 +0200
+
+    radeon: fix stencil miptree allocation of combined ZS buffers on EG and SI
+    
+    This allows texturing with depth-stencil buffers directly without the copy
+    to CB. The separate miptree description for stencil is added, because
+    the stencil mipmap offsets are not really depth offsets/4 (at least
+    for the texture units).
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 77413e77b82a5d800c86b7d3b864d6cc797721c9
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Sun Sep 30 19:19:13 2012 +0200
+
+    radeon: don't force stencil tile split to 0
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit b3d90bbc1d43bb11d8de25109f403b1b30533c34
+Author: Marek Olšák <maraeo@gmail.com>
+Date:   Sat Sep 29 15:10:33 2012 +0200
+
+    radeon: don't take the stencil-specific codepath for buffers without stencil
+    
+    Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 2426a6a7112ae62755408a371831eddbe2d89d99
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Thu Sep 6 16:16:50 2012 -0700
+
+    libdrm: man page infrastructure and a few sample man pages
+
+commit 1b7ce582ceac74c7c5f1989c611b4f01a2a18434
+Author: Kristian Høgsberg <krh@bitplanet.net>
+Date:   Fri Sep 14 16:35:19 2012 -0400
+
+    intel: Mark bo's exported to prime as not reusable
+    
+    It's the same situation as flink and we need take the same precautions.
+    
+    Reviewed-by: Chris Wilson <chris@chris-wilson.co.uk>
+    Signed-off-by: Kristian Høgsberg <krh@bitplanet.net>
+
+commit 9d9cb8553c945fac15421770da233fb3e38396e0
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Sun Mar 18 16:51:18 2012 -0500
+
+    intel: add support for ValleyView
+    
+    Just some PCI ID stuff to enable the right features.
+
+commit 9c3c95fc0cb0945492279f0c7dcc0c2b1e8f463d
+Author: Marcin Slusarz <marcin.slusarz@gmail.com>
+Date:   Sat Sep 8 00:49:38 2012 +0200
+
+    libkms: link against libdrm
+    
+    Signed-off-by: Marcin Slusarz <marcin.slusarz@gmail.com>
+
+commit b925022a3e4616665b388a78abab4e3270b4b4ec
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Wed Sep 5 18:44:45 2012 +0200
+
+    radeon: Sampling pitch for non-mipmaps seems padded to slice alignment on SI.
+    
+    Another corner case that isn't well-explained yet.
+    
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+    Reviewed-by: Christian König <christian.koenig@amd.com>
+
+commit 45083e6d36125c64267c917da3d81e1e144ed33d
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Tue Sep 4 18:53:55 2012 +0200
+
+    radeon: Memory footprint of SI mipmap base level is padded to powers of two.
+    
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+    Reviewed-by: Christian König <christian.koenig@amd.com>
+
+commit 8572444fd0cda3e7b9557c09d2d0f7a9e049a2e7
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Fri Aug 31 19:29:33 2012 +0200
+
+    radeon: Fix layout of linear aligned mipmaps on SI.
+    
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+    Reviewed-by: Christian König <christian.koenig@amd.com>
+
+commit 92fd0ce4f659d7b0680543e9e5b96a3c7737a5f3
+Author: Daniel Vetter <daniel.vetter@ffwll.ch>
+Date:   Fri Aug 31 11:16:53 2012 +0200
+
+    intel: properly test for HAS_LLC
+    
+    If the kernel supports the test, we need to check the param.
+    Copy&pasta from the above checks that only look at the return value.
+    Interesting how much one can get such a simple interface wrong.
+    
+    Issue created in
+    
+    commit 151cdcfe685ee280a4344dfc40e6087d74a5590f
+    Author: Eugeni Dodonov <eugeni.dodonov@intel.com>
+    Date:   Tue Jan 17 15:20:19 2012 -0200
+    
+        intel: query for LLC support
+    
+    Patch even claims to have fixed this in v2, but is actually unchanged
+    from v1.
+    
+    Reported-by: Xiang, Haihao <haihao.xiang@intel.com>
+    Reviewed-by: Chris Wilson <chris@chris-wilson.co.uk>
+    Signed-off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit 7080bfdfd9b6c5f003daaef37ae9c329f2d46a6c
+Author: Jakob Bornecrantz <jakob@vmware.com>
+Date:   Mon Aug 13 13:35:07 2012 +0200
+
+    vmwgfx: No longer experimental
+    
+    And hasn't been in a long while.
+    
+    Reviewed-by: Zack Rusin <zackr@vmware.com>
+    Signed-off-by: Jakob Bornecrantz <jakob@vmware.com>
+
 commit ae3ac8225fe1c6781ce425c57ef5fb6c5af6ccf4
 Author: Marek Olšák <maraeo@gmail.com>
 Date:   Fri Aug 24 17:03:13 2012 +0200

@@ -20,7 +20,7 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libdrm],
-        [2.4.39],
+        [2.4.40],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=DRI],
         [libdrm])
 
@@ -34,6 +34,27 @@ AM_MAINTAINER_MODE([enable])
 
 # Enable quiet compiles on automake 1.11.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
+if test x$LIB_MAN_SUFFIX = x    ; then
+    LIB_MAN_SUFFIX=3
+fi
+if test x$LIB_MAN_DIR = x    ; then
+    LIB_MAN_DIR='$(mandir)/man$(LIB_MAN_SUFFIX)'
+fi
+AC_SUBST([LIB_MAN_SUFFIX])
+AC_SUBST([LIB_MAN_DIR])
+
+MAN_SUBSTS="\
+	-e 's|__vendorversion__|\"\$(PACKAGE_STRING)\" |' \
+	-e 's|__projectroot__|\$(prefix)|g' \
+	-e 's|__apploaddir__|\$(appdefaultdir)|g' \
+	-e 's|__appmansuffix__|\$(APP_MAN_SUFFIX)|g' \
+	-e 's|__drivermansuffix__|\$(DRIVER_MAN_SUFFIX)|g' \
+	-e 's|__adminmansuffix__|\$(ADMIN_MAN_SUFFIX)|g' \
+	-e 's|__libmansuffix__|\$(LIB_MAN_SUFFIX)|g' \
+	-e 's|__miscmansuffix__|\$(MISC_MAN_SUFFIX)|g' \
+	-e 's|__filemansuffix__|\$(FILE_MAN_SUFFIX)|g'"
+AC_SUBST([MAN_SUBSTS])
 
 # Check for programs
 AC_PROG_CC
@@ -78,10 +99,10 @@ AC_ARG_ENABLE(nouveau,
 	      [Enable support for nouveau's KMS API (default: auto)]),
 	      [NOUVEAU=$enableval], [NOUVEAU=auto])
 
-AC_ARG_ENABLE(vmwgfx-experimental-api,
-	      AS_HELP_STRING([--enable-vmwgfx-experimental-api],
-	      [Install vmwgfx's experimental kernel API header (default: disabled)]),
-	      [VMWGFX=$enableval], [VMWGFX=no])
+AC_ARG_ENABLE(vmwgfx,
+	      AS_HELP_STRING([--disable-vmwgfx],
+	      [Enable support for vmwgfx's KMS API (default: yes)]),
+	      [VMWGFX=$enableval], [VMWGFX=yes])
 
 AC_ARG_ENABLE(omap-experimental-api,
 	      AS_HELP_STRING([--enable-omap-experimental-api],
@@ -201,11 +222,23 @@ if test "x$EXYNOS" = xyes; then
 	AC_DEFINE(HAVE_EXYNOS, 1, [Have EXYNOS support])
 fi
 
+AC_ARG_ENABLE([cairo-tests],
+              [AS_HELP_STRING([--enable-cairo-tests],
+                              [Enable support for Cairo rendering in tests (default: auto)])],
+              [CAIRO=$enableval], [CAIRO=auto])
 PKG_CHECK_MODULES(CAIRO, cairo, [HAVE_CAIRO=yes], [HAVE_CAIRO=no])
-if test "x$HAVE_CAIRO" = xyes; then
-	AC_DEFINE(HAVE_CAIRO, 1, [Have cairo support])
+AC_MSG_CHECKING([whether to enable Cairo tests])
+if test "x$CAIRO" = xauto; then
+	CAIRO="$HAVE_CAIRO"
 fi
-AM_CONDITIONAL(HAVE_CAIRO, [test "x$HAVE_CAIRO" = xyes])
+if test "x$CAIRO" = xyes; then
+	if ! test "x$HAVE_CAIRO" = xyes; then
+		AC_MSG_ERROR([Cairo support required but not present])
+	fi
+	AC_DEFINE(HAVE_CAIRO, 1, [Have Cairo support])
+fi
+AC_MSG_RESULT([$CAIRO])
+AM_CONDITIONAL(HAVE_CAIRO, [test "x$CAIRO" = xyes])
 
 # For enumerating devices in test case
 PKG_CHECK_MODULES(LIBUDEV, libudev, [HAVE_LIBUDEV=yes], [HAVE_LIBUDEV=no])
@@ -333,6 +366,7 @@ AC_CONFIG_FILES([
 	tests/vbltest/Makefile
 	include/Makefile
 	include/drm/Makefile
+	man/Makefile
 	libdrm.pc])
 AC_OUTPUT
 

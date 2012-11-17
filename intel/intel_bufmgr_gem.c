@@ -2473,7 +2473,13 @@ drm_intel_bo_gem_export_to_prime(drm_intel_bo *bo, int *prime_fd)
 	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
 	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
 
-	return drmPrimeHandleToFD(bufmgr_gem->fd, bo_gem->gem_handle, DRM_CLOEXEC, prime_fd);
+	if (drmPrimeHandleToFD(bufmgr_gem->fd, bo_gem->gem_handle,
+			       DRM_CLOEXEC, prime_fd) != 0)
+		return -errno;
+
+	bo_gem->reusable = false;
+
+	return 0;
 }
 
 static int
@@ -3112,7 +3118,7 @@ drm_intel_bufmgr_gem_init(int fd, int batch_size)
 		bufmgr_gem->has_llc = (IS_GEN6(bufmgr_gem->pci_device) |
 				IS_GEN7(bufmgr_gem->pci_device));
 	} else
-		bufmgr_gem->has_llc = ret == 0;
+		bufmgr_gem->has_llc = *gp.value;
 
 	if (bufmgr_gem->gen < 4) {
 		gp.param = I915_PARAM_NUM_FENCES_AVAIL;
