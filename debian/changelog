@@ -1,4 +1,4 @@
-libdrm (2.4.40-1) UNRELEASED; urgency=low
+libdrm (2.4.40-1) experimental; urgency=low
 
   [ Maarten Lankhorst ]
   * New upstream release.
@@ -17,7 +17,7 @@ libdrm (2.4.40-1) UNRELEASED; urgency=low
   * Mark some internal libdrm-nouveau2 symbols as private.
   * Drop patch 02_build_libkms_against_in_tree_drm.diff, applied upstream.
 
- -- Christopher James Halse Rogers <raof@ubuntu.com>  Tue, 21 Aug 2012 14:05:52 +1000
+ -- Julien Cristau <jcristau@debian.org>  Sat, 17 Nov 2012 18:50:33 +0100
 
 libdrm (2.4.33-3) unstable; urgency=low
 
