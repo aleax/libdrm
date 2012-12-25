@@ -55,16 +55,6 @@ Description: Userspace interface to kernel DRM services -- runtime
  .
  This package provides the runtime environment for libdrm.
 
-Package: libdrm2-udeb
-XC-Package-Type: udeb
-Section: debian-installer
-Architecture: any
-Depends:
- ${shlibs:Depends},
- ${misc:Depends},
-Description: Userspace interface to kernel DRM services -- runtime
- This is a udeb, or a microdeb, for the debian-installer.
-
 Package: libdrm2-dbg
 Section: debug
 Priority: extra
