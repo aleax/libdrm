@@ -1,3 +1,9 @@
+libdrm (2.4.40-1~deb7u1) UNRELEASED; urgency=low
+
+  * Revert nouveau to the 2.4.33 state (ie before the rewrite).
+
+ -- Julien Cristau <jcristau@debian.org>  Tue, 25 Dec 2012 13:08:50 +0100
+
 libdrm (2.4.40-1) experimental; urgency=low
 
   [ Maarten Lankhorst ]

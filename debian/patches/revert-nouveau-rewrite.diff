@@ -1,0 +1,4935 @@
+diff --git a/nouveau/Makefile.am b/nouveau/Makefile.am
+index 206e892..8b89916 100644
+--- a/nouveau/Makefile.am
++++ b/nouveau/Makefile.am
+@@ -3,23 +3,41 @@ AM_CFLAGS = \
+ 	-I$(top_srcdir) \
+ 	-I$(top_srcdir)/nouveau \
+ 	$(PTHREADSTUBS_CFLAGS) \
+-	-I$(top_srcdir)/include/drm \
+-	-DDEBUG
++	-I$(top_srcdir)/include/drm
+ 
+ libdrm_nouveau_la_LTLIBRARIES = libdrm_nouveau.la
+ libdrm_nouveau_ladir = $(libdir)
+-libdrm_nouveau_la_LDFLAGS = -version-number 2:0:0 -no-undefined
++libdrm_nouveau_la_LDFLAGS = -version-number 1:0:0 -no-undefined
+ libdrm_nouveau_la_LIBADD = ../libdrm.la @PTHREADSTUBS_LIBS@
+ 
+-libdrm_nouveau_la_SOURCES = nouveau.c \
+-			    pushbuf.c \
+-			    bufctx.c \
+-			    abi16.c \
+-			    private.h
++libdrm_nouveau_la_SOURCES = \
++			    nouveau_device.c \
++			    nouveau_channel.c \
++			    nouveau_pushbuf.c \
++			    nouveau_grobj.c \
++			    nouveau_notifier.c \
++			    nouveau_bo.c \
++			    nouveau_resource.c \
++			    nouveau_private.h \
++			    nouveau_reloc.c
++
++libdrm_nouveaucommonincludedir = ${includedir}/nouveau
++libdrm_nouveaucommoninclude_HEADERS = \
++				nouveau_device.h \
++				nouveau_channel.h \
++				nouveau_grobj.h \
++				nouveau_notifier.h \
++				nouveau_pushbuf.h \
++				nv04_pushbuf.h \
++				nvc0_pushbuf.h \
++				nouveau_bo.h \
++				nouveau_resource.h \
++				nouveau_reloc.h
+ 
+ 
+ libdrm_nouveauincludedir = ${includedir}/libdrm
+-libdrm_nouveauinclude_HEADERS = nouveau.h
++libdrm_nouveauinclude_HEADERS = \
++				nouveau_drmif.h
+ 
+ pkgconfigdir = @pkgconfigdir@
+ pkgconfig_DATA = libdrm_nouveau.pc
+diff --git a/nouveau/abi16.c b/nouveau/abi16.c
+deleted file mode 100644
+index a67fbc1..0000000
+--- a/nouveau/abi16.c
++++ /dev/null
+@@ -1,195 +0,0 @@
+-/*
+- * Copyright 2012 Red Hat Inc.
+- *
+- * Permission is hereby granted, free of charge, to any person obtaining a
+- * copy of this software and associated documentation files (the "Software"),
+- * to deal in the Software without restriction, including without limitation
+- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+- * and/or sell copies of the Software, and to permit persons to whom the
+- * Software is furnished to do so, subject to the following conditions:
+- *
+- * The above copyright notice and this permission notice shall be included in
+- * all copies or substantial portions of the Software.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+- * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+- * OTHER DEALINGS IN THE SOFTWARE.
+- *
+- * Authors: Ben Skeggs
+- */
+-
+-#include <stdlib.h>
+-#include <stdint.h>
+-
+-#include "private.h"
+-
+-int
+-abi16_chan_nv04(struct nouveau_object *obj)
+-{
+-	struct nouveau_device *dev = (struct nouveau_device *)obj->parent;
+-	struct nv04_fifo *nv04 = obj->data;
+-	struct drm_nouveau_channel_alloc req = {nv04->vram, nv04->gart};
+-	int ret;
+-
+-	ret = drmCommandWriteRead(dev->fd, DRM_NOUVEAU_CHANNEL_ALLOC,
+-				  &req, sizeof(req));
+-	if (ret)
+-		return ret;
+-
+-	nv04->base.channel = req.channel;
+-	nv04->base.pushbuf = req.pushbuf_domains;
+-	nv04->notify = req.notifier_handle;
+-	nv04->base.object->handle = req.channel;
+-	nv04->base.object->length = sizeof(*nv04);
+-	return 0;
+-}
+-
+-int
+-abi16_chan_nvc0(struct nouveau_object *obj)
+-{
+-	struct nouveau_device *dev = (struct nouveau_device *)obj->parent;
+-	struct drm_nouveau_channel_alloc req = {};
+-	struct nvc0_fifo *nvc0 = obj->data;
+-	int ret;
+-
+-	ret = drmCommandWriteRead(dev->fd, DRM_NOUVEAU_CHANNEL_ALLOC,
+-				  &req, sizeof(req));
+-	if (ret)
+-		return ret;
+-
+-	nvc0->base.channel = req.channel;
+-	nvc0->base.pushbuf = req.pushbuf_domains;
+-	nvc0->notify = req.notifier_handle;
+-	nvc0->base.object->handle = req.channel;
+-	nvc0->base.object->length = sizeof(*nvc0);
+-	return 0;
+-}
+-
+-int
+-abi16_engobj(struct nouveau_object *obj)
+-{
+-	struct drm_nouveau_grobj_alloc req = {
+-		obj->parent->handle, obj->handle, obj->oclass
+-	};
+-	struct nouveau_device *dev;
+-	int ret;
+-
+-	dev = nouveau_object_find(obj, NOUVEAU_DEVICE_CLASS);
+-	ret = drmCommandWrite(dev->fd, DRM_NOUVEAU_GROBJ_ALLOC,
+-			      &req, sizeof(req));
+-	if (ret)
+-		return ret;
+-
+-	obj->length = sizeof(struct nouveau_object *);
+-	return 0;
+-}
+-
+-int
+-abi16_ntfy(struct nouveau_object *obj)
+-{
+-	struct nv04_notify *ntfy = obj->data;
+-	struct drm_nouveau_notifierobj_alloc req = {
+-		obj->parent->handle, ntfy->object->handle, ntfy->length
+-	};
+-	struct nouveau_device *dev;
+-	int ret;
+-
+-	dev = nouveau_object_find(obj, NOUVEAU_DEVICE_CLASS);
+-	ret = drmCommandWriteRead(dev->fd, DRM_NOUVEAU_NOTIFIEROBJ_ALLOC,
+-				  &req, sizeof(req));
+-	if (ret)
+-		return ret;
+-
+-	ntfy->offset = req.offset;
+-	ntfy->object->length = sizeof(*ntfy);
+-	return 0;
+-}
+-
+-void
+-abi16_bo_info(struct nouveau_bo *bo, struct drm_nouveau_gem_info *info)
+-{
+-	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
+-
+-	nvbo->map_handle = info->map_handle;
+-	bo->handle = info->handle;
+-	bo->size = info->size;
+-	bo->offset = info->offset;
+-
+-	bo->flags = 0;
+-	if (info->domain & NOUVEAU_GEM_DOMAIN_VRAM)
+-		bo->flags |= NOUVEAU_BO_VRAM;
+-	if (info->domain & NOUVEAU_GEM_DOMAIN_GART)
+-		bo->flags |= NOUVEAU_BO_GART;
+-	if (!(info->tile_flags & NOUVEAU_GEM_TILE_NONCONTIG))
+-		bo->flags |= NOUVEAU_BO_CONTIG;
+-	if (nvbo->map_handle)
+-		bo->flags |= NOUVEAU_BO_MAP;
+-
+-	if (bo->device->chipset >= 0xc0) {
+-		bo->config.nvc0.memtype   = (info->tile_flags & 0xff00) >> 8;
+-		bo->config.nvc0.tile_mode = info->tile_mode;
+-	} else
+-	if (bo->device->chipset >= 0x80 || bo->device->chipset == 0x50) {
+-		bo->config.nv50.memtype   = (info->tile_flags & 0x07f00) >> 8 |
+-					    (info->tile_flags & 0x30000) >> 9;
+-		bo->config.nv50.tile_mode = info->tile_mode << 4;
+-	} else {
+-		bo->config.nv04.surf_flags = info->tile_flags & 7;
+-		bo->config.nv04.surf_pitch = info->tile_mode;
+-	}
+-}
+-
+-int
+-abi16_bo_init(struct nouveau_bo *bo, uint32_t alignment,
+-	      union nouveau_bo_config *config)
+-{
+-	struct nouveau_device *dev = bo->device;
+-	struct drm_nouveau_gem_new req = {};
+-	struct drm_nouveau_gem_info *info = &req.info;
+-	int ret;
+-
+-	if (bo->flags & NOUVEAU_BO_VRAM)
+-		info->domain |= NOUVEAU_GEM_DOMAIN_VRAM;
+-	if (bo->flags & NOUVEAU_BO_GART)
+-		info->domain |= NOUVEAU_GEM_DOMAIN_GART;
+-	if (!info->domain)
+-		info->domain |= NOUVEAU_GEM_DOMAIN_VRAM |
+-				NOUVEAU_GEM_DOMAIN_GART;
+-
+-	if (bo->flags & NOUVEAU_BO_MAP)
+-		info->domain |= NOUVEAU_GEM_DOMAIN_MAPPABLE;
+-
+-	if (!(bo->flags & NOUVEAU_BO_CONTIG))
+-		info->tile_flags = NOUVEAU_GEM_TILE_NONCONTIG;
+-
+-	info->size = bo->size;
+-	req.align = alignment;
+-
+-	if (config) {
+-		if (dev->chipset >= 0xc0) {
+-			info->tile_flags = (config->nvc0.memtype & 0xff) << 8;
+-			info->tile_mode  = config->nvc0.tile_mode;
+-		} else
+-		if (dev->chipset >= 0x80 || dev->chipset == 0x50) {
+-			info->tile_flags = (config->nv50.memtype & 0x07f) << 8 |
+-					   (config->nv50.memtype & 0x180) << 9;
+-			info->tile_mode  = config->nv50.tile_mode >> 4;
+-		} else {
+-			info->tile_flags = config->nv04.surf_flags & 7;
+-			info->tile_mode  = config->nv04.surf_pitch;
+-		}
+-	}
+-
+-	if (!nouveau_device(dev)->have_bo_usage)
+-		info->tile_flags &= 0x0000ff00;
+-
+-	ret = drmCommandWriteRead(dev->fd, DRM_NOUVEAU_GEM_NEW,
+-				  &req, sizeof(req));
+-	if (ret == 0)
+-		abi16_bo_info(bo, &req.info);
+-	return ret;
+-}
+diff --git a/nouveau/bufctx.c b/nouveau/bufctx.c
+deleted file mode 100644
+index 23d6f09..0000000
+--- a/nouveau/bufctx.c
++++ /dev/null
+@@ -1,170 +0,0 @@
+-/*
+- * Copyright 2012 Red Hat Inc.
+- *
+- * Permission is hereby granted, free of charge, to any person obtaining a
+- * copy of this software and associated documentation files (the "Software"),
+- * to deal in the Software without restriction, including without limitation
+- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+- * and/or sell copies of the Software, and to permit persons to whom the
+- * Software is furnished to do so, subject to the following conditions:
+- *
+- * The above copyright notice and this permission notice shall be included in
+- * all copies or substantial portions of the Software.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+- * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+- * OTHER DEALINGS IN THE SOFTWARE.
+- *
+- * Authors: Ben Skeggs
+- */
+-
+-#ifdef HAVE_CONFIG_H
+-#include <config.h>
+-#endif
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <stdint.h>
+-#include <stdbool.h>
+-#include <assert.h>
+-#include <errno.h>
+-
+-#include "libdrm_lists.h"
+-
+-#include "nouveau.h"
+-#include "private.h"
+-
+-struct nouveau_bufref_priv {
+-	struct nouveau_bufref base;
+-	struct nouveau_bufref_priv *next;
+-	struct nouveau_bufctx *bufctx;
+-};
+-
+-static inline struct nouveau_bufref_priv *
+-nouveau_bufref(struct nouveau_bufref *bctx)
+-{
+-	return (struct nouveau_bufref_priv *)bctx;
+-}
+-
+-struct nouveau_bufbin_priv {
+-	struct nouveau_bufref_priv *list;
+-	int relocs;
+-};
+-
+-struct nouveau_bufctx_priv {
+-	struct nouveau_bufctx base;
+-	struct nouveau_bufref_priv *free;
+-	int nr_bins;
+-	struct nouveau_bufbin_priv bins[];
+-};
+-
+-static inline struct nouveau_bufctx_priv *
+-nouveau_bufctx(struct nouveau_bufctx *bctx)
+-{
+-	return (struct nouveau_bufctx_priv *)bctx;
+-}
+-
+-int
+-nouveau_bufctx_new(struct nouveau_client *client, int bins,
+-		   struct nouveau_bufctx **pbctx)
+-{
+-	struct nouveau_bufctx_priv *priv;
+-
+-	priv = calloc(1, sizeof(*priv) + sizeof(priv->bins[0]) * bins);
+-	if (priv) {
+-		DRMINITLISTHEAD(&priv->base.head);
+-		DRMINITLISTHEAD(&priv->base.pending);
+-		DRMINITLISTHEAD(&priv->base.current);
+-		priv->base.client = client;
+-		priv->nr_bins = bins;
+-		*pbctx = &priv->base;
+-		return 0;
+-	}
+-
+-	return -ENOMEM;
+-}
+-
+-void
+-nouveau_bufctx_del(struct nouveau_bufctx **pbctx)
+-{
+-	struct nouveau_bufctx_priv *pctx = nouveau_bufctx(*pbctx);
+-	struct nouveau_bufref_priv *pref;
+-	if (pctx) {
+-		while (pctx->nr_bins--)
+-			nouveau_bufctx_reset(&pctx->base, pctx->nr_bins);
+-		while ((pref = pctx->free)) {
+-			pctx->free = pref->next;
+-			free(pref);
+-		}
+-		free(pctx);
+-		*pbctx = NULL;
+-	}
+-}
+-
+-void
+-nouveau_bufctx_reset(struct nouveau_bufctx *bctx, int bin)
+-{
+-	struct nouveau_bufctx_priv *pctx = nouveau_bufctx(bctx);
+-	struct nouveau_bufbin_priv *pbin = &pctx->bins[bin];
+-	struct nouveau_bufref_priv *pref;
+-
+-	while ((pref = pbin->list)) {
+-		DRMLISTDELINIT(&pref->base.thead);
+-		pbin->list = pref->next;
+-		pref->next = pctx->free;
+-		pctx->free = pref;
+-	}
+-
+-	bctx->relocs -= pbin->relocs;
+-	pbin->relocs  = 0;
+-}
+-
+-struct nouveau_bufref *
+-nouveau_bufctx_refn(struct nouveau_bufctx *bctx, int bin,
+-		    struct nouveau_bo *bo, uint32_t flags)
+-{
+-	struct nouveau_bufctx_priv *pctx = nouveau_bufctx(bctx);
+-	struct nouveau_bufbin_priv *pbin = &pctx->bins[bin];
+-	struct nouveau_bufref_priv *pref = pctx->free;
+-
+-	if (!pref)
+-		pref = malloc(sizeof(*pref));
+-	else
+-		pctx->free = pref->next;
+-
+-	if (pref) {
+-		pref->base.bo = bo;
+-		pref->base.flags = flags;
+-		pref->base.packet = 0;
+-
+-		DRMLISTADDTAIL(&pref->base.thead, &bctx->pending);
+-		pref->bufctx = bctx;
+-		pref->next = pbin->list;
+-		pbin->list = pref;
+-	}
+-
+-	return &pref->base;
+-}
+-
+-struct nouveau_bufref *
+-nouveau_bufctx_mthd(struct nouveau_bufctx *bctx, int bin, uint32_t packet,
+-		    struct nouveau_bo *bo, uint64_t data, uint32_t flags,
+-		    uint32_t vor, uint32_t tor)
+-{
+-	struct nouveau_bufctx_priv *pctx = nouveau_bufctx(bctx);
+-	struct nouveau_bufbin_priv *pbin = &pctx->bins[bin];
+-	struct nouveau_bufref *bref = nouveau_bufctx_refn(bctx, bin, bo, flags);
+-	if (bref) {
+-		bref->packet = packet;
+-		bref->data = data;
+-		bref->vor = vor;
+-		bref->tor = tor;
+-		pbin->relocs++;
+-		bctx->relocs++;
+-	}
+-	return bref;
+-}
+diff --git a/nouveau/libdrm_nouveau.pc.in b/nouveau/libdrm_nouveau.pc.in
+index 6170613..c78a28a 100644
+--- a/nouveau/libdrm_nouveau.pc.in
++++ b/nouveau/libdrm_nouveau.pc.in
+@@ -5,7 +5,7 @@ includedir=@includedir@
+ 
+ Name: libdrm_nouveau
+ Description: Userspace interface to nouveau kernel DRM services
+-Version: 2.4.33
++Version: 0.6
+ Libs: -L${libdir} -ldrm_nouveau
+ Cflags: -I${includedir} -I${includedir}/libdrm -I${includedir}/nouveau
+ Requires.private: libdrm
+diff --git a/nouveau/nouveau.c b/nouveau/nouveau.c
+deleted file mode 100644
+index 940d933..0000000
+--- a/nouveau/nouveau.c
++++ /dev/null
+@@ -1,527 +0,0 @@
+-/*
+- * Copyright 2012 Red Hat Inc.
+- *
+- * Permission is hereby granted, free of charge, to any person obtaining a
+- * copy of this software and associated documentation files (the "Software"),
+- * to deal in the Software without restriction, including without limitation
+- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+- * and/or sell copies of the Software, and to permit persons to whom the
+- * Software is furnished to do so, subject to the following conditions:
+- *
+- * The above copyright notice and this permission notice shall be included in
+- * all copies or substantial portions of the Software.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+- * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+- * OTHER DEALINGS IN THE SOFTWARE.
+- *
+- * Authors: Ben Skeggs
+- */
+-
+-#ifdef HAVE_CONFIG_H
+-#include <config.h>
+-#endif
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <stdint.h>
+-#include <string.h>
+-#include <stdbool.h>
+-#include <assert.h>
+-#include <errno.h>
+-#include <sys/mman.h>
+-#include <fcntl.h>
+-
+-#include <xf86drm.h>
+-#include <xf86atomic.h>
+-#include "libdrm_lists.h"
+-#include "nouveau_drm.h"
+-
+-#include "nouveau.h"
+-#include "private.h"
+-
+-#ifdef DEBUG
+-uint32_t nouveau_debug = 0;
+-
+-static void
+-debug_init(char *args)
+-{
+-	if (args) {
+-		int n = strtol(args, NULL, 0);
+-		if (n >= 0)
+-			nouveau_debug = n;
+-	}
+-}
+-#endif
+-
+-/* this is the old libdrm's version of nouveau_device_wrap(), the symbol
+- * is kept here to prevent AIGLX from crashing if the DDX is linked against
+- * the new libdrm, but the DRI driver against the old
+- */
+-int
+-nouveau_device_open_existing(struct nouveau_device **pdev, int close, int fd,
+-			     drm_context_t ctx)
+-{
+-	return -EACCES;
+-}
+-
+-int
+-nouveau_device_wrap(int fd, int close, struct nouveau_device **pdev)
+-{
+-	struct nouveau_device_priv *nvdev = calloc(1, sizeof(*nvdev));
+-	struct nouveau_device *dev = &nvdev->base;
+-	uint64_t chipset, vram, gart, bousage;
+-	drmVersionPtr ver;
+-	int ret;
+-
+-#ifdef DEBUG
+-	debug_init(getenv("NOUVEAU_LIBDRM_DEBUG"));
+-#endif
+-
+-	if (!nvdev)
+-		return -ENOMEM;
+-	nvdev->base.fd = fd;
+-
+-	ver = drmGetVersion(fd);
+-	if (ver) dev->drm_version = (ver->version_major << 24) |
+-				    (ver->version_minor << 8) |
+-				     ver->version_patchlevel;
+-	drmFreeVersion(ver);
+-
+-	if ( dev->drm_version != 0x00000010 &&
+-	    (dev->drm_version <  0x01000000 ||
+-	     dev->drm_version >= 0x02000000)) {
+-		nouveau_device_del(&dev);
+-		return -EINVAL;
+-	}
+-
+-	ret = nouveau_getparam(dev, NOUVEAU_GETPARAM_CHIPSET_ID, &chipset);
+-	if (ret == 0)
+-	ret = nouveau_getparam(dev, NOUVEAU_GETPARAM_FB_SIZE, &vram);
+-	if (ret == 0)
+-	ret = nouveau_getparam(dev, NOUVEAU_GETPARAM_AGP_SIZE, &gart);
+-	if (ret) {
+-		nouveau_device_del(&dev);
+-		return ret;
+-	}
+-
+-	ret = nouveau_getparam(dev, NOUVEAU_GETPARAM_HAS_BO_USAGE, &bousage);
+-	if (ret == 0)
+-		nvdev->have_bo_usage = (bousage != 0);
+-
+-	nvdev->close = close;
+-	DRMINITLISTHEAD(&nvdev->bo_list);
+-	nvdev->base.object.oclass = NOUVEAU_DEVICE_CLASS;
+-	nvdev->base.lib_version = 0x01000000;
+-	nvdev->base.chipset = chipset;
+-	nvdev->base.vram_size = vram;
+-	nvdev->base.gart_size = gart;
+-	nvdev->base.vram_limit = (nvdev->base.vram_size * 80) / 100;
+-	nvdev->base.gart_limit = (nvdev->base.gart_size * 80) / 100;
+-
+-	*pdev = &nvdev->base;
+-	return 0;
+-}
+-
+-int
+-nouveau_device_open(const char *busid, struct nouveau_device **pdev)
+-{
+-	int ret = -ENODEV, fd = drmOpen("nouveau", busid);
+-	if (fd >= 0) {
+-		ret = nouveau_device_wrap(fd, 1, pdev);
+-		if (ret)
+-			drmClose(fd);
+-	}
+-	return ret;
+-}
+-
+-void
+-nouveau_device_del(struct nouveau_device **pdev)
+-{
+-	struct nouveau_device_priv *nvdev = nouveau_device(*pdev);
+-	if (nvdev) {
+-		if (nvdev->close)
+-			drmClose(nvdev->base.fd);
+-		free(nvdev->client);
+-		free(nvdev);
+-		*pdev = NULL;
+-	}
+-}
+-
+-int
+-nouveau_getparam(struct nouveau_device *dev, uint64_t param, uint64_t *value)
+-{
+-	struct drm_nouveau_getparam r = { param, 0 };
+-	int fd = dev->fd, ret =
+-		drmCommandWriteRead(fd, DRM_NOUVEAU_GETPARAM, &r, sizeof(r));
+-	*value = r.value;
+-	return ret;
+-}
+-
+-int
+-nouveau_setparam(struct nouveau_device *dev, uint64_t param, uint64_t value)
+-{
+-	struct drm_nouveau_setparam r = { param, value };
+-	return drmCommandWrite(dev->fd, DRM_NOUVEAU_SETPARAM, &r, sizeof(r));
+-}
+-
+-int
+-nouveau_client_new(struct nouveau_device *dev, struct nouveau_client **pclient)
+-{
+-	struct nouveau_device_priv *nvdev = nouveau_device(dev);
+-	struct nouveau_client_priv *pcli;
+-	int id = 0, i, ret = -ENOMEM;
+-	uint32_t *clients;
+-
+-	for (i = 0; i < nvdev->nr_client; i++) {
+-		id = ffs(nvdev->client[i]) - 1;
+-		if (id >= 0)
+-			goto out;
+-	}
+-
+-	clients = realloc(nvdev->client, sizeof(uint32_t) * (i + 1));
+-	if (!clients)
+-		return ret;
+-	nvdev->client = clients;
+-	nvdev->client[i] = 0;
+-	nvdev->nr_client++;
+-
+-out:
+-	pcli = calloc(1, sizeof(*pcli));
+-	if (pcli) {
+-		nvdev->client[i] |= (1 << id);
+-		pcli->base.device = dev;
+-		pcli->base.id = (i * 32) + id;
+-		ret = 0;
+-	}
+-
+-	*pclient = &pcli->base;
+-	return ret;
+-}
+-
+-void
+-nouveau_client_del(struct nouveau_client **pclient)
+-{
+-	struct nouveau_client_priv *pcli = nouveau_client(*pclient);
+-	struct nouveau_device_priv *nvdev;
+-	if (pcli) {
+-		int id = pcli->base.id;
+-		nvdev = nouveau_device(pcli->base.device);
+-		nvdev->client[id / 32] &= ~(1 << (id % 32));
+-		free(pcli->kref);
+-		free(pcli);
+-	}
+-}
+-
+-int
+-nouveau_object_new(struct nouveau_object *parent, uint64_t handle,
+-		   uint32_t oclass, void *data, uint32_t length,
+-		   struct nouveau_object **pobj)
+-{
+-	struct nouveau_device *dev;
+-	struct nouveau_object *obj;
+-	int ret = -EINVAL;
+-
+-	if (length == 0)
+-		length = sizeof(struct nouveau_object *);
+-	obj = malloc(sizeof(*obj) + length);
+-	obj->parent = parent;
+-	obj->handle = handle;
+-	obj->oclass = oclass;
+-	obj->length = length;
+-	obj->data = obj + 1;
+-	if (data)
+-		memcpy(obj->data, data, length);
+-	*(struct nouveau_object **)obj->data = obj;
+-
+-	dev = nouveau_object_find(obj, NOUVEAU_DEVICE_CLASS);
+-	switch (parent->oclass) {
+-	case NOUVEAU_DEVICE_CLASS:
+-		switch (obj->oclass) {
+-		case NOUVEAU_FIFO_CHANNEL_CLASS:
+-		{
+-			if (dev->chipset < 0xc0)
+-				ret = abi16_chan_nv04(obj);
+-			else
+-				ret = abi16_chan_nvc0(obj);
+-		}
+-			break;
+-		default:
+-			break;
+-		}
+-		break;
+-	case NOUVEAU_FIFO_CHANNEL_CLASS:
+-		switch (obj->oclass) {
+-		case NOUVEAU_NOTIFIER_CLASS:
+-			ret = abi16_ntfy(obj);
+-			break;
+-		default:
+-			ret = abi16_engobj(obj);
+-			break;
+-		}
+-	default:
+-		break;
+-	}
+-
+-	if (ret) {
+-		free(obj);
+-		return ret;
+-	}
+-
+-	*pobj = obj;
+-	return 0;
+-}
+-
+-void
+-nouveau_object_del(struct nouveau_object **pobj)
+-{
+-	struct nouveau_object *obj = *pobj;
+-	struct nouveau_device *dev;
+-	if (obj) {
+-		dev = nouveau_object_find(obj, NOUVEAU_DEVICE_CLASS);
+-		if (obj->oclass == NOUVEAU_FIFO_CHANNEL_CLASS) {
+-			struct drm_nouveau_channel_free req;
+-			req.channel = obj->handle;
+-			drmCommandWrite(dev->fd, DRM_NOUVEAU_CHANNEL_FREE,
+-					&req, sizeof(req));
+-		} else {
+-			struct drm_nouveau_gpuobj_free req;
+-			req.channel = obj->parent->handle;
+-			req.handle  = obj->handle;
+-			drmCommandWrite(dev->fd, DRM_NOUVEAU_GPUOBJ_FREE,
+-					&req, sizeof(req));
+-		}
+-	}
+-	free(obj);
+-	*pobj = NULL;
+-}
+-
+-void *
+-nouveau_object_find(struct nouveau_object *obj, uint32_t pclass)
+-{
+-	while (obj && obj->oclass != pclass) {
+-		obj = obj->parent;
+-		if (pclass == NOUVEAU_PARENT_CLASS)
+-			break;
+-	}
+-	return obj;
+-}
+-
+-static void
+-nouveau_bo_del(struct nouveau_bo *bo)
+-{
+-	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
+-	struct drm_gem_close req = { bo->handle };
+-	DRMLISTDEL(&nvbo->head);
+-	if (bo->map)
+-		munmap(bo->map, bo->size);
+-	drmIoctl(bo->device->fd, DRM_IOCTL_GEM_CLOSE, &req);
+-	free(nvbo);
+-}
+-
+-int
+-nouveau_bo_new(struct nouveau_device *dev, uint32_t flags, uint32_t align,
+-	       uint64_t size, union nouveau_bo_config *config,
+-	       struct nouveau_bo **pbo)
+-{
+-	struct nouveau_device_priv *nvdev = nouveau_device(dev);
+-	struct nouveau_bo_priv *nvbo = calloc(1, sizeof(*nvbo));
+-	struct nouveau_bo *bo = &nvbo->base;
+-	int ret;
+-
+-	if (!nvbo)
+-		return -ENOMEM;
+-	atomic_set(&nvbo->refcnt, 1);
+-	bo->device = dev;
+-	bo->flags = flags;
+-	bo->size = size;
+-
+-	ret = abi16_bo_init(bo, align, config);
+-	if (ret) {
+-		free(nvbo);
+-		return ret;
+-	}
+-
+-	DRMLISTADD(&nvbo->head, &nvdev->bo_list);
+-
+-	*pbo = bo;
+-	return 0;
+-}
+-
+-int
+-nouveau_bo_wrap(struct nouveau_device *dev, uint32_t handle,
+-		struct nouveau_bo **pbo)
+-{
+-	struct nouveau_device_priv *nvdev = nouveau_device(dev);
+-	struct drm_nouveau_gem_info req = { .handle = handle };
+-	struct nouveau_bo_priv *nvbo;
+-	int ret;
+-
+-	DRMLISTFOREACHENTRY(nvbo, &nvdev->bo_list, head) {
+-		if (nvbo->base.handle == handle) {
+-			*pbo = NULL;
+-			nouveau_bo_ref(&nvbo->base, pbo);
+-			return 0;
+-		}
+-	}
+-
+-	ret = drmCommandWriteRead(dev->fd, DRM_NOUVEAU_GEM_INFO,
+-				  &req, sizeof(req));
+-	if (ret)
+-		return ret;
+-
+-	nvbo = calloc(1, sizeof(*nvbo));
+-	if (nvbo) {
+-		atomic_set(&nvbo->refcnt, 1);
+-		nvbo->base.device = dev;
+-		abi16_bo_info(&nvbo->base, &req);
+-		DRMLISTADD(&nvbo->head, &nvdev->bo_list);
+-		*pbo = &nvbo->base;
+-		return 0;
+-	}
+-
+-	return -ENOMEM;
+-}
+-
+-int
+-nouveau_bo_name_ref(struct nouveau_device *dev, uint32_t name,
+-		    struct nouveau_bo **pbo)
+-{
+-	struct nouveau_device_priv *nvdev = nouveau_device(dev);
+-	struct nouveau_bo_priv *nvbo;
+-	struct drm_gem_open req = { .name = name };
+-	int ret;
+-
+-	DRMLISTFOREACHENTRY(nvbo, &nvdev->bo_list, head) {
+-		if (nvbo->name == name) {
+-			*pbo = NULL;
+-			nouveau_bo_ref(&nvbo->base, pbo);
+-			return 0;
+-		}
+-	}
+-
+-	ret = drmIoctl(dev->fd, DRM_IOCTL_GEM_OPEN, &req);
+-	if (ret == 0) {
+-		ret = nouveau_bo_wrap(dev, req.handle, pbo);
+-		nouveau_bo((*pbo))->name = name;
+-	}
+-
+-	return ret;
+-}
+-
+-int
+-nouveau_bo_name_get(struct nouveau_bo *bo, uint32_t *name)
+-{
+-	struct drm_gem_flink req = { .handle = bo->handle };
+-	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
+-	if (!nvbo->name) {
+-		int ret = drmIoctl(bo->device->fd, DRM_IOCTL_GEM_FLINK, &req);
+-		if (ret)
+-			return ret;
+-		nvbo->name = req.name;
+-	}
+-	*name = nvbo->name;
+-	return 0;
+-}
+-
+-void
+-nouveau_bo_ref(struct nouveau_bo *bo, struct nouveau_bo **pref)
+-{
+-	struct nouveau_bo *ref = *pref;
+-	if (bo) {
+-		atomic_inc(&nouveau_bo(bo)->refcnt);
+-	}
+-	if (ref) {
+-		if (atomic_dec_and_test(&nouveau_bo(ref)->refcnt))
+-			nouveau_bo_del(ref);
+-	}
+-	*pref = bo;
+-}
+-
+-int
+-nouveau_bo_prime_handle_ref(struct nouveau_device *dev, int prime_fd,
+-			    struct nouveau_bo **bo)
+-{
+-	int ret;
+-	unsigned int handle;
+-
+-	ret = drmPrimeFDToHandle(dev->fd, prime_fd, &handle);
+-	if (ret) {
+-		nouveau_bo_ref(NULL, bo);
+-		return ret;
+-	}
+-
+-	ret = nouveau_bo_wrap(dev, handle, bo);
+-	if (ret) {
+-		nouveau_bo_ref(NULL, bo);
+-		return ret;
+-	}
+-
+-	return 0;
+-}
+-
+-int
+-nouveau_bo_set_prime(struct nouveau_bo *bo, int *prime_fd)
+-{
+-	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
+-	int ret;
+-
+-	ret = drmPrimeHandleToFD(bo->device->fd, nvbo->base.handle, DRM_CLOEXEC, prime_fd);
+-	if (ret)
+-		return ret;
+-	return 0;
+-}
+-
+-int
+-nouveau_bo_wait(struct nouveau_bo *bo, uint32_t access,
+-		struct nouveau_client *client)
+-{
+-	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
+-	struct drm_nouveau_gem_cpu_prep req;
+-	struct nouveau_pushbuf *push;
+-	int ret = 0;
+-
+-	if (!(access & NOUVEAU_BO_RDWR))
+-		return 0;
+-
+-	push = cli_push_get(client, bo);
+-	if (push && push->channel)
+-		nouveau_pushbuf_kick(push, push->channel);
+-
+-	if (!nvbo->name && !(nvbo->access & NOUVEAU_BO_WR) &&
+-			   !(      access & NOUVEAU_BO_WR))
+-		return 0;
+-
+-	req.handle = bo->handle;
+-	req.flags = 0;
+-	if (access & NOUVEAU_BO_WR)
+-		req.flags |= NOUVEAU_GEM_CPU_PREP_WRITE;
+-	if (access & NOUVEAU_BO_NOBLOCK)
+-		req.flags |= NOUVEAU_GEM_CPU_PREP_NOWAIT;
+-
+-	ret = drmCommandWrite(bo->device->fd, DRM_NOUVEAU_GEM_CPU_PREP,
+-			      &req, sizeof(req));
+-	if (ret == 0)
+-		nvbo->access = 0;
+-	return ret;
+-}
+-
+-int
+-nouveau_bo_map(struct nouveau_bo *bo, uint32_t access,
+-	       struct nouveau_client *client)
+-{
+-	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
+-	if (bo->map == NULL) {
+-		bo->map = mmap(0, bo->size, PROT_READ | PROT_WRITE,
+-			       MAP_SHARED, bo->device->fd, nvbo->map_handle);
+-		if (bo->map == MAP_FAILED) {
+-			bo->map = NULL;
+-			return -errno;
+-		}
+-	}
+-	return nouveau_bo_wait(bo, access, client);
+-}
+diff --git a/nouveau/nouveau.h b/nouveau/nouveau.h
+deleted file mode 100644
+index c42eea7..0000000
+--- a/nouveau/nouveau.h
++++ /dev/null
+@@ -1,215 +0,0 @@
+-#ifndef __NOUVEAU_H__
+-#define __NOUVEAU_H__
+-
+-#include <stdint.h>
+-#include <stdbool.h>
+-
+-#define NOUVEAU_DEVICE_CLASS       0x80000000
+-#define NOUVEAU_FIFO_CHANNEL_CLASS 0x80000001
+-#define NOUVEAU_NOTIFIER_CLASS     0x80000002
+-#define NOUVEAU_PARENT_CLASS       0xffffffff
+-
+-struct nouveau_list {
+-	struct nouveau_list *prev;
+-	struct nouveau_list *next;
+-};
+-
+-struct nouveau_object {
+-	struct nouveau_object *parent;
+-	uint64_t handle;
+-	uint32_t oclass;
+-	uint32_t length;
+-	void *data;
+-};
+-
+-struct nouveau_fifo {
+-	struct nouveau_object *object;
+-	uint32_t channel;
+-	uint32_t pushbuf;
+-	uint64_t unused1[3];
+-};
+-
+-struct nv04_fifo {
+-	struct nouveau_fifo base;
+-	uint32_t vram;
+-	uint32_t gart;
+-	uint32_t notify;
+-};
+-
+-struct nvc0_fifo {
+-	struct nouveau_fifo base;
+-	uint32_t notify;
+-};
+-
+-struct nv04_notify {
+-	struct nouveau_object *object;
+-	uint32_t offset;
+-	uint32_t length;
+-};
+-
+-int  nouveau_object_new(struct nouveau_object *parent, uint64_t handle,
+-			uint32_t oclass, void *data, uint32_t length,
+-			struct nouveau_object **);
+-void nouveau_object_del(struct nouveau_object **);
+-void *nouveau_object_find(struct nouveau_object *, uint32_t parent_class);
+-
+-struct nouveau_device {
+-	struct nouveau_object object;
+-	int fd;
+-	uint32_t lib_version;
+-	uint32_t drm_version;
+-	uint32_t chipset;
+-	uint64_t vram_size;
+-	uint64_t gart_size;
+-	uint64_t vram_limit;
+-	uint64_t gart_limit;
+-};
+-
+-int  nouveau_device_wrap(int fd, int close, struct nouveau_device **);
+-int  nouveau_device_open(const char *busid, struct nouveau_device **);
+-void nouveau_device_del(struct nouveau_device **);
+-int  nouveau_getparam(struct nouveau_device *, uint64_t param, uint64_t *value);
+-int  nouveau_setparam(struct nouveau_device *, uint64_t param, uint64_t value);
+-
+-struct nouveau_client {
+-	struct nouveau_device *device;
+-	int id;
+-};
+-
+-int  nouveau_client_new(struct nouveau_device *, struct nouveau_client **);
+-void nouveau_client_del(struct nouveau_client **);
+-
+-union nouveau_bo_config {
+-	struct {
+-#define NV04_BO_16BPP 0x00000001
+-#define NV04_BO_32BPP 0x00000002
+-#define NV04_BO_ZETA  0x00000004
+-		uint32_t surf_flags;
+-		uint32_t surf_pitch;
+-	} nv04;
+-	struct {
+-		uint32_t memtype;
+-		uint32_t tile_mode;
+-	} nv50;
+-	struct {
+-		uint32_t memtype;
+-		uint32_t tile_mode;
+-	} nvc0;
+-	uint32_t data[8];
+-};
+-
+-#define NOUVEAU_BO_VRAM    0x00000001
+-#define NOUVEAU_BO_GART    0x00000002
+-#define NOUVEAU_BO_APER   (NOUVEAU_BO_VRAM | NOUVEAU_BO_GART)
+-#define NOUVEAU_BO_RD      0x00000100
+-#define NOUVEAU_BO_WR      0x00000200
+-#define NOUVEAU_BO_RDWR   (NOUVEAU_BO_RD | NOUVEAU_BO_WR)
+-#define NOUVEAU_BO_NOBLOCK 0x00000400
+-#define NOUVEAU_BO_LOW     0x00001000
+-#define NOUVEAU_BO_HIGH    0x00002000
+-#define NOUVEAU_BO_OR      0x00004000
+-#define NOUVEAU_BO_MAP     0x80000000
+-#define NOUVEAU_BO_CONTIG  0x40000000
+-#define NOUVEAU_BO_NOSNOOP 0x20000000
+-
+-struct nouveau_bo {
+-	struct nouveau_device *device;
+-	uint32_t handle;
+-	uint64_t size;
+-	uint32_t flags;
+-	uint64_t offset;
+-	void *map;
+-	union nouveau_bo_config config;
+-};
+-
+-int  nouveau_bo_new(struct nouveau_device *, uint32_t flags, uint32_t align,
+-		    uint64_t size, union nouveau_bo_config *,
+-		    struct nouveau_bo **);
+-int  nouveau_bo_wrap(struct nouveau_device *, uint32_t handle,
+-		     struct nouveau_bo **);
+-int  nouveau_bo_name_ref(struct nouveau_device *dev, uint32_t name,
+-			 struct nouveau_bo **);
+-int  nouveau_bo_name_get(struct nouveau_bo *, uint32_t *name);
+-void nouveau_bo_ref(struct nouveau_bo *, struct nouveau_bo **);
+-int  nouveau_bo_map(struct nouveau_bo *, uint32_t access,
+-		    struct nouveau_client *);
+-int  nouveau_bo_wait(struct nouveau_bo *, uint32_t access,
+-		     struct nouveau_client *);
+-int  nouveau_bo_prime_handle_ref(struct nouveau_device *dev, int prime_fd,
+-				 struct nouveau_bo **);
+-int  nouveau_bo_set_prime(struct nouveau_bo *bo, int *prime_fd);
+-
+-struct nouveau_bufref {
+-	struct nouveau_list thead;
+-	struct nouveau_bo *bo;
+-	uint32_t packet;
+-	uint32_t flags;
+-	uint32_t data;
+-	uint32_t vor;
+-	uint32_t tor;
+-	uint32_t priv_data;
+-	void *priv;
+-};
+-
+-struct nouveau_bufctx {
+-	struct nouveau_client *client;
+-	struct nouveau_list head;
+-	struct nouveau_list pending;
+-	struct nouveau_list current;
+-	int relocs;
+-};
+-
+-int  nouveau_bufctx_new(struct nouveau_client *, int bins,
+-			struct nouveau_bufctx **);
+-void nouveau_bufctx_del(struct nouveau_bufctx **);
+-struct nouveau_bufref *
+-nouveau_bufctx_refn(struct nouveau_bufctx *, int bin,
+-		    struct nouveau_bo *, uint32_t flags);
+-struct nouveau_bufref *
+-nouveau_bufctx_mthd(struct nouveau_bufctx *, int bin,  uint32_t packet,
+-		    struct nouveau_bo *, uint64_t data, uint32_t flags,
+-		    uint32_t vor, uint32_t tor);
+-void nouveau_bufctx_reset(struct nouveau_bufctx *, int bin);
+-
+-struct nouveau_pushbuf_krec;
+-struct nouveau_pushbuf {
+-	struct nouveau_client *client;
+-	struct nouveau_object *channel;
+-	struct nouveau_bufctx *bufctx;
+-	void (*kick_notify)(struct nouveau_pushbuf *);
+-	void *user_priv;
+-	uint32_t rsvd_kick;
+-	uint32_t flags;
+-	uint32_t *cur;
+-	uint32_t *end;
+-};
+-
+-struct nouveau_pushbuf_refn {
+-	struct nouveau_bo *bo;
+-	uint32_t flags;
+-};
+-
+-int  nouveau_pushbuf_new(struct nouveau_client *, struct nouveau_object *channel,
+-			 int nr, uint32_t size, bool immediate,
+-			 struct nouveau_pushbuf **);
+-void nouveau_pushbuf_del(struct nouveau_pushbuf **);
+-int  nouveau_pushbuf_space(struct nouveau_pushbuf *, uint32_t dwords,
+-			   uint32_t relocs, uint32_t pushes);
+-void nouveau_pushbuf_data(struct nouveau_pushbuf *, struct nouveau_bo *,
+-			  uint64_t offset, uint64_t length);
+-int  nouveau_pushbuf_refn(struct nouveau_pushbuf *,
+-			  struct nouveau_pushbuf_refn *, int nr);
+-/* Emits a reloc into the push buffer at the current position, you *must*
+- * have previously added the referenced buffer to a buffer context, and
+- * validated it against the current push buffer.
+- */
+-void nouveau_pushbuf_reloc(struct nouveau_pushbuf *, struct nouveau_bo *,
+-			   uint32_t data, uint32_t flags,
+-			   uint32_t vor, uint32_t tor);
+-int  nouveau_pushbuf_validate(struct nouveau_pushbuf *);
+-uint32_t nouveau_pushbuf_refd(struct nouveau_pushbuf *, struct nouveau_bo *);
+-int  nouveau_pushbuf_kick(struct nouveau_pushbuf *, struct nouveau_object *channel);
+-struct nouveau_bufctx *
+-nouveau_pushbuf_bufctx(struct nouveau_pushbuf *, struct nouveau_bufctx *);
+-
+-#endif
+diff --git a/nouveau/nouveau_bo.c b/nouveau/nouveau_bo.c
+new file mode 100644
+index 0000000..d6bb22d
+--- /dev/null
++++ b/nouveau/nouveau_bo.c
+@@ -0,0 +1,549 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++#include <stdint.h>
++#include <stdlib.h>
++#include <errno.h>
++#include <assert.h>
++
++#include <sys/mman.h>
++
++#include "nouveau_private.h"
++
++int
++nouveau_bo_init(struct nouveau_device *dev)
++{
++	return 0;
++}
++
++void
++nouveau_bo_takedown(struct nouveau_device *dev)
++{
++}
++
++static int
++nouveau_bo_info(struct nouveau_bo_priv *nvbo, struct drm_nouveau_gem_info *arg)
++{
++	nvbo->handle = nvbo->base.handle = arg->handle;
++	nvbo->domain = arg->domain;
++	nvbo->size = arg->size;
++	nvbo->offset = arg->offset;
++	nvbo->map_handle = arg->map_handle;
++	nvbo->base.tile_mode = arg->tile_mode;
++	/* XXX - flag inverted for backwards compatibility */
++	nvbo->base.tile_flags = arg->tile_flags ^ NOUVEAU_GEM_TILE_NONCONTIG;
++	return 0;
++}
++
++static int
++nouveau_bo_allocated(struct nouveau_bo_priv *nvbo)
++{
++	if (nvbo->sysmem || nvbo->handle)
++		return 1;
++	return 0;
++}
++
++static int
++nouveau_bo_ualloc(struct nouveau_bo_priv *nvbo)
++{
++	if (nvbo->user || nvbo->sysmem) {
++		assert(nvbo->sysmem);
++		return 0;
++	}
++
++	nvbo->sysmem = malloc(nvbo->size);
++	if (!nvbo->sysmem)
++		return -ENOMEM;
++
++	return 0;
++}
++
++static void
++nouveau_bo_ufree(struct nouveau_bo_priv *nvbo)
++{
++	if (nvbo->sysmem) {
++		if (!nvbo->user)
++			free(nvbo->sysmem);
++		nvbo->sysmem = NULL;
++	}
++}
++
++static void
++nouveau_bo_kfree(struct nouveau_bo_priv *nvbo)
++{
++	struct nouveau_device_priv *nvdev = nouveau_device(nvbo->base.device);
++	struct drm_gem_close req;
++
++	if (!nvbo->handle)
++		return;
++
++	if (nvbo->map) {
++		munmap(nvbo->map, nvbo->size);
++		nvbo->map = NULL;
++	}
++
++	req.handle = nvbo->handle;
++	nvbo->handle = 0;
++	drmIoctl(nvdev->fd, DRM_IOCTL_GEM_CLOSE, &req);
++}
++
++static int
++nouveau_bo_kalloc(struct nouveau_bo_priv *nvbo, struct nouveau_channel *chan)
++{
++	struct nouveau_device_priv *nvdev = nouveau_device(nvbo->base.device);
++	struct drm_nouveau_gem_new req;
++	struct drm_nouveau_gem_info *info = &req.info;
++	int ret;
++
++	if (nvbo->handle)
++		return 0;
++
++	req.channel_hint = chan ? chan->id : 0;
++	req.align = nvbo->align;
++
++
++	info->size = nvbo->size;
++	info->domain = 0;
++
++	if (nvbo->flags & NOUVEAU_BO_VRAM)
++		info->domain |= NOUVEAU_GEM_DOMAIN_VRAM;
++	if (nvbo->flags & NOUVEAU_BO_GART)
++		info->domain |= NOUVEAU_GEM_DOMAIN_GART;
++	if (!info->domain) {
++		info->domain |= (NOUVEAU_GEM_DOMAIN_VRAM |
++				 NOUVEAU_GEM_DOMAIN_GART);
++	}
++
++	if (nvbo->flags & NOUVEAU_BO_MAP)
++		info->domain |= NOUVEAU_GEM_DOMAIN_MAPPABLE;
++
++	info->tile_mode = nvbo->base.tile_mode;
++	info->tile_flags = nvbo->base.tile_flags;
++	/* XXX - flag inverted for backwards compatibility */
++	info->tile_flags ^= NOUVEAU_GEM_TILE_NONCONTIG;
++	if (!nvdev->has_bo_usage)
++		info->tile_flags &= NOUVEAU_GEM_TILE_LAYOUT_MASK;
++
++	ret = drmCommandWriteRead(nvdev->fd, DRM_NOUVEAU_GEM_NEW,
++				  &req, sizeof(req));
++	if (ret)
++		return ret;
++
++	nouveau_bo_info(nvbo, &req.info);
++	return 0;
++}
++
++static int
++nouveau_bo_kmap(struct nouveau_bo_priv *nvbo)
++{
++	struct nouveau_device_priv *nvdev = nouveau_device(nvbo->base.device);
++
++	if (nvbo->map)
++		return 0;
++
++	if (!nvbo->map_handle)
++		return -EINVAL;
++
++	nvbo->map = mmap(0, nvbo->size, PROT_READ | PROT_WRITE,
++			 MAP_SHARED, nvdev->fd, nvbo->map_handle);
++	if (nvbo->map == MAP_FAILED) {
++		nvbo->map = NULL;
++		return -errno;
++	}
++
++	return 0;
++}
++
++int
++nouveau_bo_new_tile(struct nouveau_device *dev, uint32_t flags, int align,
++		    int size, uint32_t tile_mode, uint32_t tile_flags,
++		    struct nouveau_bo **bo)
++{
++	struct nouveau_bo_priv *nvbo;
++	int ret;
++
++	if (!dev || !bo || *bo)
++		return -EINVAL;
++
++	nvbo = calloc(1, sizeof(struct nouveau_bo_priv));
++	if (!nvbo)
++		return -ENOMEM;
++	nvbo->base.device = dev;
++	nvbo->base.size = size;
++	nvbo->base.tile_mode = tile_mode;
++	nvbo->base.tile_flags = tile_flags;
++
++	nvbo->refcount = 1;
++	nvbo->flags = flags;
++	nvbo->size = size;
++	nvbo->align = align;
++
++	if (flags & (NOUVEAU_BO_VRAM | NOUVEAU_BO_GART)) {
++		ret = nouveau_bo_kalloc(nvbo, NULL);
++		if (ret) {
++			nouveau_bo_ref(NULL, (void *)&nvbo);
++			return ret;
++		}
++	}
++
++	*bo = &nvbo->base;
++	return 0;
++}
++
++int
++nouveau_bo_new(struct nouveau_device *dev, uint32_t flags, int align,
++	       int size, struct nouveau_bo **bo)
++{
++	return nouveau_bo_new_tile(dev, flags, align, size, 0, 0, bo);
++}
++
++int
++nouveau_bo_user(struct nouveau_device *dev, void *ptr, int size,
++		struct nouveau_bo **bo)
++{
++	struct nouveau_bo_priv *nvbo;
++	int ret;
++
++	ret = nouveau_bo_new(dev, NOUVEAU_BO_MAP, 0, size, bo);
++	if (ret)
++		return ret;
++	nvbo = nouveau_bo(*bo);
++
++	nvbo->sysmem = ptr;
++	nvbo->user = 1;
++	return 0;
++}
++
++int
++nouveau_bo_wrap(struct nouveau_device *dev, uint32_t handle,
++		struct nouveau_bo **bo)
++{
++	struct nouveau_device_priv *nvdev = nouveau_device(dev);
++	struct drm_nouveau_gem_info req;
++	struct nouveau_bo_priv *nvbo;
++	int ret;
++
++	ret = nouveau_bo_new(dev, 0, 0, 0, bo);
++	if (ret)
++		return ret;
++	nvbo = nouveau_bo(*bo);
++
++	req.handle = handle;
++	ret = drmCommandWriteRead(nvdev->fd, DRM_NOUVEAU_GEM_INFO,
++				  &req, sizeof(req));
++	if (ret) {
++		nouveau_bo_ref(NULL, bo);
++		return ret;
++	}
++
++	nouveau_bo_info(nvbo, &req);
++	nvbo->base.size = nvbo->size;
++	return 0;
++}
++
++int
++nouveau_bo_handle_get(struct nouveau_bo *bo, uint32_t *handle)
++{
++	struct nouveau_device_priv *nvdev = nouveau_device(bo->device);
++	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
++	int ret;
++ 
++	if (!bo || !handle)
++		return -EINVAL;
++
++	if (!nvbo->global_handle) {
++		struct drm_gem_flink req;
++ 
++		ret = nouveau_bo_kalloc(nvbo, NULL);
++		if (ret)
++			return ret;
++
++		req.handle = nvbo->handle;
++		ret = drmIoctl(nvdev->fd, DRM_IOCTL_GEM_FLINK, &req);
++		if (ret) {
++			nouveau_bo_kfree(nvbo);
++			return ret;
++		}
++
++		nvbo->global_handle = req.name;
++	}
++ 
++	*handle = nvbo->global_handle;
++	return 0;
++}
++ 
++int
++nouveau_bo_handle_ref(struct nouveau_device *dev, uint32_t handle,
++		      struct nouveau_bo **bo)
++{
++	struct nouveau_device_priv *nvdev = nouveau_device(dev);
++	struct nouveau_bo_priv *nvbo;
++	struct drm_gem_open req;
++	int ret;
++
++	req.name = handle;
++	ret = drmIoctl(nvdev->fd, DRM_IOCTL_GEM_OPEN, &req);
++	if (ret) {
++		nouveau_bo_ref(NULL, bo);
++		return ret;
++	}
++
++	ret = nouveau_bo_wrap(dev, req.handle, bo);
++	if (ret) {
++		nouveau_bo_ref(NULL, bo);
++		return ret;
++	}
++
++	nvbo = nouveau_bo(*bo);
++	nvbo->base.handle = nvbo->handle;
++	return 0;
++} 
++
++static void
++nouveau_bo_del(struct nouveau_bo **bo)
++{
++	struct nouveau_bo_priv *nvbo;
++
++	if (!bo || !*bo)
++		return;
++	nvbo = nouveau_bo(*bo);
++	*bo = NULL;
++
++	if (--nvbo->refcount)
++		return;
++
++	if (nvbo->pending) {
++		nvbo->pending = NULL;
++		nouveau_pushbuf_flush(nvbo->pending_channel, 0);
++	}
++
++	nouveau_bo_ufree(nvbo);
++	nouveau_bo_kfree(nvbo);
++	free(nvbo);
++}
++
++int
++nouveau_bo_ref(struct nouveau_bo *ref, struct nouveau_bo **pbo)
++{
++	if (!pbo)
++		return -EINVAL;
++
++	if (ref)
++		nouveau_bo(ref)->refcount++;
++
++	if (*pbo)
++		nouveau_bo_del(pbo);
++
++	*pbo = ref;
++	return 0;
++}
++
++static int
++nouveau_bo_wait(struct nouveau_bo *bo, int cpu_write, int no_wait, int no_block)
++{
++	struct nouveau_device_priv *nvdev = nouveau_device(bo->device);
++	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
++	struct drm_nouveau_gem_cpu_prep req;
++	int ret;
++
++	if (!nvbo->global_handle && !nvbo->write_marker && !cpu_write)
++		return 0;
++
++	if (nvbo->pending &&
++	    (nvbo->pending->write_domains || cpu_write)) {
++		nvbo->pending = NULL;
++		nouveau_pushbuf_flush(nvbo->pending_channel, 0);
++	}
++
++	req.handle = nvbo->handle;
++	req.flags = 0;
++	if (cpu_write)
++		req.flags |= NOUVEAU_GEM_CPU_PREP_WRITE;
++	if (no_wait)
++		req.flags |= NOUVEAU_GEM_CPU_PREP_NOWAIT;
++	if (no_block)
++		req.flags |= NOUVEAU_GEM_CPU_PREP_NOBLOCK;
++
++	do {
++		ret = drmCommandWrite(nvdev->fd, DRM_NOUVEAU_GEM_CPU_PREP,
++				      &req, sizeof(req));
++	} while (ret == -EAGAIN);
++	if (ret)
++		return ret;
++
++	if (ret == 0)
++		nvbo->write_marker = 0;
++	return 0;
++}
++
++int
++nouveau_bo_map_range(struct nouveau_bo *bo, uint32_t delta, uint32_t size,
++		     uint32_t flags)
++{
++	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
++	int ret;
++
++	if (!nvbo || bo->map)
++		return -EINVAL;
++
++	if (!nouveau_bo_allocated(nvbo)) {
++		if (nvbo->flags & (NOUVEAU_BO_VRAM | NOUVEAU_BO_GART)) {
++			ret = nouveau_bo_kalloc(nvbo, NULL);
++			if (ret)
++				return ret;
++		}
++
++		if (!nouveau_bo_allocated(nvbo)) {
++			ret = nouveau_bo_ualloc(nvbo);
++			if (ret)
++				return ret;
++		}
++	}
++
++	if (nvbo->sysmem) {
++		bo->map = (char *)nvbo->sysmem + delta;
++	} else {
++		ret = nouveau_bo_kmap(nvbo);
++		if (ret)
++			return ret;
++
++		if (!(flags & NOUVEAU_BO_NOSYNC)) {
++			ret = nouveau_bo_wait(bo, (flags & NOUVEAU_BO_WR),
++					      (flags & NOUVEAU_BO_NOWAIT), 0);
++			if (ret)
++				return ret;
++
++			nvbo->map_refcnt++;
++		}
++
++		bo->map = (char *)nvbo->map + delta;
++	}
++
++	return 0;
++}
++
++void
++nouveau_bo_map_flush(struct nouveau_bo *bo, uint32_t delta, uint32_t size)
++{
++}
++
++int
++nouveau_bo_map(struct nouveau_bo *bo, uint32_t flags)
++{
++	return nouveau_bo_map_range(bo, 0, bo->size, flags);
++}
++
++void
++nouveau_bo_unmap(struct nouveau_bo *bo)
++{
++	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
++
++	if (bo->map && !nvbo->sysmem && nvbo->map_refcnt) {
++		struct nouveau_device_priv *nvdev = nouveau_device(bo->device);
++		struct drm_nouveau_gem_cpu_fini req;
++
++		req.handle = nvbo->handle;
++		drmCommandWrite(nvdev->fd, DRM_NOUVEAU_GEM_CPU_FINI,
++				&req, sizeof(req));
++		nvbo->map_refcnt--;
++	}
++
++	bo->map = NULL;
++}
++
++int
++nouveau_bo_busy(struct nouveau_bo *bo, uint32_t access)
++{
++	return nouveau_bo_wait(bo, (access & NOUVEAU_BO_WR), 1, 1);
++}
++
++uint32_t
++nouveau_bo_pending(struct nouveau_bo *bo)
++{
++	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
++	uint32_t flags;
++
++	if (!nvbo->pending)
++		return 0;
++
++	flags = 0;
++	if (nvbo->pending->read_domains)
++		flags |= NOUVEAU_BO_RD;
++	if (nvbo->pending->write_domains)
++		flags |= NOUVEAU_BO_WR;
++
++	return flags;
++}
++
++struct drm_nouveau_gem_pushbuf_bo *
++nouveau_bo_emit_buffer(struct nouveau_channel *chan, struct nouveau_bo *bo)
++{
++	struct nouveau_pushbuf_priv *nvpb = &nouveau_channel(chan)->pb;
++	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
++	struct drm_nouveau_gem_pushbuf_bo *pbbo;
++	struct nouveau_bo *ref = NULL;
++	int ret;
++
++	if (nvbo->pending)
++		return nvbo->pending;
++
++	if (!nvbo->handle) {
++		ret = nouveau_bo_kalloc(nvbo, chan);
++		if (ret)
++			return NULL;
++
++		if (nvbo->sysmem) {
++			void *sysmem_tmp = nvbo->sysmem;
++
++			nvbo->sysmem = NULL;
++			ret = nouveau_bo_map(bo, NOUVEAU_BO_WR);
++			if (ret)
++				return NULL;
++			nvbo->sysmem = sysmem_tmp;
++
++			memcpy(bo->map, nvbo->sysmem, nvbo->base.size);
++			nouveau_bo_ufree(nvbo);
++			nouveau_bo_unmap(bo);
++		}
++	}
++
++	if (nvpb->nr_buffers >= NOUVEAU_GEM_MAX_BUFFERS)
++		return NULL;
++	pbbo = nvpb->buffers + nvpb->nr_buffers++;
++	nvbo->pending = pbbo;
++	nvbo->pending_channel = chan;
++	nvbo->pending_refcnt = 0;
++
++	nouveau_bo_ref(bo, &ref);
++	pbbo->user_priv = (uint64_t)(unsigned long)ref;
++	pbbo->handle = nvbo->handle;
++	pbbo->valid_domains = NOUVEAU_GEM_DOMAIN_VRAM | NOUVEAU_GEM_DOMAIN_GART;
++	pbbo->read_domains = 0;
++	pbbo->write_domains = 0;
++	pbbo->presumed.domain = nvbo->domain;
++	pbbo->presumed.offset = nvbo->offset;
++	pbbo->presumed.valid = 1;
++	return pbbo;
++}
+diff --git a/nouveau/nouveau_bo.h b/nouveau/nouveau_bo.h
+new file mode 100644
+index 0000000..3a1f2d4
+--- /dev/null
++++ b/nouveau/nouveau_bo.h
+@@ -0,0 +1,104 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifndef __NOUVEAU_BO_H__
++#define __NOUVEAU_BO_H__
++
++/* Relocation/Buffer type flags */
++#define NOUVEAU_BO_VRAM   (1 << 0)
++#define NOUVEAU_BO_GART   (1 << 1)
++#define NOUVEAU_BO_RD     (1 << 2)
++#define NOUVEAU_BO_WR     (1 << 3)
++#define NOUVEAU_BO_RDWR   (NOUVEAU_BO_RD | NOUVEAU_BO_WR)
++#define NOUVEAU_BO_MAP    (1 << 4)
++#define NOUVEAU_BO_LOW    (1 << 6)
++#define NOUVEAU_BO_HIGH   (1 << 7)
++#define NOUVEAU_BO_OR     (1 << 8)
++#define NOUVEAU_BO_INVAL  (1 << 12)
++#define NOUVEAU_BO_NOSYNC (1 << 13)
++#define NOUVEAU_BO_NOWAIT (1 << 14)
++#define NOUVEAU_BO_IFLUSH (1 << 15)
++#define NOUVEAU_BO_DUMMY  (1 << 31)
++
++#define NOUVEAU_BO_TILE_LAYOUT_MASK 0x0000ff00
++#define NOUVEAU_BO_TILE_16BPP       0x00000001
++#define NOUVEAU_BO_TILE_32BPP       0x00000002
++#define NOUVEAU_BO_TILE_ZETA        0x00000004
++#define NOUVEAU_BO_TILE_SCANOUT     0x00000008
++
++struct nouveau_bo {
++	struct nouveau_device *device;
++	uint32_t handle;
++
++	uint64_t size;
++	void *map;
++
++	uint32_t tile_mode;
++	uint32_t tile_flags;
++};
++
++int
++nouveau_bo_new(struct nouveau_device *, uint32_t flags, int align, int size,
++	       struct nouveau_bo **);
++
++int
++nouveau_bo_new_tile(struct nouveau_device *, uint32_t flags, int align,
++		    int size, uint32_t tile_mode, uint32_t tile_flags,
++		    struct nouveau_bo **);
++
++int
++nouveau_bo_user(struct nouveau_device *, void *ptr, int size,
++		struct nouveau_bo **);
++
++int
++nouveau_bo_wrap(struct nouveau_device *, uint32_t handle, struct nouveau_bo **);
++
++int
++nouveau_bo_handle_get(struct nouveau_bo *, uint32_t *);
++
++int
++nouveau_bo_handle_ref(struct nouveau_device *, uint32_t handle,
++		      struct nouveau_bo **);
++
++int
++nouveau_bo_ref(struct nouveau_bo *, struct nouveau_bo **);
++
++int
++nouveau_bo_map_range(struct nouveau_bo *, uint32_t delta, uint32_t size,
++		     uint32_t flags);
++
++void
++nouveau_bo_map_flush(struct nouveau_bo *, uint32_t delta, uint32_t size);
++
++int
++nouveau_bo_map(struct nouveau_bo *, uint32_t flags);
++
++void
++nouveau_bo_unmap(struct nouveau_bo *);
++
++int
++nouveau_bo_busy(struct nouveau_bo *, uint32_t access);
++
++uint32_t
++nouveau_bo_pending(struct nouveau_bo *);
++
++#endif
+diff --git a/nouveau/nouveau_channel.c b/nouveau/nouveau_channel.c
+new file mode 100644
+index 0000000..96fa03b
+--- /dev/null
++++ b/nouveau/nouveau_channel.c
+@@ -0,0 +1,142 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#include <stdlib.h>
++#include <string.h>
++#include <errno.h>
++
++#include "nouveau_private.h"
++
++int
++nouveau_channel_alloc(struct nouveau_device *dev, uint32_t fb_ctxdma,
++		      uint32_t tt_ctxdma, int pushbuf_size,
++		      struct nouveau_channel **chan)
++{
++	struct nouveau_device_priv *nvdev = nouveau_device(dev);
++	struct nouveau_channel_priv *nvchan;
++	unsigned i;
++	int ret;
++
++	if (!nvdev || !chan || *chan)
++	    return -EINVAL;
++
++	nvchan = calloc(1, sizeof(struct nouveau_channel_priv));
++	if (!nvchan)
++		return -ENOMEM;
++	nvchan->base.device = dev;
++
++	nvchan->drm.fb_ctxdma_handle = fb_ctxdma;
++	nvchan->drm.tt_ctxdma_handle = tt_ctxdma;
++	ret = drmCommandWriteRead(nvdev->fd, DRM_NOUVEAU_CHANNEL_ALLOC,
++				  &nvchan->drm, sizeof(nvchan->drm));
++	if (ret) {
++		free(nvchan);
++		return ret;
++	}
++
++	nvchan->base.id = nvchan->drm.channel;
++	if (nouveau_grobj_ref(&nvchan->base, nvchan->drm.fb_ctxdma_handle,
++			      &nvchan->base.vram) ||
++	    nouveau_grobj_ref(&nvchan->base, nvchan->drm.tt_ctxdma_handle,
++		    	      &nvchan->base.gart)) {
++		nouveau_channel_free((void *)&nvchan);
++		return -EINVAL;
++	}
++
++	/* Mark all DRM-assigned subchannels as in-use */
++	for (i = 0; i < nvchan->drm.nr_subchan; i++) {
++		struct nouveau_grobj_priv *gr = calloc(1, sizeof(*gr));
++
++		gr->base.bound = NOUVEAU_GROBJ_BOUND_EXPLICIT;
++		gr->base.subc = i;
++		gr->base.handle = nvchan->drm.subchan[i].handle;
++		gr->base.grclass = nvchan->drm.subchan[i].grclass;
++		gr->base.channel = &nvchan->base;
++
++		nvchan->base.subc[i].gr = &gr->base;
++	}
++
++	if (dev->chipset < 0xc0) {
++		ret = nouveau_bo_wrap(dev, nvchan->drm.notifier_handle,
++				      &nvchan->notifier_bo);
++		if (!ret)
++			ret = nouveau_bo_map(nvchan->notifier_bo,
++					     NOUVEAU_BO_RDWR);
++		if (ret) {
++			nouveau_channel_free((void *)&nvchan);
++			return ret;
++		}
++
++		ret = nouveau_grobj_alloc(&nvchan->base, 0x00000000, 0x0030,
++					  &nvchan->base.nullobj);
++		if (ret) {
++			nouveau_channel_free((void *)&nvchan);
++			return ret;
++		}
++	}
++
++	ret = nouveau_pushbuf_init(&nvchan->base, pushbuf_size);
++	if (ret) {
++		nouveau_channel_free((void *)&nvchan);
++		return ret;
++	}
++
++	*chan = &nvchan->base;
++	return 0;
++}
++
++void
++nouveau_channel_free(struct nouveau_channel **chan)
++{
++	struct nouveau_channel_priv *nvchan;
++	struct nouveau_device_priv *nvdev;
++	struct drm_nouveau_channel_free cf;
++	unsigned i;
++
++	if (!chan || !*chan)
++		return;
++	nvchan = nouveau_channel(*chan);
++	(*chan)->flush_notify = NULL;
++	*chan = NULL;
++	nvdev = nouveau_device(nvchan->base.device);
++
++	FIRE_RING(&nvchan->base);
++
++	nouveau_pushbuf_fini(&nvchan->base);
++	if (nvchan->notifier_bo) {
++		nouveau_bo_unmap(nvchan->notifier_bo);
++		nouveau_bo_ref(NULL, &nvchan->notifier_bo);
++	}
++
++	for (i = 0; i < nvchan->drm.nr_subchan; i++)
++		free(nvchan->base.subc[i].gr);
++
++	nouveau_grobj_free(&nvchan->base.vram);
++	nouveau_grobj_free(&nvchan->base.gart);
++	nouveau_grobj_free(&nvchan->base.nullobj);
++
++	cf.channel = nvchan->drm.channel;
++	drmCommandWrite(nvdev->fd, DRM_NOUVEAU_CHANNEL_FREE, &cf, sizeof(cf));
++	free(nvchan);
++}
++
++
+diff --git a/nouveau/nouveau_channel.h b/nouveau/nouveau_channel.h
+new file mode 100644
+index 0000000..d61a4c0
+--- /dev/null
++++ b/nouveau/nouveau_channel.h
+@@ -0,0 +1,57 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifndef __NOUVEAU_CHANNEL_H__
++#define __NOUVEAU_CHANNEL_H__
++
++struct nouveau_subchannel {
++	struct nouveau_grobj *gr;
++	unsigned sequence;
++};
++
++struct nouveau_channel {
++	uint32_t *cur;
++	uint32_t *end;
++
++	struct nouveau_device *device;
++	int id;
++
++	struct nouveau_grobj *nullobj;
++	struct nouveau_grobj *vram;
++	struct nouveau_grobj *gart;
++
++	void *user_private;
++	void (*hang_notify)(struct nouveau_channel *);
++	void (*flush_notify)(struct nouveau_channel *);
++
++	struct nouveau_subchannel subc[8];
++	unsigned subc_sequence;
++};
++
++int
++nouveau_channel_alloc(struct nouveau_device *, uint32_t fb, uint32_t tt,
++		      int pushbuf_size, struct nouveau_channel **);
++
++void
++nouveau_channel_free(struct nouveau_channel **);
++
++#endif
+diff --git a/nouveau/nouveau_device.c b/nouveau/nouveau_device.c
+new file mode 100644
+index 0000000..425c5d2
+--- /dev/null
++++ b/nouveau/nouveau_device.c
+@@ -0,0 +1,198 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <errno.h>
++
++#include "nouveau_private.h"
++
++int
++nouveau_device_open_existing(struct nouveau_device **dev, int close,
++			     int fd, drm_context_t ctx)
++{
++	struct nouveau_device_priv *nvdev;
++	drmVersionPtr ver;
++	uint64_t value;
++	int ret;
++
++	if (!dev || *dev)
++	    return -EINVAL;
++
++	nvdev = calloc(1, sizeof(*nvdev));
++	if (!nvdev)
++	    return -ENOMEM;
++	nvdev->fd = fd;
++	nvdev->ctx = ctx;
++	nvdev->needs_close = close;
++
++	ver = drmGetVersion(fd);
++	if (!ver) {
++		nouveau_device_close((void *)&nvdev);
++		return -EINVAL;
++	}
++
++	if ((ver->version_major == 0 && ver->version_patchlevel != 16) ||
++	     ver->version_major > 1) {
++		nouveau_device_close((void *)&nvdev);
++		return -EINVAL;
++	}
++
++	drmFreeVersion(ver);
++
++	ret = nouveau_device_get_param(&nvdev->base,
++				       NOUVEAU_GETPARAM_VM_VRAM_BASE, &value);
++	if (ret) {
++		nouveau_device_close((void *)&nvdev);
++		return ret;
++	}
++	nvdev->base.vm_vram_base = value;
++
++	ret = nouveau_device_get_param(&nvdev->base,
++				       NOUVEAU_GETPARAM_FB_SIZE, &value);
++	if (ret) {
++		nouveau_device_close((void *)&nvdev);
++		return ret;
++	}
++	nvdev->base.vm_vram_size = value;
++
++	ret = nouveau_device_get_param(&nvdev->base,
++				       NOUVEAU_GETPARAM_AGP_SIZE, &value);
++	if (ret) {
++		nouveau_device_close((void *)&nvdev);
++		return ret;
++	}
++	nvdev->base.vm_gart_size = value;
++
++	ret = nouveau_bo_init(&nvdev->base);
++	if (ret) {
++		nouveau_device_close((void *)&nvdev);
++		return ret;
++	}
++
++	ret = nouveau_device_get_param(&nvdev->base,
++				       NOUVEAU_GETPARAM_CHIPSET_ID, &value);
++	if (ret) {
++		nouveau_device_close((void *)&nvdev);
++		return ret;
++	}
++	nvdev->base.chipset = value;
++
++	ret = nouveau_device_get_param(&nvdev->base,
++				       NOUVEAU_GETPARAM_HAS_BO_USAGE, &value);
++	if (!ret)
++		nvdev->has_bo_usage = value;
++
++	*dev = &nvdev->base;
++	return 0;
++}
++
++int
++nouveau_device_open(struct nouveau_device **dev, const char *busid)
++{
++	drm_context_t ctx;
++	int fd, ret;
++
++	if (!dev || *dev)
++		return -EINVAL;
++
++	fd = drmOpen("nouveau", busid);
++	if (fd < 0)
++		return -EINVAL;
++
++	ret = drmCreateContext(fd, &ctx);
++	if (ret) {
++		drmClose(fd);
++		return ret;
++	}
++
++	ret = nouveau_device_open_existing(dev, 1, fd, ctx);
++	if (ret) {
++	    drmDestroyContext(fd, ctx);
++	    drmClose(fd);
++	    return ret;
++	}
++
++	return 0;
++}
++
++void
++nouveau_device_close(struct nouveau_device **dev)
++{
++	struct nouveau_device_priv *nvdev;
++
++	if (!dev || !*dev)
++		return;
++	nvdev = nouveau_device(*dev);
++	*dev = NULL;
++
++	nouveau_bo_takedown(&nvdev->base);
++
++	if (nvdev->needs_close) {
++		drmDestroyContext(nvdev->fd, nvdev->ctx);
++		drmClose(nvdev->fd);
++	}
++	free(nvdev);
++}
++
++int
++nouveau_device_get_param(struct nouveau_device *dev,
++			 uint64_t param, uint64_t *value)
++{
++	struct nouveau_device_priv *nvdev = nouveau_device(dev);
++	struct drm_nouveau_getparam g;
++	int ret;
++
++	if (!nvdev || !value)
++		return -EINVAL;
++
++	g.param = param;
++	ret = drmCommandWriteRead(nvdev->fd, DRM_NOUVEAU_GETPARAM,
++				  &g, sizeof(g));
++	if (ret)
++		return ret;
++
++	*value = g.value;
++	return 0;
++}
++
++int
++nouveau_device_set_param(struct nouveau_device *dev,
++			 uint64_t param, uint64_t value)
++{
++	struct nouveau_device_priv *nvdev = nouveau_device(dev);
++	struct drm_nouveau_setparam s;
++	int ret;
++
++	if (!nvdev)
++		return -EINVAL;
++
++	s.param = param;
++	s.value = value;
++	ret = drmCommandWriteRead(nvdev->fd, DRM_NOUVEAU_SETPARAM,
++				  &s, sizeof(s));
++	if (ret)
++		return ret;
++
++	return 0;
++}
++
+diff --git a/nouveau/nouveau_device.h b/nouveau/nouveau_device.h
+new file mode 100644
+index 0000000..c0d9333
+--- /dev/null
++++ b/nouveau/nouveau_device.h
+@@ -0,0 +1,33 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifndef __NOUVEAU_DEVICE_H__
++#define __NOUVEAU_DEVICE_H__
++
++struct nouveau_device {
++	unsigned chipset;
++	uint64_t vm_vram_base;
++	uint64_t vm_vram_size;
++	uint64_t vm_gart_size;
++};
++
++#endif
+diff --git a/nouveau/nouveau_drmif.h b/nouveau/nouveau_drmif.h
+new file mode 100644
+index 0000000..ec226a2
+--- /dev/null
++++ b/nouveau/nouveau_drmif.h
+@@ -0,0 +1,58 @@
++/*
++ * Copyright 2008 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifndef __NOUVEAU_DRMIF_H__
++#define __NOUVEAU_DRMIF_H__
++
++#include <stdint.h>
++#include <xf86drm.h>
++
++#include "nouveau_device.h"
++
++struct nouveau_device_priv {
++	struct nouveau_device base;
++
++	int fd;
++	drm_context_t ctx;
++	drmLock *lock;
++	int needs_close;
++	int has_bo_usage;
++};
++#define nouveau_device(n) ((struct nouveau_device_priv *)(n))
++
++int
++nouveau_device_open_existing(struct nouveau_device **, int close,
++			     int fd, drm_context_t ctx);
++
++int
++nouveau_device_open(struct nouveau_device **, const char *busid);
++
++void
++nouveau_device_close(struct nouveau_device **);
++
++int
++nouveau_device_get_param(struct nouveau_device *, uint64_t param, uint64_t *v);
++
++int
++nouveau_device_set_param(struct nouveau_device *, uint64_t param, uint64_t val);
++
++#endif
+diff --git a/nouveau/nouveau_grobj.c b/nouveau/nouveau_grobj.c
+new file mode 100644
+index 0000000..36344b9
+--- /dev/null
++++ b/nouveau/nouveau_grobj.c
+@@ -0,0 +1,148 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#include <stdlib.h>
++#include <errno.h>
++
++#include "nouveau_private.h"
++
++int
++nouveau_grobj_alloc(struct nouveau_channel *chan, uint32_t handle,
++		    int class, struct nouveau_grobj **grobj)
++{
++	struct nouveau_device_priv *nvdev = nouveau_device(chan->device);
++	struct nouveau_grobj_priv *nvgrobj;
++	struct drm_nouveau_grobj_alloc g;
++	int ret;
++
++	if (!nvdev || !grobj || *grobj)
++		return -EINVAL;
++
++	nvgrobj = calloc(1, sizeof(*nvgrobj));
++	if (!nvgrobj)
++		return -ENOMEM;
++	nvgrobj->base.channel = chan;
++	nvgrobj->base.handle  = handle;
++	nvgrobj->base.grclass = class;
++	nvgrobj->base.bound   = NOUVEAU_GROBJ_UNBOUND;
++	nvgrobj->base.subc    = -1;
++
++	g.channel = chan->id;
++	g.handle  = handle;
++	g.class   = class;
++	ret = drmCommandWrite(nvdev->fd, DRM_NOUVEAU_GROBJ_ALLOC,
++			      &g, sizeof(g));
++	if (ret) {
++		nouveau_grobj_free((void *)&nvgrobj);
++		return ret;
++	}
++
++	*grobj = &nvgrobj->base;
++	return 0;
++}
++
++int
++nouveau_grobj_ref(struct nouveau_channel *chan, uint32_t handle,
++		  struct nouveau_grobj **grobj)
++{
++	struct nouveau_grobj_priv *nvgrobj;
++
++	if (!chan || !grobj || *grobj)
++		return -EINVAL;
++
++	nvgrobj = calloc(1, sizeof(struct nouveau_grobj_priv));
++	if (!nvgrobj)
++		return -ENOMEM;
++	nvgrobj->base.channel = chan;
++	nvgrobj->base.handle = handle;
++	nvgrobj->base.grclass = 0;
++
++	*grobj = &nvgrobj->base;
++	return 0;
++}
++
++void
++nouveau_grobj_free(struct nouveau_grobj **grobj)
++{
++	struct nouveau_device_priv *nvdev;
++	struct nouveau_channel_priv *chan;
++	struct nouveau_grobj_priv *nvgrobj;
++
++	if (!grobj || !*grobj)
++		return;
++	nvgrobj = nouveau_grobj(*grobj);
++	*grobj = NULL;
++
++
++	chan = nouveau_channel(nvgrobj->base.channel);
++	nvdev = nouveau_device(chan->base.device);
++
++	if (nvgrobj->base.grclass) {
++		struct drm_nouveau_gpuobj_free f;
++
++		FIRE_RING(&chan->base);
++		f.channel = chan->drm.channel;
++		f.handle  = nvgrobj->base.handle;
++		drmCommandWrite(nvdev->fd, DRM_NOUVEAU_GPUOBJ_FREE,
++				&f, sizeof(f));	
++	}
++	if (nvgrobj->base.bound != NOUVEAU_GROBJ_UNBOUND)
++		chan->base.subc[nvgrobj->base.subc].gr = NULL;
++	free(nvgrobj);
++}
++
++void
++nouveau_grobj_autobind(struct nouveau_grobj *grobj)
++{
++	struct nouveau_channel *chan = grobj->channel;
++	struct nouveau_subchannel *subc = NULL;
++	int i;
++
++	for (i = 0; i < 8; i++) {
++		struct nouveau_subchannel *scc = &grobj->channel->subc[i];
++
++		if (scc->gr && scc->gr->bound == NOUVEAU_GROBJ_BOUND_EXPLICIT)
++			continue;
++
++		if (!subc || scc->sequence < subc->sequence)
++			subc = scc;
++	}
++
++	if (subc->gr) {
++		subc->gr->bound = NOUVEAU_GROBJ_UNBOUND;
++		subc->gr->subc  = -1;
++	}
++
++	subc->gr = grobj;
++	subc->gr->bound = NOUVEAU_GROBJ_BOUND;
++	subc->gr->subc  = subc - &grobj->channel->subc[0];
++
++	WAIT_RING(chan, 2);
++	if (chan->device->chipset < 0xc0) {
++		OUT_RING (chan, (1 << 18) | (grobj->subc << 13));
++		OUT_RING (chan, grobj->handle);
++	} else {
++		OUT_RING (chan, (2 << 28) | (1 << 16) | (grobj->subc << 13));
++		OUT_RING (chan, grobj->grclass);
++	}
++}
++
+diff --git a/nouveau/nouveau_grobj.h b/nouveau/nouveau_grobj.h
+new file mode 100644
+index 0000000..51ac7d9
+--- /dev/null
++++ b/nouveau/nouveau_grobj.h
+@@ -0,0 +1,48 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifndef __NOUVEAU_GROBJ_H__
++#define __NOUVEAU_GROBJ_H__
++
++#include "nouveau_channel.h"
++
++struct nouveau_grobj {
++	struct nouveau_channel *channel;
++	int grclass;
++	uint32_t handle;
++
++	enum {
++		NOUVEAU_GROBJ_UNBOUND = 0,
++		NOUVEAU_GROBJ_BOUND = 1,
++		NOUVEAU_GROBJ_BOUND_EXPLICIT = 2
++	} bound;
++	int subc;
++};
++
++int nouveau_grobj_alloc(struct nouveau_channel *, uint32_t handle,
++			       int class, struct nouveau_grobj **);
++int nouveau_grobj_ref(struct nouveau_channel *, uint32_t handle,
++			     struct nouveau_grobj **);
++void nouveau_grobj_free(struct nouveau_grobj **);
++void nouveau_grobj_autobind(struct nouveau_grobj *);
++
++#endif
+diff --git a/nouveau/nouveau_notifier.c b/nouveau/nouveau_notifier.c
+new file mode 100644
+index 0000000..513fa63
+--- /dev/null
++++ b/nouveau/nouveau_notifier.c
+@@ -0,0 +1,148 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#include <stdlib.h>
++#include <errno.h>
++#include <sys/time.h>
++
++#include "nouveau_private.h"
++
++#define NOTIFIER(__v)                                                          \
++	struct nouveau_notifier_priv *nvnotify = nouveau_notifier(notifier);   \
++	volatile uint32_t *__v = (uint32_t *)((char *)nvnotify->map + (id * 32))
++
++int
++nouveau_notifier_alloc(struct nouveau_channel *chan, uint32_t handle,
++		       int count, struct nouveau_notifier **notifier)
++{
++	struct nouveau_notifier_priv *nvnotify;
++	int ret;
++
++	if (!chan || !notifier || *notifier)
++		return -EINVAL;
++
++	nvnotify = calloc(1, sizeof(struct nouveau_notifier_priv));
++	if (!nvnotify)
++		return -ENOMEM;
++	nvnotify->base.channel = chan;
++	nvnotify->base.handle  = handle;
++
++	nvnotify->drm.channel = chan->id;
++	nvnotify->drm.handle  = handle;
++	nvnotify->drm.size    = (count * 32);
++	if ((ret = drmCommandWriteRead(nouveau_device(chan->device)->fd,
++				       DRM_NOUVEAU_NOTIFIEROBJ_ALLOC,
++				       &nvnotify->drm,
++				       sizeof(nvnotify->drm)))) {
++		nouveau_notifier_free((void *)&nvnotify);
++		return ret;
++	}
++
++	nvnotify->map = (char *)nouveau_channel(chan)->notifier_bo->map +
++				nvnotify->drm.offset;
++	*notifier = &nvnotify->base;
++	return 0;
++}
++
++void
++nouveau_notifier_free(struct nouveau_notifier **notifier)
++{
++
++	struct nouveau_notifier_priv *nvnotify;
++	struct nouveau_channel_priv *nvchan;
++	struct nouveau_device_priv *nvdev;
++	struct drm_nouveau_gpuobj_free f;
++
++	if (!notifier || !*notifier)
++		return;
++	nvnotify = nouveau_notifier(*notifier);
++	*notifier = NULL;
++
++	nvchan = nouveau_channel(nvnotify->base.channel);
++	nvdev   = nouveau_device(nvchan->base.device);
++
++	FIRE_RING(&nvchan->base);
++
++	f.channel = nvchan->drm.channel;
++	f.handle  = nvnotify->base.handle;
++	drmCommandWrite(nvdev->fd, DRM_NOUVEAU_GPUOBJ_FREE, &f, sizeof(f));		
++	free(nvnotify);
++}
++
++void
++nouveau_notifier_reset(struct nouveau_notifier *notifier, int id)
++{
++	NOTIFIER(n);
++
++	n[NV_NOTIFY_TIME_0      /4] = 0x00000000;
++	n[NV_NOTIFY_TIME_1      /4] = 0x00000000;
++	n[NV_NOTIFY_RETURN_VALUE/4] = 0x00000000;
++	n[NV_NOTIFY_STATE       /4] = (NV_NOTIFY_STATE_STATUS_IN_PROCESS <<
++				       NV_NOTIFY_STATE_STATUS_SHIFT);
++}
++
++uint32_t
++nouveau_notifier_status(struct nouveau_notifier *notifier, int id)
++{
++	NOTIFIER(n);
++
++	return n[NV_NOTIFY_STATE/4] >> NV_NOTIFY_STATE_STATUS_SHIFT;
++}
++
++uint32_t
++nouveau_notifier_return_val(struct nouveau_notifier *notifier, int id)
++{
++	NOTIFIER(n);
++
++	return n[NV_NOTIFY_RETURN_VALUE/4];
++}
++
++static inline double
++gettime(void)
++{
++	struct timeval tv;
++
++	gettimeofday(&tv, NULL);
++	return (double)tv.tv_sec + tv.tv_usec / 1000000.0;
++}
++
++int
++nouveau_notifier_wait_status(struct nouveau_notifier *notifier, int id,
++			     uint32_t status, double timeout)
++{
++	NOTIFIER(n);
++	double time = 0, t_start = gettime();
++
++	while (time <= timeout) {
++		uint32_t v;
++
++		v = n[NV_NOTIFY_STATE/4] >> NV_NOTIFY_STATE_STATUS_SHIFT;
++		if (v == status)
++			return 0;
++
++		if (timeout)
++			time = gettime() - t_start;
++	}
++
++	return -EBUSY;
++}
++
+diff --git a/nouveau/nouveau_notifier.h b/nouveau/nouveau_notifier.h
+new file mode 100644
+index 0000000..dbc6a3b
+--- /dev/null
++++ b/nouveau/nouveau_notifier.h
+@@ -0,0 +1,63 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifndef __NOUVEAU_NOTIFIER_H__
++#define __NOUVEAU_NOTIFIER_H__
++
++#define NV_NOTIFIER_SIZE                                                      32
++#define NV_NOTIFY_TIME_0                                              0x00000000
++#define NV_NOTIFY_TIME_1                                              0x00000004
++#define NV_NOTIFY_RETURN_VALUE                                        0x00000008
++#define NV_NOTIFY_STATE                                               0x0000000C
++#define NV_NOTIFY_STATE_STATUS_MASK                                   0xFF000000
++#define NV_NOTIFY_STATE_STATUS_SHIFT                                          24
++#define NV_NOTIFY_STATE_STATUS_COMPLETED                                    0x00
++#define NV_NOTIFY_STATE_STATUS_IN_PROCESS                                   0x01
++#define NV_NOTIFY_STATE_ERROR_CODE_MASK                               0x0000FFFF
++#define NV_NOTIFY_STATE_ERROR_CODE_SHIFT                                       0
++
++struct nouveau_notifier {
++	struct nouveau_channel *channel;
++	uint32_t handle;
++};
++
++int
++nouveau_notifier_alloc(struct nouveau_channel *, uint32_t handle, int count,
++		       struct nouveau_notifier **);
++
++void
++nouveau_notifier_free(struct nouveau_notifier **);
++
++void
++nouveau_notifier_reset(struct nouveau_notifier *, int id);
++
++uint32_t
++nouveau_notifier_status(struct nouveau_notifier *, int id);
++
++uint32_t
++nouveau_notifier_return_val(struct nouveau_notifier *, int id);
++
++int
++nouveau_notifier_wait_status(struct nouveau_notifier *, int id, uint32_t status,
++			     double timeout);
++
++#endif
+diff --git a/nouveau/nouveau_private.h b/nouveau/nouveau_private.h
+new file mode 100644
+index 0000000..124fe87
+--- /dev/null
++++ b/nouveau/nouveau_private.h
+@@ -0,0 +1,136 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifndef __NOUVEAU_PRIVATE_H__
++#define __NOUVEAU_PRIVATE_H__
++
++#include <stdint.h>
++#include <xf86drm.h>
++#include <nouveau_drm.h>
++
++#include "nouveau_drmif.h"
++#include "nouveau_device.h"
++#include "nouveau_channel.h"
++#include "nouveau_grobj.h"
++#include "nouveau_notifier.h"
++#include "nouveau_bo.h"
++#include "nouveau_resource.h"
++#include "nouveau_pushbuf.h"
++#include "nouveau_reloc.h"
++
++#define CALPB_BUFFERS 3
++
++struct nouveau_pushbuf_priv {
++	uint32_t cal_suffix0;
++	uint32_t cal_suffix1;
++	struct nouveau_bo *buffer[CALPB_BUFFERS];
++	int current;
++	int current_offset;
++
++	unsigned *pushbuf;
++	unsigned size;
++
++	uint32_t *marker;
++	unsigned marker_offset;
++	unsigned marker_relocs;
++	unsigned marker_push;
++
++	struct drm_nouveau_gem_pushbuf_bo *buffers;
++	unsigned nr_buffers;
++	struct drm_nouveau_gem_pushbuf_reloc *relocs;
++	unsigned nr_relocs;
++	struct drm_nouveau_gem_pushbuf_push push[NOUVEAU_GEM_MAX_PUSH];
++	unsigned nr_push;
++};
++#define nouveau_pushbuf(n) ((struct nouveau_pushbuf_priv *)(n))
++
++int
++nouveau_pushbuf_init(struct nouveau_channel *, int buf_size);
++void
++nouveau_pushbuf_fini(struct nouveau_channel *);
++
++struct nouveau_channel_priv {
++	struct nouveau_channel base;
++
++	struct drm_nouveau_channel_alloc drm;
++
++	struct nouveau_bo *notifier_bo;
++
++	struct nouveau_pushbuf_priv pb;
++};
++#define nouveau_channel(n) ((struct nouveau_channel_priv *)(n))
++
++struct nouveau_grobj_priv {
++	struct nouveau_grobj base;
++};
++#define nouveau_grobj(n) ((struct nouveau_grobj_priv *)(n))
++
++struct nouveau_notifier_priv {
++	struct nouveau_notifier base;
++
++	struct drm_nouveau_notifierobj_alloc drm;
++	volatile void *map;
++};
++#define nouveau_notifier(n) ((struct nouveau_notifier_priv *)(n))
++
++struct nouveau_bo_priv {
++	struct nouveau_bo base;
++	int refcount;
++
++	/* Buffer configuration + usage hints */
++	unsigned flags;
++	unsigned size;
++	unsigned align;
++	int user;
++
++	/* Tracking */
++	struct drm_nouveau_gem_pushbuf_bo *pending;
++	struct nouveau_channel *pending_channel;
++	int pending_refcnt;
++	int write_marker;
++
++	/* Userspace object */
++	void *sysmem;
++
++	/* Kernel object */
++	uint32_t global_handle;
++	drm_handle_t handle;
++	uint64_t map_handle;
++	int map_refcnt;
++	void *map;
++
++	/* Last known information from kernel on buffer status */
++	uint64_t offset;
++	uint32_t domain;
++};
++#define nouveau_bo(n) ((struct nouveau_bo_priv *)(n))
++
++int
++nouveau_bo_init(struct nouveau_device *);
++
++void
++nouveau_bo_takedown(struct nouveau_device *);
++
++struct drm_nouveau_gem_pushbuf_bo *
++nouveau_bo_emit_buffer(struct nouveau_channel *, struct nouveau_bo *);
++
++#endif
+diff --git a/nouveau/nouveau_pushbuf.c b/nouveau/nouveau_pushbuf.c
+new file mode 100644
+index 0000000..59f60d9
+--- /dev/null
++++ b/nouveau/nouveau_pushbuf.c
+@@ -0,0 +1,344 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <errno.h>
++#include <assert.h>
++
++#include "nouveau_private.h"
++
++#define PB_BUFMGR_DWORDS   (4096 / 2)
++#define PB_MIN_USER_DWORDS  2048
++
++static int
++nouveau_pushbuf_space(struct nouveau_channel *chan, unsigned min)
++{
++	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
++	struct nouveau_pushbuf_priv *nvpb = &nvchan->pb;
++	struct nouveau_bo *bo;
++	int ret;
++
++	if (min < PB_MIN_USER_DWORDS)
++		min = PB_MIN_USER_DWORDS;
++
++	nvpb->current_offset = chan->cur - nvpb->pushbuf;
++	if (chan->cur + min + 2 <= chan->end)
++		return 0;
++
++	nvpb->current++;
++	if (nvpb->current == CALPB_BUFFERS)
++		nvpb->current = 0;
++	bo = nvpb->buffer[nvpb->current];
++
++	ret = nouveau_bo_map(bo, NOUVEAU_BO_WR);
++	if (ret)
++		return ret;
++
++	nvpb->size = (bo->size - 8) / 4;
++	nvpb->pushbuf = bo->map;
++	nvpb->current_offset = 0;
++
++	chan->cur = nvpb->pushbuf;
++	chan->end = nvpb->pushbuf + nvpb->size;
++
++	nouveau_bo_unmap(bo);
++	return 0;
++}
++
++static void
++nouveau_pushbuf_fini_call(struct nouveau_channel *chan)
++{
++	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
++	struct nouveau_pushbuf_priv *nvpb = &nvchan->pb;
++	int i;
++
++	for (i = 0; i < CALPB_BUFFERS; i++)
++		nouveau_bo_ref(NULL, &nvpb->buffer[i]);
++	nvpb->pushbuf = NULL;
++}
++
++static int
++nouveau_pushbuf_init_call(struct nouveau_channel *chan, int buf_size)
++{
++	struct drm_nouveau_gem_pushbuf req;
++	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
++	struct nouveau_pushbuf_priv *nvpb = &nvchan->pb;
++	struct nouveau_device *dev = chan->device;
++	uint32_t flags = 0;
++	int i, ret;
++
++	if (nvchan->drm.pushbuf_domains & NOUVEAU_GEM_DOMAIN_GART)
++		flags |= NOUVEAU_BO_GART;
++	else
++		flags |= NOUVEAU_BO_VRAM;
++
++	req.channel = chan->id;
++	req.nr_push = 0;
++	ret = drmCommandWriteRead(nouveau_device(dev)->fd,
++				  DRM_NOUVEAU_GEM_PUSHBUF, &req, sizeof(req));
++	if (ret)
++		return ret;
++
++	for (i = 0; i < CALPB_BUFFERS; i++) {
++		ret = nouveau_bo_new(dev, flags | NOUVEAU_BO_MAP,
++				     0, buf_size, &nvpb->buffer[i]);
++		if (ret) {
++			nouveau_pushbuf_fini_call(chan);
++			return ret;
++		}
++	}
++
++	nvpb->cal_suffix0 = req.suffix0;
++	nvpb->cal_suffix1 = req.suffix1;
++	return 0;
++}
++
++int
++nouveau_pushbuf_init(struct nouveau_channel *chan, int buf_size)
++{
++	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
++	struct nouveau_pushbuf_priv *nvpb = &nvchan->pb;
++	int ret;
++
++	ret = nouveau_pushbuf_init_call(chan, buf_size);
++	if (ret)
++		return ret;
++
++	ret = nouveau_pushbuf_space(chan, 0);
++	if (ret)
++		return ret;
++
++	nvpb->buffers = calloc(NOUVEAU_GEM_MAX_BUFFERS,
++			       sizeof(struct drm_nouveau_gem_pushbuf_bo));
++	nvpb->relocs = calloc(NOUVEAU_GEM_MAX_RELOCS,
++			      sizeof(struct drm_nouveau_gem_pushbuf_reloc));
++	return 0;
++}
++
++void
++nouveau_pushbuf_fini(struct nouveau_channel *chan)
++{
++	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
++	struct nouveau_pushbuf_priv *nvpb = &nvchan->pb;
++	nouveau_pushbuf_fini_call(chan);
++	free(nvpb->buffers);
++	free(nvpb->relocs);
++}
++
++static int
++nouveau_pushbuf_bo_add(struct nouveau_channel *chan, struct nouveau_bo *bo,
++		       unsigned offset, unsigned length)
++{
++	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
++	struct nouveau_pushbuf_priv *nvpb = &nvchan->pb;
++	struct drm_nouveau_gem_pushbuf_push *p = &nvpb->push[nvpb->nr_push++];
++	struct drm_nouveau_gem_pushbuf_bo *pbbo;
++	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
++
++	pbbo = nouveau_bo_emit_buffer(chan, bo);
++	if (!pbbo)
++		return -ENOMEM;
++	pbbo->valid_domains &= nvchan->drm.pushbuf_domains;
++	pbbo->read_domains |= nvchan->drm.pushbuf_domains;
++	nvbo->pending_refcnt++;
++
++	p->bo_index = pbbo - nvpb->buffers;
++	p->offset = offset;
++	p->length = length;
++	return 0;
++}
++
++int
++nouveau_pushbuf_submit(struct nouveau_channel *chan, struct nouveau_bo *bo,
++		       unsigned offset, unsigned length)
++{
++	struct nouveau_pushbuf_priv *nvpb = &nouveau_channel(chan)->pb;
++	int ret, len;
++
++	if ((AVAIL_RING(chan) + nvpb->current_offset) != nvpb->size) {
++		if (nvpb->cal_suffix0 || nvpb->cal_suffix1) {
++			*(chan->cur++) = nvpb->cal_suffix0;
++			*(chan->cur++) = nvpb->cal_suffix1;
++		}
++
++		len = (chan->cur - nvpb->pushbuf) - nvpb->current_offset;
++
++		ret = nouveau_pushbuf_bo_add(chan, nvpb->buffer[nvpb->current],
++					     nvpb->current_offset * 4, len * 4);
++		if (ret)
++			return ret;
++
++		nvpb->current_offset += len;
++	}
++
++	return bo ? nouveau_pushbuf_bo_add(chan, bo, offset, length) : 0;
++}
++
++static void
++nouveau_pushbuf_bo_unref(struct nouveau_pushbuf_priv *nvpb, int index)
++{
++	struct drm_nouveau_gem_pushbuf_bo *pbbo = &nvpb->buffers[index];
++	struct nouveau_bo *bo = (void *)(unsigned long)pbbo->user_priv;
++	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
++
++	if (--nvbo->pending_refcnt)
++		return;
++
++	if (pbbo->presumed.valid == 0) {
++		nvbo->domain = pbbo->presumed.domain;
++		nvbo->offset = pbbo->presumed.offset;
++	}
++
++	nvbo->pending = NULL;
++	nouveau_bo_ref(NULL, &bo);
++
++	/* we only ever remove from the tail of the pending lists,
++	 * so this is safe.
++	 */
++	nvpb->nr_buffers--;
++}
++
++int
++nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
++{
++	struct nouveau_device_priv *nvdev = nouveau_device(chan->device);
++	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
++	struct nouveau_pushbuf_priv *nvpb = &nvchan->pb;
++	struct drm_nouveau_gem_pushbuf req;
++	unsigned i;
++	int ret;
++
++	ret = nouveau_pushbuf_submit(chan, NULL, 0, 0);
++	if (ret)
++		return ret;
++
++	if (!nvpb->nr_push)
++		return 0;
++
++	req.channel = chan->id;
++	req.nr_push = nvpb->nr_push;
++	req.push = (uint64_t)(unsigned long)nvpb->push;
++	req.nr_buffers = nvpb->nr_buffers;
++	req.buffers = (uint64_t)(unsigned long)nvpb->buffers;
++	req.nr_relocs = nvpb->nr_relocs;
++	req.relocs = (uint64_t)(unsigned long)nvpb->relocs;
++	req.suffix0 = nvpb->cal_suffix0;
++	req.suffix1 = nvpb->cal_suffix1;
++
++	do {
++		ret = drmCommandWriteRead(nvdev->fd, DRM_NOUVEAU_GEM_PUSHBUF,
++					  &req, sizeof(req));
++	} while (ret == -EAGAIN);
++	nvpb->cal_suffix0 = req.suffix0;
++	nvpb->cal_suffix1 = req.suffix1;
++	nvdev->base.vm_vram_size = req.vram_available;
++	nvdev->base.vm_gart_size = req.gart_available;
++
++	/* Update presumed offset/domain for any buffers that moved.
++	 * Dereference all buffers on validate list
++	 */
++	for (i = 0; i < nvpb->nr_relocs; i++) {
++		nouveau_pushbuf_bo_unref(nvpb, nvpb->relocs[i].bo_index);
++		nouveau_pushbuf_bo_unref(nvpb, nvpb->relocs[i].reloc_bo_index);
++	}
++
++	for (i = 0; i < nvpb->nr_push; i++)
++		nouveau_pushbuf_bo_unref(nvpb, nvpb->push[i].bo_index);
++
++	nvpb->nr_buffers = 0;
++	nvpb->nr_relocs = 0;
++	nvpb->nr_push = 0;
++
++	/* Allocate space for next push buffer */
++	if (nouveau_pushbuf_space(chan, min))
++		assert(0);
++
++	if (chan->flush_notify)
++		chan->flush_notify(chan);
++
++	nvpb->marker = NULL;
++	return ret;
++}
++
++int
++nouveau_pushbuf_marker_emit(struct nouveau_channel *chan,
++			    unsigned wait_dwords, unsigned wait_relocs)
++{
++	struct nouveau_pushbuf_priv *nvpb = &nouveau_channel(chan)->pb;
++
++	if (AVAIL_RING(chan) < wait_dwords)
++		return nouveau_pushbuf_flush(chan, wait_dwords);
++
++	if (nvpb->nr_relocs + wait_relocs >= NOUVEAU_GEM_MAX_RELOCS)
++		return nouveau_pushbuf_flush(chan, wait_dwords);
++
++	nvpb->marker = chan->cur;
++	nvpb->marker_offset = nvpb->current_offset;
++	nvpb->marker_push = nvpb->nr_push;
++	nvpb->marker_relocs = nvpb->nr_relocs;
++	return 0;
++}
++
++void
++nouveau_pushbuf_marker_undo(struct nouveau_channel *chan)
++{
++	struct nouveau_pushbuf_priv *nvpb = &nouveau_channel(chan)->pb;
++	unsigned i;
++
++	if (!nvpb->marker)
++		return;
++
++	/* undo any relocs/buffers added to the list since last marker */
++	for (i = nvpb->marker_relocs; i < nvpb->nr_relocs; i++) {
++		nouveau_pushbuf_bo_unref(nvpb, nvpb->relocs[i].bo_index);
++		nouveau_pushbuf_bo_unref(nvpb, nvpb->relocs[i].reloc_bo_index);
++	}
++	nvpb->nr_relocs = nvpb->marker_relocs;
++
++	for (i = nvpb->marker_push; i < nvpb->nr_push; i++)
++		nouveau_pushbuf_bo_unref(nvpb, nvpb->push[i].bo_index);
++	nvpb->nr_push = nvpb->marker_push;
++
++	/* reset pushbuf back to last marker */
++	chan->cur = nvpb->marker;
++	nvpb->current_offset = nvpb->marker_offset;
++	nvpb->marker = NULL;
++}
++
++int
++nouveau_pushbuf_emit_reloc(struct nouveau_channel *chan, void *ptr,
++			   struct nouveau_bo *bo, uint32_t data, uint32_t data2,
++			   uint32_t flags, uint32_t vor, uint32_t tor)
++{
++	struct nouveau_pushbuf_priv *nvpb = &nouveau_channel(chan)->pb;
++	int ret;
++
++	ret = nouveau_reloc_emit(chan, nvpb->buffer[nvpb->current],
++				 (char *)ptr - (char *)nvpb->pushbuf, ptr,
++				 bo, data, data2, flags, vor, tor);
++	if (ret)
++		return ret;
++
++	return 0;
++}
++
+diff --git a/nouveau/nouveau_pushbuf.h b/nouveau/nouveau_pushbuf.h
+new file mode 100644
+index 0000000..2a98789
+--- /dev/null
++++ b/nouveau/nouveau_pushbuf.h
+@@ -0,0 +1,162 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifndef __NOUVEAU_PUSHBUF_H__
++#define __NOUVEAU_PUSHBUF_H__
++
++#include <assert.h>
++#include <string.h>
++
++#include "nouveau_bo.h"
++#include "nouveau_grobj.h"
++
++int
++nouveau_pushbuf_flush(struct nouveau_channel *, unsigned min);
++
++int
++nouveau_pushbuf_marker_emit(struct nouveau_channel *chan,
++			    unsigned wait_dwords, unsigned wait_relocs);
++
++void
++nouveau_pushbuf_marker_undo(struct nouveau_channel *chan);
++
++int
++nouveau_pushbuf_emit_reloc(struct nouveau_channel *, void *ptr,
++			   struct nouveau_bo *, uint32_t data, uint32_t data2,
++			   uint32_t flags, uint32_t vor, uint32_t tor);
++
++int
++nouveau_pushbuf_submit(struct nouveau_channel *chan, struct nouveau_bo *bo,
++		       unsigned offset, unsigned length);
++
++/* Push buffer access macros */
++static __inline__ int
++MARK_RING(struct nouveau_channel *chan, unsigned dwords, unsigned relocs)
++{
++	return nouveau_pushbuf_marker_emit(chan, dwords, relocs);
++}
++
++static __inline__ void
++MARK_UNDO(struct nouveau_channel *chan)
++{
++	nouveau_pushbuf_marker_undo(chan);
++}
++
++static __inline__ void
++OUT_RING(struct nouveau_channel *chan, unsigned data)
++{
++	*(chan->cur++) = (data);
++}
++
++static __inline__ void
++OUT_RINGp(struct nouveau_channel *chan, const void *data, unsigned size)
++{
++	memcpy(chan->cur, data, size * 4);
++	chan->cur += size;
++}
++
++static __inline__ void
++OUT_RINGf(struct nouveau_channel *chan, float f)
++{
++	union { uint32_t i; float f; } c;
++	c.f = f;
++	OUT_RING(chan, c.i);
++}
++
++static __inline__ unsigned
++AVAIL_RING(struct nouveau_channel *chan)
++{
++	return chan->end - chan->cur;
++}
++
++static __inline__ void
++WAIT_RING(struct nouveau_channel *chan, unsigned size)
++{
++	if (chan->cur + size > chan->end)
++		nouveau_pushbuf_flush(chan, size);
++}
++
++static __inline__ void
++FIRE_RING(struct nouveau_channel *chan)
++{
++	nouveau_pushbuf_flush(chan, 0);
++}
++
++static __inline__ int
++OUT_RELOC(struct nouveau_channel *chan, struct nouveau_bo *bo,
++	  unsigned data, unsigned flags, unsigned vor, unsigned tor)
++{
++	return nouveau_pushbuf_emit_reloc(chan, chan->cur++, bo,
++					  data, 0, flags, vor, tor);
++}
++
++static __inline__ int
++OUT_RELOC2(struct nouveau_channel *chan, struct nouveau_bo *bo,
++	   unsigned data, unsigned data2, unsigned flags,
++	   unsigned vor, unsigned tor)
++{
++	return nouveau_pushbuf_emit_reloc(chan, chan->cur++, bo,
++					  data, data2, flags, vor, tor);
++}
++
++/* Raw data + flags depending on FB/TT buffer */
++static __inline__ int
++OUT_RELOCd(struct nouveau_channel *chan, struct nouveau_bo *bo,
++	   unsigned data, unsigned flags, unsigned vor, unsigned tor)
++{
++	return OUT_RELOC(chan, bo, data, flags | NOUVEAU_BO_OR, vor, tor);
++}
++
++/* FB/TT object handle */
++static __inline__ int
++OUT_RELOCo(struct nouveau_channel *chan, struct nouveau_bo *bo,
++	   unsigned flags)
++{
++	return OUT_RELOC(chan, bo, 0, flags | NOUVEAU_BO_OR,
++			 chan->vram->handle, chan->gart->handle);
++}
++
++/* Low 32-bits of offset */
++static __inline__ int
++OUT_RELOCl(struct nouveau_channel *chan, struct nouveau_bo *bo,
++	   unsigned delta, unsigned flags)
++{
++	return OUT_RELOC(chan, bo, delta, flags | NOUVEAU_BO_LOW, 0, 0);
++}
++
++/* Low 32-bits of offset + GPU linear access range info */
++static __inline__ int
++OUT_RELOCr(struct nouveau_channel *chan, struct nouveau_bo *bo,
++	   unsigned delta, unsigned size, unsigned flags)
++{
++	return OUT_RELOC2(chan, bo, delta, size, flags | NOUVEAU_BO_LOW, 0, 0);
++}
++
++/* High 32-bits of offset */
++static __inline__ int
++OUT_RELOCh(struct nouveau_channel *chan, struct nouveau_bo *bo,
++	   unsigned delta, unsigned flags)
++{
++	return OUT_RELOC(chan, bo, delta, flags | NOUVEAU_BO_HIGH, 0, 0);
++}
++
++#endif
+diff --git a/nouveau/nouveau_reloc.c b/nouveau/nouveau_reloc.c
+new file mode 100644
+index 0000000..cd219db
+--- /dev/null
++++ b/nouveau/nouveau_reloc.c
+@@ -0,0 +1,154 @@
++/*
++ * Copyright 2010 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <errno.h>
++#include <assert.h>
++
++#include "nouveau_private.h"
++
++static uint32_t
++nouveau_reloc_calc(struct drm_nouveau_gem_pushbuf_bo *pbbo,
++		   struct drm_nouveau_gem_pushbuf_reloc *r)
++{
++	uint32_t push = 0;
++
++	if (r->flags & NOUVEAU_GEM_RELOC_LOW)
++		push = (pbbo->presumed.offset + r->data);
++	else
++	if (r->flags & NOUVEAU_GEM_RELOC_HIGH)
++		push = (pbbo->presumed.offset + r->data) >> 32;
++	else
++		push = r->data;
++
++	if (r->flags & NOUVEAU_GEM_RELOC_OR) {
++		if (pbbo->presumed.domain & NOUVEAU_GEM_DOMAIN_VRAM)
++			push |= r->vor;
++		else
++			push |= r->tor;
++	}
++
++	return push;
++}
++
++int
++nouveau_reloc_emit(struct nouveau_channel *chan, struct nouveau_bo *reloc_bo,
++		   uint32_t reloc_offset, uint32_t *reloc_ptr,
++		   struct nouveau_bo *bo, uint32_t data, uint32_t data2,
++		   uint32_t flags, uint32_t vor, uint32_t tor)
++{
++	struct nouveau_pushbuf_priv *nvpb = &nouveau_channel(chan)->pb;
++	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
++	struct drm_nouveau_gem_pushbuf_reloc *r;
++	struct drm_nouveau_gem_pushbuf_bo *pbbo, *rpbbo;
++	uint32_t domains = 0;
++
++	if (nvpb->nr_relocs >= NOUVEAU_GEM_MAX_RELOCS) {
++		fprintf(stderr, "too many relocs!!\n");
++		return -ENOMEM;
++	}
++
++	if (nvbo->user && (flags & NOUVEAU_BO_WR)) {
++		fprintf(stderr, "write to user buffer!!\n");
++		return -EINVAL;
++	}
++
++	/* We're about to reloc a user buffer, better make sure we don't cause
++	 * a double migration.
++	 */
++	if (!(nvbo->flags & (NOUVEAU_BO_GART | NOUVEAU_BO_VRAM)))
++		nvbo->flags |= (flags & (NOUVEAU_BO_GART | NOUVEAU_BO_VRAM));
++
++	/* add buffer to validation list */
++	pbbo = nouveau_bo_emit_buffer(chan, bo);
++	if (!pbbo) {
++		fprintf(stderr, "buffer emit fail :(\n");
++		return -ENOMEM;
++	}
++	nouveau_bo(bo)->pending_refcnt++;
++
++	if (flags & (NOUVEAU_BO_VRAM | NOUVEAU_BO_GART)) {
++		if (flags & NOUVEAU_BO_VRAM)
++			domains |= NOUVEAU_GEM_DOMAIN_VRAM;
++		if (flags & NOUVEAU_BO_GART)
++			domains |= NOUVEAU_GEM_DOMAIN_GART;
++	} else
++		domains |= nvbo->domain;
++
++	if (!(pbbo->valid_domains & domains)) {
++		fprintf(stderr, "no valid domains remain!\n");
++		return -EINVAL;
++	}
++	pbbo->valid_domains &= domains;
++
++	assert(flags & NOUVEAU_BO_RDWR);
++	if (flags & NOUVEAU_BO_RD) {
++		pbbo->read_domains |= domains;
++	}
++	if (flags & NOUVEAU_BO_WR) {
++		pbbo->write_domains |= domains;
++		nvbo->write_marker = 1;
++	}
++
++	/* nvc0 gallium driver uses reloc_emit() with NULL target buffer
++	 * to inform bufmgr of a buffer's use - however, we need something
++	 * to track, so create a reloc for now, and hope it never triggers
++	 * (it shouldn't, constant virtual address..)..
++	 */
++	if (!reloc_bo) {
++		reloc_bo  = nvpb->buffer[nvpb->current];
++		reloc_offset = 0;
++		reloc_ptr = NULL;
++	}
++
++	/* add reloc target bo to validation list, and create the reloc */
++	rpbbo = nouveau_bo_emit_buffer(chan, reloc_bo);
++	if (!rpbbo)
++		return -ENOMEM;
++	nouveau_bo(reloc_bo)->pending_refcnt++;
++
++	r = nvpb->relocs + nvpb->nr_relocs++;
++	r->reloc_bo_index = rpbbo - nvpb->buffers;
++	r->reloc_bo_offset = reloc_offset;
++	r->bo_index = pbbo - nvpb->buffers;
++	r->flags = 0;
++	if (flags & NOUVEAU_BO_LOW)
++		r->flags |= NOUVEAU_GEM_RELOC_LOW;
++	if (flags & NOUVEAU_BO_HIGH)
++		r->flags |= NOUVEAU_GEM_RELOC_HIGH;
++	if (flags & NOUVEAU_BO_OR)
++		r->flags |= NOUVEAU_GEM_RELOC_OR;
++	r->data = data;
++	r->vor = vor;
++	r->tor = tor;
++
++	if (reloc_ptr) {
++		if (flags & NOUVEAU_BO_DUMMY)
++			*reloc_ptr = 0;
++		else
++			*reloc_ptr = nouveau_reloc_calc(pbbo, r);
++	}
++
++	return 0;
++}
++
+diff --git a/nouveau/nouveau_reloc.h b/nouveau/nouveau_reloc.h
+new file mode 100644
+index 0000000..24ddb52
+--- /dev/null
++++ b/nouveau/nouveau_reloc.h
+@@ -0,0 +1,32 @@
++/*
++ * Copyright 2010 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifndef __NOUVEAU_RELOC_H__
++#define __NOUVEAU_RELOC_H__
++
++int
++nouveau_reloc_emit(struct nouveau_channel *chan, struct nouveau_bo *reloc_bo,
++		   uint32_t reloc_offset, uint32_t *reloc_ptr,
++		   struct nouveau_bo *bo, uint32_t data, uint32_t data2,
++		   uint32_t flags, uint32_t vor, uint32_t tor);
++
++#endif
+diff --git a/nouveau/nouveau_resource.c b/nouveau/nouveau_resource.c
+new file mode 100644
+index 0000000..7acaf7d
+--- /dev/null
++++ b/nouveau/nouveau_resource.c
+@@ -0,0 +1,124 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#include <stdlib.h>
++#include <errno.h>
++
++#include "nouveau_private.h"
++
++int
++nouveau_resource_init(struct nouveau_resource **heap,
++		      unsigned start, unsigned size)
++{
++	struct nouveau_resource *r;
++
++	r = calloc(1, sizeof(struct nouveau_resource));
++	if (!r)
++		return 1;
++
++	r->start = start;
++	r->size  = size;
++	*heap = r;
++	return 0;
++}
++
++void
++nouveau_resource_destroy(struct nouveau_resource **heap)
++{
++	if (!*heap)
++		return;
++	free(*heap);
++	*heap = NULL;
++}
++
++int
++nouveau_resource_alloc(struct nouveau_resource *heap, unsigned size, void *priv,
++		       struct nouveau_resource **res)
++{
++	struct nouveau_resource *r;
++
++	if (!heap || !size || !res || *res)
++		return 1;
++
++	while (heap) {
++		if (!heap->in_use && heap->size >= size) {
++			r = calloc(1, sizeof(struct nouveau_resource));
++			if (!r)
++				return 1;
++
++			r->start  = (heap->start + heap->size) - size;
++			r->size   = size;
++			r->in_use = 1;
++			r->priv   = priv;
++
++			heap->size -= size;
++
++			r->next = heap->next;
++			if (heap->next)
++				heap->next->prev = r;
++			r->prev = heap;
++			heap->next = r;
++
++			*res = r;
++			return 0;
++		}
++			
++		heap = heap->next;
++	}
++
++	return 1;
++}
++
++void
++nouveau_resource_free(struct nouveau_resource **res)
++{
++	struct nouveau_resource *r;
++
++	if (!res || !*res)
++		return;
++	r = *res;
++	*res = NULL;
++
++	r->in_use = 0;
++
++	if (r->next && !r->next->in_use) {
++		struct nouveau_resource *new = r->next;
++
++		new->prev = r->prev;
++		if (r->prev)
++			r->prev->next = new;
++		new->size += r->size;
++		new->start = r->start;
++
++		free(r);
++		r = new;
++	}
++
++	if (r->prev && !r->prev->in_use) {
++		r->prev->next = r->next;
++		if (r->next)
++			r->next->prev = r->prev;
++		r->prev->size += r->size;
++		free(r);
++	}
++	
++}
+diff --git a/nouveau/nouveau_resource.h b/nouveau/nouveau_resource.h
+new file mode 100644
+index 0000000..b760dfb
+--- /dev/null
++++ b/nouveau/nouveau_resource.h
+@@ -0,0 +1,51 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifndef __NOUVEAU_RESOURCE_H__
++#define __NOUVEAU_RESOURCE_H__
++
++struct nouveau_resource {
++	struct nouveau_resource *prev;
++	struct nouveau_resource *next;
++
++	int in_use;
++	void *priv;
++
++	unsigned int start;
++	unsigned int size;
++};
++
++int
++nouveau_resource_init(struct nouveau_resource **heap, unsigned start,
++		      unsigned size);
++
++void
++nouveau_resource_destroy(struct nouveau_resource **heap);
++
++int
++nouveau_resource_alloc(struct nouveau_resource *heap, unsigned size, void *priv,
++		       struct nouveau_resource **);
++
++void
++nouveau_resource_free(struct nouveau_resource **);
++
++#endif
+diff --git a/nouveau/nv04_pushbuf.h b/nouveau/nv04_pushbuf.h
+new file mode 100644
+index 0000000..586b284
+--- /dev/null
++++ b/nouveau/nv04_pushbuf.h
+@@ -0,0 +1,66 @@
++/*
++ * Copyright 2007 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifndef __NV04_PUSHBUF_H__
++#define __NV04_PUSHBUF_H__
++
++#include "nouveau_pushbuf.h"
++
++static __inline__ void
++BEGIN_RING(struct nouveau_channel *chan, struct nouveau_grobj *gr,
++	   unsigned mthd, unsigned size)
++{
++	if (gr->bound == NOUVEAU_GROBJ_UNBOUND)
++		nouveau_grobj_autobind(gr);
++	chan->subc[gr->subc].sequence = chan->subc_sequence++;
++
++	WAIT_RING(chan, size + 1);
++	OUT_RING(chan, (gr->subc << 13) | (size << 18) | mthd);
++}
++
++/* non-incrementing BEGIN_RING */
++static __inline__ void
++BEGIN_RING_NI(struct nouveau_channel *chan, struct nouveau_grobj *gr,
++	   unsigned mthd, unsigned size)
++{
++	BEGIN_RING(chan, gr, mthd | 0x40000000, size);
++}
++
++static __inline__ void
++BIND_RING(struct nouveau_channel *chan, struct nouveau_grobj *gr, unsigned sc)
++{
++	struct nouveau_subchannel *subc = &gr->channel->subc[sc];
++
++	if (subc->gr) {
++		if (subc->gr->bound == NOUVEAU_GROBJ_BOUND_EXPLICIT)
++			assert(0);
++		subc->gr->bound = NOUVEAU_GROBJ_UNBOUND;
++	}
++	subc->gr = gr;
++	subc->gr->subc = sc;
++	subc->gr->bound = NOUVEAU_GROBJ_BOUND_EXPLICIT;
++
++	BEGIN_RING(chan, gr, 0x0000, 1);
++	OUT_RING  (chan, gr->handle);
++}
++
++#endif
+diff --git a/nouveau/nvc0_pushbuf.h b/nouveau/nvc0_pushbuf.h
+new file mode 100644
+index 0000000..40dc7e6
+--- /dev/null
++++ b/nouveau/nvc0_pushbuf.h
+@@ -0,0 +1,92 @@
++/*
++ * Copyright 2010 Nouveau Project
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
++ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifndef __NVC0_PUSHBUF_H__
++#define __NVC0_PUSHBUF_H__
++
++#include "nouveau_pushbuf.h"
++
++#define SUBC_BIND(chan, gr) do {                                               \
++	if (gr->bound == NOUVEAU_GROBJ_UNBOUND)                                \
++		nouveau_grobj_autobind(gr);                                    \
++	chan->subc[gr->subc].sequence = chan->subc_sequence++;                 \
++} while (0)
++
++/* incremental methods */
++static __inline__ void
++BEGIN_RING(struct nouveau_channel *chan, struct nouveau_grobj *gr,
++	   unsigned mthd, unsigned size)
++{
++	SUBC_BIND(chan, gr);
++	WAIT_RING(chan, size + 1);
++	OUT_RING (chan, (0x2 << 28) | (size << 16) | (gr->subc << 13) | (mthd >> 2));
++}
++
++/* non-incremental */
++static __inline__ void
++BEGIN_RING_NI(struct nouveau_channel *chan, struct nouveau_grobj *gr,
++	      unsigned mthd, unsigned size)
++{
++	SUBC_BIND(chan, gr);
++	WAIT_RING(chan, size + 1);
++	OUT_RING (chan, (0x6 << 28) | (size << 16) | (gr->subc << 13) | (mthd >> 2));
++}
++
++/* increment-once */
++static __inline__ void
++BEGIN_RING_1I(struct nouveau_channel *chan, struct nouveau_grobj *gr,
++	      unsigned mthd, unsigned size)
++{
++	SUBC_BIND(chan, gr);
++	WAIT_RING(chan, size + 1);
++	OUT_RING (chan, (0xa << 28) | (size << 16) | (gr->subc << 13) | (mthd >> 2));
++}
++
++/* inline-data */
++static __inline__ void
++IMMED_RING(struct nouveau_channel *chan, struct nouveau_grobj *gr,
++	   unsigned mthd, unsigned data)
++{
++	SUBC_BIND(chan, gr);
++	WAIT_RING(chan, 1);
++	OUT_RING (chan, (0x8 << 28) | (data << 16) | (gr->subc << 13) | (mthd >> 2));
++}
++
++static __inline__ void
++BIND_RING(struct nouveau_channel *chan, struct nouveau_grobj *gr, unsigned sc)
++{
++	struct nouveau_subchannel *subc = &gr->channel->subc[sc];
++
++	if (subc->gr) {
++		if (subc->gr->bound == NOUVEAU_GROBJ_BOUND_EXPLICIT)
++			assert(0);
++		subc->gr->bound = NOUVEAU_GROBJ_UNBOUND;
++	}
++	subc->gr = gr;
++	subc->gr->subc = sc;
++	subc->gr->bound = NOUVEAU_GROBJ_BOUND_EXPLICIT;
++
++	BEGIN_RING(chan, gr, 0x0000, 1);
++	OUT_RING  (chan, gr->grclass);
++}
++
++#endif
+diff --git a/nouveau/private.h b/nouveau/private.h
+deleted file mode 100644
+index b409cc8..0000000
+--- a/nouveau/private.h
++++ /dev/null
+@@ -1,122 +0,0 @@
+-#ifndef __NOUVEAU_LIBDRM_PRIVATE_H__
+-#define __NOUVEAU_LIBDRM_PRIVATE_H__
+-
+-#include <xf86drm.h>
+-#include <xf86atomic.h>
+-#include "nouveau_drm.h"
+-
+-#include "nouveau.h"
+-
+-#ifdef DEBUG
+-uint32_t nouveau_debug;
+-#define dbg_on(lvl) (nouveau_debug & (1 << lvl))
+-#define dbg(lvl, fmt, args...) do {                                            \
+-	if (dbg_on((lvl)))                                                     \
+-		fprintf(stderr, "nouveau: "fmt, ##args);                       \
+-} while(0)
+-#else
+-#define dbg_on(lvl) (0)
+-#define dbg(lvl, fmt, args...)
+-#endif
+-#define err(fmt, args...) fprintf(stderr, "nouveau: "fmt, ##args)
+-
+-struct nouveau_client_kref {
+-	struct drm_nouveau_gem_pushbuf_bo *kref;
+-	struct nouveau_pushbuf *push;
+-};
+-
+-struct nouveau_client_priv {
+-	struct nouveau_client base;
+-	struct nouveau_client_kref *kref;
+-	unsigned kref_nr;
+-};
+-
+-static inline struct nouveau_client_priv *
+-nouveau_client(struct nouveau_client *client)
+-{
+-	return (struct nouveau_client_priv *)client;
+-}
+-
+-static inline struct drm_nouveau_gem_pushbuf_bo *
+-cli_kref_get(struct nouveau_client *client, struct nouveau_bo *bo)
+-{
+-	struct nouveau_client_priv *pcli = nouveau_client(client);
+-	struct drm_nouveau_gem_pushbuf_bo *kref = NULL;
+-	if (pcli->kref_nr > bo->handle)
+-		kref = pcli->kref[bo->handle].kref;
+-	return kref;
+-}
+-
+-static inline struct nouveau_pushbuf *
+-cli_push_get(struct nouveau_client *client, struct nouveau_bo *bo)
+-{
+-	struct nouveau_client_priv *pcli = nouveau_client(client);
+-	struct nouveau_pushbuf *push = NULL;
+-	if (pcli->kref_nr > bo->handle)
+-		push = pcli->kref[bo->handle].push;
+-	return push;
+-}
+-
+-static inline void
+-cli_kref_set(struct nouveau_client *client, struct nouveau_bo *bo,
+-	     struct drm_nouveau_gem_pushbuf_bo *kref,
+-	     struct nouveau_pushbuf *push)
+-{
+-	struct nouveau_client_priv *pcli = nouveau_client(client);
+-	if (pcli->kref_nr <= bo->handle) {
+-		pcli->kref = realloc(pcli->kref,
+-				     sizeof(*pcli->kref) * bo->handle * 2);
+-		while (pcli->kref_nr < bo->handle * 2) {
+-			pcli->kref[pcli->kref_nr].kref = NULL;
+-			pcli->kref[pcli->kref_nr].push = NULL;
+-			pcli->kref_nr++;
+-		}
+-	}
+-	pcli->kref[bo->handle].kref = kref;
+-	pcli->kref[bo->handle].push = push;
+-}
+-
+-struct nouveau_bo_priv {
+-	struct nouveau_bo base;
+-	struct nouveau_list head;
+-	atomic_t refcnt;
+-	uint64_t map_handle;
+-	uint32_t name;
+-	uint32_t access;
+-};
+-
+-static inline struct nouveau_bo_priv *
+-nouveau_bo(struct nouveau_bo *bo)
+-{
+-	return (struct nouveau_bo_priv *)bo;
+-}
+-
+-struct nouveau_device_priv {
+-	struct nouveau_device base;
+-	int close;
+-	atomic_t lock;
+-	struct nouveau_list bo_list;
+-	uint32_t *client;
+-	int nr_client;
+-	bool have_bo_usage;
+-};
+-
+-static inline struct nouveau_device_priv *
+-nouveau_device(struct nouveau_device *dev)
+-{
+-	return (struct nouveau_device_priv *)dev;
+-}
+-
+-int
+-nouveau_device_open_existing(struct nouveau_device **, int, int, drm_context_t);
+-
+-/* abi16.c */
+-int  abi16_chan_nv04(struct nouveau_object *);
+-int  abi16_chan_nvc0(struct nouveau_object *);
+-int  abi16_engobj(struct nouveau_object *);
+-int  abi16_ntfy(struct nouveau_object *);
+-void abi16_bo_info(struct nouveau_bo *, struct drm_nouveau_gem_info *);
+-int  abi16_bo_init(struct nouveau_bo *, uint32_t alignment,
+-		   union nouveau_bo_config *);
+-
+-#endif
+diff --git a/nouveau/pushbuf.c b/nouveau/pushbuf.c
+deleted file mode 100644
+index 0e37ce3..0000000
+--- a/nouveau/pushbuf.c
++++ /dev/null
+@@ -1,773 +0,0 @@
+-/*
+- * Copyright 2012 Red Hat Inc.
+- *
+- * Permission is hereby granted, free of charge, to any person obtaining a
+- * copy of this software and associated documentation files (the "Software"),
+- * to deal in the Software without restriction, including without limitation
+- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+- * and/or sell copies of the Software, and to permit persons to whom the
+- * Software is furnished to do so, subject to the following conditions:
+- *
+- * The above copyright notice and this permission notice shall be included in
+- * all copies or substantial portions of the Software.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+- * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+- * OTHER DEALINGS IN THE SOFTWARE.
+- *
+- * Authors: Ben Skeggs
+- */
+-
+-#ifdef HAVE_CONFIG_H
+-#include <config.h>
+-#endif
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <stdint.h>
+-#include <stdbool.h>
+-#include <string.h>
+-#include <assert.h>
+-#include <errno.h>
+-
+-#include <xf86drm.h>
+-#include <xf86atomic.h>
+-#include "libdrm_lists.h"
+-#include "nouveau_drm.h"
+-
+-#include "nouveau.h"
+-#include "private.h"
+-
+-struct nouveau_pushbuf_krec {
+-	struct nouveau_pushbuf_krec *next;
+-	struct drm_nouveau_gem_pushbuf_bo buffer[NOUVEAU_GEM_MAX_BUFFERS];
+-	struct drm_nouveau_gem_pushbuf_reloc reloc[NOUVEAU_GEM_MAX_RELOCS];
+-	struct drm_nouveau_gem_pushbuf_push push[NOUVEAU_GEM_MAX_PUSH];
+-	int nr_buffer;
+-	int nr_reloc;
+-	int nr_push;
+-	uint64_t vram_used;
+-	uint64_t gart_used;
+-};
+-
+-struct nouveau_pushbuf_priv {
+-	struct nouveau_pushbuf base;
+-	struct nouveau_pushbuf_krec *list;
+-	struct nouveau_pushbuf_krec *krec;
+-	struct nouveau_list bctx_list;
+-	struct nouveau_bo *bo;
+-	uint32_t type;
+-	uint32_t suffix0;
+-	uint32_t suffix1;
+-	uint32_t *ptr;
+-	uint32_t *bgn;
+-	int bo_next;
+-	int bo_nr;
+-	struct nouveau_bo *bos[];
+-};
+-
+-static inline struct nouveau_pushbuf_priv *
+-nouveau_pushbuf(struct nouveau_pushbuf *push)
+-{
+-	return (struct nouveau_pushbuf_priv *)push;
+-}
+-
+-static int pushbuf_validate(struct nouveau_pushbuf *, bool);
+-static int pushbuf_flush(struct nouveau_pushbuf *);
+-
+-static bool
+-pushbuf_kref_fits(struct nouveau_pushbuf *push, struct nouveau_bo *bo,
+-		  uint32_t *domains)
+-{
+-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(push);
+-	struct nouveau_pushbuf_krec *krec = nvpb->krec;
+-	struct nouveau_device *dev = push->client->device;
+-	struct nouveau_bo *kbo;
+-	struct drm_nouveau_gem_pushbuf_bo *kref;
+-	int i;
+-
+-	/* VRAM is the only valid domain.  GART and VRAM|GART buffers
+-	 * are all accounted to GART, so if this doesn't fit in VRAM
+-	 * straight up, a flush is needed.
+-	 */
+-	if (*domains == NOUVEAU_GEM_DOMAIN_VRAM) {
+-		if (krec->vram_used + bo->size > dev->vram_limit)
+-			return false;
+-		krec->vram_used += bo->size;
+-		return true;
+-	}
+-
+-	/* GART or VRAM|GART buffer.  Account both of these buffer types
+-	 * to GART only for the moment, which simplifies things.  If the
+-	 * buffer can fit already, we're done here.
+-	 */
+-	if (krec->gart_used + bo->size <= dev->gart_limit) {
+-		krec->gart_used += bo->size;
+-		return true;
+-	}
+-
+-	/* Ran out of GART space, if it's a VRAM|GART buffer and it'll
+-	 * fit into available VRAM, turn it into a VRAM buffer
+-	 */
+-	if ((*domains & NOUVEAU_GEM_DOMAIN_VRAM) &&
+-	    krec->vram_used + bo->size <= dev->vram_limit) {
+-		*domains &= NOUVEAU_GEM_DOMAIN_VRAM;
+-		krec->vram_used += bo->size;
+-		return true;
+-	}
+-
+-	/* Still couldn't fit the buffer in anywhere, so as a last resort;
+-	 * scan the buffer list for VRAM|GART buffers and turn them into
+-	 * VRAM buffers until we have enough space in GART for this one
+-	 */
+-	kref = krec->buffer;
+-	for (i = 0; i < krec->nr_buffer; i++, kref++) {
+-		if (!(kref->valid_domains & NOUVEAU_GEM_DOMAIN_GART))
+-			continue;
+-
+-		kbo = (void *)(unsigned long)kref->user_priv;
+-		if (!(kref->valid_domains & NOUVEAU_GEM_DOMAIN_VRAM) ||
+-		    krec->vram_used + kbo->size > dev->vram_limit)
+-			continue;
+-
+-		kref->valid_domains &= NOUVEAU_GEM_DOMAIN_VRAM;
+-		krec->gart_used -= kbo->size;
+-		krec->vram_used += kbo->size;
+-		if (krec->gart_used + bo->size <= dev->gart_limit) {
+-			krec->gart_used += bo->size;
+-			return true;
+-		}
+-	}
+-
+-	/* Couldn't resolve a placement, need to force a flush */
+-	return false;
+-}
+-
+-static struct drm_nouveau_gem_pushbuf_bo *
+-pushbuf_kref(struct nouveau_pushbuf *push, struct nouveau_bo *bo,
+-	     uint32_t flags)
+-{
+-	struct nouveau_device *dev = push->client->device;
+-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(push);
+-	struct nouveau_pushbuf_krec *krec = nvpb->krec;
+-	struct nouveau_pushbuf *fpush;
+-	struct drm_nouveau_gem_pushbuf_bo *kref;
+-	uint32_t domains, domains_wr, domains_rd;
+-
+-	domains = 0;
+-	if (flags & NOUVEAU_BO_VRAM)
+-		domains |= NOUVEAU_GEM_DOMAIN_VRAM;
+-	if (flags & NOUVEAU_BO_GART)
+-		domains |= NOUVEAU_GEM_DOMAIN_GART;
+-	domains_wr = domains * !!(flags & NOUVEAU_BO_WR);
+-	domains_rd = domains * !!(flags & NOUVEAU_BO_RD);
+-
+-	/* if buffer is referenced on another pushbuf that is owned by the
+-	 * same client, we need to flush the other pushbuf first to ensure
+-	 * the correct ordering of commands
+-	 */
+-	fpush = cli_push_get(push->client, bo);
+-	if (fpush && fpush != push)
+-		pushbuf_flush(fpush);
+-
+-	kref = cli_kref_get(push->client, bo);
+-	if (kref) {
+-		/* possible conflict in memory types - flush and retry */
+-		if (!(kref->valid_domains & domains))
+-			return NULL;
+-
+-		/* VRAM|GART buffer turning into a VRAM buffer.  Make sure
+-		 * it'll fit in VRAM and force a flush if not.
+-		 */
+-		if ((kref->valid_domains  & NOUVEAU_GEM_DOMAIN_GART) &&
+-		    (            domains == NOUVEAU_GEM_DOMAIN_VRAM)) {
+-			if (krec->vram_used + bo->size > dev->vram_limit)
+-				return NULL;
+-			krec->vram_used += bo->size;
+-			krec->gart_used -= bo->size;
+-		}
+-
+-		kref->valid_domains &= domains;
+-		kref->write_domains |= domains_wr;
+-		kref->read_domains  |= domains_rd;
+-	} else {
+-		if (krec->nr_buffer == NOUVEAU_GEM_MAX_BUFFERS ||
+-		    !pushbuf_kref_fits(push, bo, &domains))
+-			return NULL;
+-
+-		kref = &krec->buffer[krec->nr_buffer++];
+-		kref->user_priv = (unsigned long)bo;
+-		kref->handle = bo->handle;
+-		kref->valid_domains = domains;
+-		kref->write_domains = domains_wr;
+-		kref->read_domains = domains_rd;
+-		kref->presumed.valid = 1;
+-		kref->presumed.offset = bo->offset;
+-		if (bo->flags & NOUVEAU_BO_VRAM)
+-			kref->presumed.domain = NOUVEAU_GEM_DOMAIN_VRAM;
+-		else
+-			kref->presumed.domain = NOUVEAU_GEM_DOMAIN_GART;
+-
+-		cli_kref_set(push->client, bo, kref, push);
+-		atomic_inc(&nouveau_bo(bo)->refcnt);
+-	}
+-
+-	return kref;
+-}
+-
+-static uint32_t
+-pushbuf_krel(struct nouveau_pushbuf *push, struct nouveau_bo *bo,
+-	     uint32_t data, uint32_t flags, uint32_t vor, uint32_t tor)
+-{
+-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(push);
+-	struct nouveau_pushbuf_krec *krec = nvpb->krec;
+-	struct drm_nouveau_gem_pushbuf_reloc *krel;
+-	struct drm_nouveau_gem_pushbuf_bo *pkref;
+-	struct drm_nouveau_gem_pushbuf_bo *bkref;
+-	uint32_t reloc = data;
+-
+-	pkref = cli_kref_get(push->client, nvpb->bo);
+-	bkref = cli_kref_get(push->client, bo);
+-	krel  = &krec->reloc[krec->nr_reloc++];
+-
+-	krel->reloc_bo_index = pkref - krec->buffer;
+-	krel->reloc_bo_offset = (push->cur - nvpb->ptr) * 4;
+-	krel->bo_index = bkref - krec->buffer;
+-	krel->flags = 0;
+-	krel->data = data;
+-	krel->vor = vor;
+-	krel->tor = tor;
+-
+-	if (flags & NOUVEAU_BO_LOW) {
+-		reloc = (bkref->presumed.offset + data);
+-		krel->flags |= NOUVEAU_GEM_RELOC_LOW;
+-	} else
+-	if (flags & NOUVEAU_BO_HIGH) {
+-		reloc = (bkref->presumed.offset + data) >> 32;
+-		krel->flags |= NOUVEAU_GEM_RELOC_HIGH;
+-	}
+-	if (flags & NOUVEAU_BO_OR) {
+-		if (bkref->presumed.domain & NOUVEAU_GEM_DOMAIN_VRAM)
+-			reloc |= vor;
+-		else
+-			reloc |= tor;
+-		krel->flags |= NOUVEAU_GEM_RELOC_OR;
+-	}
+-
+-	return reloc;
+-}
+-
+-static void
+-pushbuf_dump(struct nouveau_pushbuf_krec *krec, int krec_id, int chid)
+-{
+-	struct drm_nouveau_gem_pushbuf_reloc *krel;
+-	struct drm_nouveau_gem_pushbuf_push *kpsh;
+-	struct drm_nouveau_gem_pushbuf_bo *kref;
+-	struct nouveau_bo *bo;
+-	uint32_t *bgn, *end;
+-	int i;
+-
+-	err("ch%d: krec %d pushes %d bufs %d relocs %d\n", chid,
+-	    krec_id, krec->nr_push, krec->nr_buffer, krec->nr_reloc);
+-
+-	kref = krec->buffer;
+-	for (i = 0; i < krec->nr_buffer; i++, kref++) {
+-		err("ch%d: buf %08x %08x %08x %08x %08x\n", chid, i,
+-		    kref->handle, kref->valid_domains,
+-		    kref->read_domains, kref->write_domains);
+-	}
+-
+-	krel = krec->reloc;
+-	for (i = 0; i < krec->nr_reloc; i++, krel++) {
+-		err("ch%d: rel %08x %08x %08x %08x %08x %08x %08x\n",
+-		    chid, krel->reloc_bo_index, krel->reloc_bo_offset,
+-		    krel->bo_index, krel->flags, krel->data,
+-		    krel->vor, krel->tor);
+-	}
+-
+-	kpsh = krec->push;
+-	for (i = 0; i < krec->nr_push; i++, kpsh++) {
+-		kref = krec->buffer + kpsh->bo_index;
+-		bo = (void *)(unsigned long)kref->user_priv;
+-		bgn = (uint32_t *)((char *)bo->map + kpsh->offset);
+-		end = bgn + (kpsh->length /4);
+-
+-		err("ch%d: psh %08x %010llx %010llx\n", chid, kpsh->bo_index,
+-		    (unsigned long long)kpsh->offset,
+-		    (unsigned long long)(kpsh->offset + kpsh->length));
+-		while (bgn < end)
+-			err("\t0x%08x\n", *bgn++);
+-	}
+-}
+-
+-static int
+-pushbuf_submit(struct nouveau_pushbuf *push, struct nouveau_object *chan)
+-{
+-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(push);
+-	struct nouveau_pushbuf_krec *krec = nvpb->list;
+-	struct nouveau_device *dev = push->client->device;
+-	struct drm_nouveau_gem_pushbuf_bo_presumed *info;
+-	struct drm_nouveau_gem_pushbuf_bo *kref;
+-	struct drm_nouveau_gem_pushbuf req;
+-	struct nouveau_fifo *fifo = chan->data;
+-	struct nouveau_bo *bo;
+-	int krec_id = 0;
+-	int ret = 0, i;
+-
+-	if (chan->oclass != NOUVEAU_FIFO_CHANNEL_CLASS)
+-		return -EINVAL;
+-
+-	if (push->kick_notify)
+-		push->kick_notify(push);
+-
+-	nouveau_pushbuf_data(push, NULL, 0, 0);
+-
+-	while (krec && krec->nr_push) {
+-		req.channel = fifo->channel;
+-		req.nr_buffers = krec->nr_buffer;
+-		req.buffers = (uint64_t)(unsigned long)krec->buffer;
+-		req.nr_relocs = krec->nr_reloc;
+-		req.nr_push = krec->nr_push;
+-		req.relocs = (uint64_t)(unsigned long)krec->reloc;
+-		req.push = (uint64_t)(unsigned long)krec->push;
+-		req.suffix0 = nvpb->suffix0;
+-		req.suffix1 = nvpb->suffix1;
+-		req.vram_available = 0; /* for valgrind */
+-		req.gart_available = 0;
+-
+-		if (dbg_on(0))
+-			pushbuf_dump(krec, krec_id++, fifo->channel);
+-
+-#ifndef SIMULATE
+-		ret = drmCommandWriteRead(dev->fd, DRM_NOUVEAU_GEM_PUSHBUF,
+-					  &req, sizeof(req));
+-		nvpb->suffix0 = req.suffix0;
+-		nvpb->suffix1 = req.suffix1;
+-		dev->vram_limit = (req.vram_available * 80) / 100;
+-		dev->gart_limit = (req.gart_available * 80) / 100;
+-#else
+-		if (dbg_on(31))
+-			ret = -EINVAL;
+-#endif
+-
+-		if (ret) {
+-			err("kernel rejected pushbuf: %s\n", strerror(-ret));
+-			pushbuf_dump(krec, krec_id++, fifo->channel);
+-			break;
+-		}
+-
+-		kref = krec->buffer;
+-		for (i = 0; i < krec->nr_buffer; i++, kref++) {
+-			bo = (void *)(unsigned long)kref->user_priv;
+-
+-			info = &kref->presumed;
+-			if (!info->valid) {
+-				bo->flags &= ~NOUVEAU_BO_APER;
+-				if (info->domain == NOUVEAU_GEM_DOMAIN_VRAM)
+-					bo->flags |= NOUVEAU_BO_VRAM;
+-				else
+-					bo->flags |= NOUVEAU_BO_GART;
+-				bo->offset = info->offset;
+-			}
+-
+-			if (kref->write_domains)
+-				nouveau_bo(bo)->access |= NOUVEAU_BO_WR;
+-			if (kref->read_domains)
+-				nouveau_bo(bo)->access |= NOUVEAU_BO_RD;
+-		}
+-
+-		krec = krec->next;
+-	}
+-
+-	return ret;
+-}
+-
+-static int
+-pushbuf_flush(struct nouveau_pushbuf *push)
+-{
+-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(push);
+-	struct nouveau_pushbuf_krec *krec = nvpb->krec;
+-	struct drm_nouveau_gem_pushbuf_bo *kref;
+-	struct nouveau_bufctx *bctx, *btmp;
+-	struct nouveau_bo *bo;
+-	int ret = 0, i;
+-
+-	if (push->channel) {
+-		ret = pushbuf_submit(push, push->channel);
+-	} else {
+-		nouveau_pushbuf_data(push, NULL, 0, 0);
+-		krec->next = malloc(sizeof(*krec));
+-		nvpb->krec = krec->next;
+-	}
+-
+-	kref = krec->buffer;
+-	for (i = 0; i < krec->nr_buffer; i++, kref++) {
+-		bo = (void *)(unsigned long)kref->user_priv;
+-		cli_kref_set(push->client, bo, NULL, NULL);
+-		if (push->channel)
+-			nouveau_bo_ref(NULL, &bo);
+-	}
+-
+-	krec = nvpb->krec;
+-	krec->vram_used = 0;
+-	krec->gart_used = 0;
+-	krec->nr_buffer = 0;
+-	krec->nr_reloc = 0;
+-	krec->nr_push = 0;
+-
+-	DRMLISTFOREACHENTRYSAFE(bctx, btmp, &nvpb->bctx_list, head) {
+-		DRMLISTJOIN(&bctx->current, &bctx->pending);
+-		DRMINITLISTHEAD(&bctx->current);
+-		DRMLISTDELINIT(&bctx->head);
+-	}
+-
+-	return ret;
+-}
+-
+-static void
+-pushbuf_refn_fail(struct nouveau_pushbuf *push, int sref, int srel)
+-{
+-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(push);
+-	struct nouveau_pushbuf_krec *krec = nvpb->krec;
+-	struct drm_nouveau_gem_pushbuf_bo *kref;
+-
+-	kref = krec->buffer + sref;
+-	while (krec->nr_buffer-- > sref) {
+-		struct nouveau_bo *bo = (void *)(unsigned long)kref->user_priv;
+-		cli_kref_set(push->client, bo, NULL, NULL);
+-		nouveau_bo_ref(NULL, &bo);
+-		kref++;
+-	}
+-	krec->nr_buffer = sref;
+-	krec->nr_reloc = srel;
+-}
+-
+-static int
+-pushbuf_refn(struct nouveau_pushbuf *push, bool retry,
+-	     struct nouveau_pushbuf_refn *refs, int nr)
+-{
+-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(push);
+-	struct nouveau_pushbuf_krec *krec = nvpb->krec;
+-	struct drm_nouveau_gem_pushbuf_bo *kref;
+-	int sref = krec->nr_buffer;
+-	int ret = 0, i;
+-
+-	for (i = 0; i < nr; i++) {
+-		kref = pushbuf_kref(push, refs[i].bo, refs[i].flags);
+-		if (!kref) {
+-			ret = -ENOSPC;
+-			break;
+-		}
+-	}
+-
+-	if (ret) {
+-		pushbuf_refn_fail(push, sref, krec->nr_reloc);
+-		if (retry) {
+-			pushbuf_flush(push);
+-			nouveau_pushbuf_space(push, 0, 0, 0);
+-			return pushbuf_refn(push, false, refs, nr);
+-		}
+-	}
+-
+-	return ret;
+-}
+-
+-static int
+-pushbuf_validate(struct nouveau_pushbuf *push, bool retry)
+-{
+-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(push);
+-	struct nouveau_pushbuf_krec *krec = nvpb->krec;
+-	struct drm_nouveau_gem_pushbuf_bo *kref;
+-	struct nouveau_bufctx *bctx = push->bufctx;
+-	struct nouveau_bufref *bref;
+-	int relocs = bctx ? bctx->relocs * 2: 0;
+-	int sref, srel, ret;
+-
+-	ret = nouveau_pushbuf_space(push, relocs, relocs, 0);
+-	if (ret || bctx == NULL)
+-		return ret;
+-
+-	sref = krec->nr_buffer;
+-	srel = krec->nr_reloc;
+-
+-	DRMLISTDEL(&bctx->head);
+-	DRMLISTADD(&bctx->head, &nvpb->bctx_list);
+-
+-	DRMLISTFOREACHENTRY(bref, &bctx->pending, thead) {
+-		kref = pushbuf_kref(push, bref->bo, bref->flags);
+-		if (!kref) {
+-			ret = -ENOSPC;
+-			break;
+-		}
+-
+-		if (bref->packet) {
+-			pushbuf_krel(push, bref->bo, bref->packet, 0, 0, 0);
+-			*push->cur++ = 0;
+-			pushbuf_krel(push, bref->bo, bref->data, bref->flags,
+-					   bref->vor, bref->tor);
+-			*push->cur++ = 0;
+-		}
+-	}
+-
+-	DRMLISTJOIN(&bctx->pending, &bctx->current);
+-	DRMINITLISTHEAD(&bctx->pending);
+-
+-	if (ret) {
+-		pushbuf_refn_fail(push, sref, srel);
+-		if (retry) {
+-			pushbuf_flush(push);
+-			return pushbuf_validate(push, false);
+-		}
+-	}
+-
+-	return 0;
+-}
+-
+-int
+-nouveau_pushbuf_new(struct nouveau_client *client, struct nouveau_object *chan,
+-		    int nr, uint32_t size, bool immediate,
+-		    struct nouveau_pushbuf **ppush)
+-{
+-	struct nouveau_device *dev = client->device;
+-	struct nouveau_fifo *fifo = chan->data;
+-	struct nouveau_pushbuf_priv *nvpb;
+-	struct nouveau_pushbuf *push;
+-	struct drm_nouveau_gem_pushbuf req = {};
+-	int ret;
+-
+-	if (chan->oclass != NOUVEAU_FIFO_CHANNEL_CLASS)
+-		return -EINVAL;
+-
+-	/* nop pushbuf call, to get the current "return to main" sequence
+-	 * we need to append to the pushbuf on early chipsets
+-	 */
+-	req.channel = fifo->channel;
+-	req.nr_push = 0;
+-	ret = drmCommandWriteRead(dev->fd, DRM_NOUVEAU_GEM_PUSHBUF,
+-				  &req, sizeof(req));
+-	if (ret)
+-		return ret;
+-
+-	nvpb = calloc(1, sizeof(*nvpb) + nr * sizeof(*nvpb->bos));
+-	if (!nvpb)
+-		return -ENOMEM;
+-
+-#ifndef SIMULATE
+-	nvpb->suffix0 = req.suffix0;
+-	nvpb->suffix1 = req.suffix1;
+-#else
+-	nvpb->suffix0 = 0xffffffff;
+-	nvpb->suffix1 = 0xffffffff;
+-#endif
+-	nvpb->krec = calloc(1, sizeof(*nvpb->krec));
+-	nvpb->list = nvpb->krec;
+-	if (!nvpb->krec) {
+-		free(nvpb);
+-		return -ENOMEM;
+-	}
+-
+-	push = &nvpb->base;
+-	push->client = client;
+-	push->channel = immediate ? chan : NULL;
+-	push->flags = NOUVEAU_BO_RD;
+-	if (fifo->pushbuf & NOUVEAU_GEM_DOMAIN_VRAM) {
+-		push->flags |= NOUVEAU_BO_VRAM;
+-		nvpb->type   = NOUVEAU_BO_VRAM;
+-	}
+-	if (fifo->pushbuf & NOUVEAU_GEM_DOMAIN_GART) {
+-		push->flags |= NOUVEAU_BO_GART;
+-		nvpb->type   = NOUVEAU_BO_GART;
+-	}
+-	nvpb->type |= NOUVEAU_BO_MAP;
+-
+-	for (nvpb->bo_nr = 0; nvpb->bo_nr < nr; nvpb->bo_nr++) {
+-		ret = nouveau_bo_new(client->device, nvpb->type, 0, size,
+-				     NULL, &nvpb->bos[nvpb->bo_nr]);
+-		if (ret) {
+-			nouveau_pushbuf_del(&push);
+-			return ret;
+-		}
+-	}
+-
+-	DRMINITLISTHEAD(&nvpb->bctx_list);
+-	*ppush = push;
+-	return 0;
+-}
+-
+-void
+-nouveau_pushbuf_del(struct nouveau_pushbuf **ppush)
+-{
+-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(*ppush);
+-	if (nvpb) {
+-		struct drm_nouveau_gem_pushbuf_bo *kref;
+-		struct nouveau_pushbuf_krec *krec;
+-		while ((krec = nvpb->list)) {
+-			kref = krec->buffer;
+-			while (krec->nr_buffer--) {
+-				unsigned long priv = kref++->user_priv;
+-				struct nouveau_bo *bo = (void *)priv;
+-				cli_kref_set(nvpb->base.client, bo, NULL, NULL);
+-				nouveau_bo_ref(NULL, &bo);
+-			}
+-			nvpb->list = krec->next;
+-			free(krec);
+-		}
+-		while (nvpb->bo_nr--)
+-			nouveau_bo_ref(NULL, &nvpb->bos[nvpb->bo_nr]);
+-		nouveau_bo_ref(NULL, &nvpb->bo);
+-		free(nvpb);
+-	}
+-	*ppush = NULL;
+-}
+-
+-struct nouveau_bufctx *
+-nouveau_pushbuf_bufctx(struct nouveau_pushbuf *push, struct nouveau_bufctx *ctx)
+-{
+-	struct nouveau_bufctx *prev = push->bufctx;
+-	push->bufctx = ctx;
+-	return prev;
+-}
+-
+-int
+-nouveau_pushbuf_space(struct nouveau_pushbuf *push,
+-		      uint32_t dwords, uint32_t relocs, uint32_t pushes)
+-{
+-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(push);
+-	struct nouveau_pushbuf_krec *krec = nvpb->krec;
+-	struct nouveau_client *client = push->client;
+-	struct nouveau_bo *bo = NULL;
+-	bool flushed = false;
+-	int ret = 0;
+-
+-	/* switch to next buffer if insufficient space in the current one */
+-	if (push->cur + dwords >= push->end) {
+-		if (nvpb->bo_next < nvpb->bo_nr) {
+-			nouveau_bo_ref(nvpb->bos[nvpb->bo_next++], &bo);
+-			if (nvpb->bo_next == nvpb->bo_nr && push->channel)
+-				nvpb->bo_next = 0;
+-		} else {
+-			ret = nouveau_bo_new(client->device, nvpb->type, 0,
+-					     nvpb->bos[0]->size, NULL, &bo);
+-			if (ret)
+-				return ret;
+-		}
+-	}
+-
+-	/* make sure there's always enough space to queue up the pending
+-	 * data in the pushbuf proper
+-	 */
+-	pushes++;
+-
+-	/* need to flush if we've run out of space on an immediate pushbuf,
+-	 * if the new buffer won't fit, or if the kernel push/reloc limits
+-	 * have been hit
+-	 */
+-	if ((bo && ( push->channel ||
+-		    !pushbuf_kref(push, bo, push->flags))) ||
+-	    krec->nr_reloc + relocs >= NOUVEAU_GEM_MAX_RELOCS ||
+-	    krec->nr_push + pushes >= NOUVEAU_GEM_MAX_PUSH) {
+-		if (nvpb->bo && krec->nr_buffer)
+-			pushbuf_flush(push);
+-		flushed = true;
+-	}
+-
+-	/* if necessary, switch to new buffer */
+-	if (bo) {
+-		ret = nouveau_bo_map(bo, NOUVEAU_BO_WR, push->client);
+-		if (ret)
+-			return ret;
+-
+-		nouveau_pushbuf_data(push, NULL, 0, 0);
+-		nouveau_bo_ref(bo, &nvpb->bo);
+-		nouveau_bo_ref(NULL, &bo);
+-
+-		nvpb->bgn = nvpb->bo->map;
+-		nvpb->ptr = nvpb->bgn;
+-		push->cur = nvpb->bgn;
+-		push->end = push->cur + (nvpb->bo->size / 4);
+-		push->end -= 2 + push->rsvd_kick; /* space for suffix */
+-	}
+-
+-	pushbuf_kref(push, nvpb->bo, push->flags);
+-	return flushed ? pushbuf_validate(push, false) : 0;
+-}
+-
+-void
+-nouveau_pushbuf_data(struct nouveau_pushbuf *push, struct nouveau_bo *bo,
+-		     uint64_t offset, uint64_t length)
+-{
+-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(push);
+-	struct nouveau_pushbuf_krec *krec = nvpb->krec;
+-	struct drm_nouveau_gem_pushbuf_push *kpsh;
+-	struct drm_nouveau_gem_pushbuf_bo *kref;
+-
+-	if (bo != nvpb->bo && nvpb->bgn != push->cur) {
+-		if (nvpb->suffix0 || nvpb->suffix1) {
+-			*push->cur++ = nvpb->suffix0;
+-			*push->cur++ = nvpb->suffix1;
+-		}
+-
+-		nouveau_pushbuf_data(push, nvpb->bo,
+-				     (nvpb->bgn - nvpb->ptr) * 4,
+-				     (push->cur - nvpb->bgn) * 4);
+-		nvpb->bgn = push->cur;
+-	}
+-
+-	if (bo) {
+-		kref = cli_kref_get(push->client, bo);
+-		kpsh = &krec->push[krec->nr_push++];
+-		kpsh->bo_index = kref - krec->buffer;
+-		kpsh->offset   = offset;
+-		kpsh->length   = length;
+-	}
+-}
+-
+-int
+-nouveau_pushbuf_refn(struct nouveau_pushbuf *push,
+-		     struct nouveau_pushbuf_refn *refs, int nr)
+-{
+-	return pushbuf_refn(push, true, refs, nr);
+-}
+-
+-void
+-nouveau_pushbuf_reloc(struct nouveau_pushbuf *push, struct nouveau_bo *bo,
+-		      uint32_t data, uint32_t flags, uint32_t vor, uint32_t tor)
+-{
+-	*push->cur++ = pushbuf_krel(push, bo, data, flags, vor, tor);
+-}
+-
+-int
+-nouveau_pushbuf_validate(struct nouveau_pushbuf *push)
+-{
+-	return pushbuf_validate(push, true);
+-}
+-
+-uint32_t
+-nouveau_pushbuf_refd(struct nouveau_pushbuf *push, struct nouveau_bo *bo)
+-{
+-	struct drm_nouveau_gem_pushbuf_bo *kref;
+-	uint32_t flags = 0;
+-
+-	if (cli_push_get(push->client, bo) == push) {
+-		kref = cli_kref_get(push->client, bo);
+-		if (kref->read_domains)
+-			flags |= NOUVEAU_BO_RD;
+-		if (kref->write_domains)
+-			flags |= NOUVEAU_BO_WR;
+-	}
+-
+-	return flags;
+-}
+-
+-int
+-nouveau_pushbuf_kick(struct nouveau_pushbuf *push, struct nouveau_object *chan)
+-{
+-	if (!push->channel)
+-		return pushbuf_submit(push, chan);
+-	pushbuf_flush(push);
+-	return pushbuf_validate(push, false);
+-}
