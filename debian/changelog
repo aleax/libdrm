@@ -1,4 +1,4 @@
-libdrm (2.4.40-1~deb7u1) experimental; urgency=low
+libdrm (2.4.40-1~deb7u1) sid; urgency=low
 
   * Revert nouveau to the 2.4.33 state (ie before the rewrite).
   * Revert addition of libdrm2-udeb.
