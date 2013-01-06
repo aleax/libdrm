@@ -1,3 +1,11 @@
+libdrm (2.4.40-1~deb7u2) UNRELEASED; urgency=low
+
+  * Fix FTBFS on kfreebsd:
+    - fix missing ETIME (cherry-picked from upstream)
+    - work around missing O_CLOEXEC
+
+ -- Julien Cristau <jcristau@debian.org>  Sun, 06 Jan 2013 12:44:49 +0100
+
 libdrm (2.4.40-1~deb7u1) sid; urgency=low
 
   * Revert nouveau to the 2.4.33 state (ie before the rewrite).

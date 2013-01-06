@@ -1,0 +1,30 @@
+From 5488edc26442124dc8e8498336982e34a2ddb3e7 Mon Sep 17 00:00:00 2001
+From: Julien Cristau <jcristau@debian.org>
+Date: Sun, 6 Jan 2013 12:42:18 +0100
+Subject: [PATCH] intel: work around the lack of O_CLOEXEC definition on
+ kfreebsd
+
+Provide our own instead, per
+http://svnweb.freebsd.org/base/head/sys/sys/fcntl.h?r1=219999&r2=219998&pathrev=219999
+---
+ intel/intel_bufmgr_gem.c |    4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/intel/intel_bufmgr_gem.c b/intel/intel_bufmgr_gem.c
+index 512bc6f..bc035af 100644
+--- a/intel/intel_bufmgr_gem.c
++++ b/intel/intel_bufmgr_gem.c
+@@ -2470,6 +2470,10 @@ drm_intel_bo_gem_create_from_prime(drm_intel_bufmgr *bufmgr, int prime_fd, int s
+ 	return &bo_gem->bo;
+ }
+ 
++/* XXX hack for kfreebsd */
++#if !defined(O_CLOEXEC) && defined(__FreeBSD_kernel__)
++#define O_CLOEXEC 0x00100000
++#endif
+ int
+ drm_intel_bo_gem_export_to_prime(drm_intel_bo *bo, int *prime_fd)
+ {
+-- 
+1.7.10.4
+
