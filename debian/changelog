@@ -19,12 +19,6 @@ libdrm (2.4.40-1) experimental; urgency=low
 
  -- Julien Cristau <jcristau@debian.org>  Sat, 17 Nov 2012 18:50:33 +0100
 
-libdrm (2.4.39-0ubuntu1) quantal; urgency=low
-
-  * Sync from unreleased debian git.
-
- -- Timo Aaltonen <tjaalton@ubuntu.com>  Mon, 03 Sep 2012 17:26:35 +0300
-
 libdrm (2.4.33-3) unstable; urgency=low
 
   * Add missing dependency on libdrm-omap1 to libdrm-dev (thanks, Robert
