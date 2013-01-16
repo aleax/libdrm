@@ -1,6 +1,10 @@
-libdrm (2.4.40-2) UNRELEASED; urgency=low
+libdrm (2.4.41-1) UNRELEASED; urgency=low
 
+  [ Julien Cristau ]
   * Bump libdrm2 shlibs to 2.4.38.
+
+  [ Maarten Lankhorst ]
+  * New upstream release.
 
  -- Julien Cristau <jcristau@debian.org>  Tue, 25 Dec 2012 13:17:28 +0100
 

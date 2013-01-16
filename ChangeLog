@@ -1,3 +1,177 @@
+commit 007bff7a034741dcf9d1716583f91fc4453d4112
+Author: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+Date:   Wed Jan 16 13:06:52 2013 +0100
+
+    configure.ac: bump version to 2.4.41 for release
+
+commit c41b494c47f8e514e69cb8c2f2ace41d5fa17c94
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Fri Nov 23 12:40:30 2012 +1000
+
+    nouveau: expose channel engine selection on kepler chipsets
+    
+    v2: Take Maarten Lankhorst's suggestion of nesting the struct to prevent
+        sizeof() issues due to padding on older revisions.
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+    Signed-off-by: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+
+commit 9e6f96a579fc2ed241e9a31a35a5995129ee8f7a
+Author: Marcin Slusarz <marcin.slusarz@gmail.com>
+Date:   Sun Dec 16 19:28:24 2012 +0100
+
+    libdrm_nouveau.pc: don't include I${includedir}/nouveau
+    
+    Nouveau headers are installed in I${includedir}/libdrm.
+
+commit fdda97007b1dbf95beb16a0e3510fd36c89e8c33
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:   Fri Jan 11 00:55:12 2013 +0000
+
+    intel: Remove the fence count contributions when clearing relocs
+    
+    As we clear the relocs from the bo, we also need to clear the
+    contribution of the reloc_target_bo from the fence count. Otherwise they
+    are leaked and prevent any further relocations being added to the bo.
+
+commit 1dbd873700f281d9773e64931ff0c1cf96e13793
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Wed Jan 9 17:28:41 2013 -0800
+
+    man: disable man page building until David saves us all
+    
+    I must have botched something in the push of the xml switchover, since I
+    now get errors when building the pages and aliases.  Just disable for
+    now.
+
+commit fd6b369d39bc710acf56632a292308eb4e23d6db
+Author: David Herrmann <dh.herrmann@googlemail.com>
+Date:   Fri Sep 28 23:44:22 2012 +0200
+
+    man: add drm-memory overview page
+    
+    This adds an overview page that describes Dumb-Buffers, TTM and GEM. It
+    does not describe chipset-specific features. You should do that in the
+    driver-manpages.
+    
+    Signed-off-by: David Herrmann <dh.herrmann@googlemail.com>
+    Reviewed-by: Jesse Barnes <jbarnes@virtuousgeek.org>
+
+commit 8cd0c131df20d983657c4e205493109a8c71624e
+Author: David Herrmann <dh.herrmann@googlemail.com>
+Date:   Fri Sep 28 23:44:21 2012 +0200
+
+    man: add drm-kms overview page
+    
+    This is an overview page for KMS. It is again targeted at novice users
+    that need redirection to the correct function man-pages.
+    
+    Signed-off-by: David Herrmann <dh.herrmann@googlemail.com>
+    Reviewed-by: Jesse Barnes <jbarnes@virtuousgeek.org>
+
+commit 0a766a5388ba6ff0983ad5181a5f6644aea8050a
+Author: David Herrmann <dh.herrmann@googlemail.com>
+Date:   Fri Sep 28 23:44:20 2012 +0200
+
+    man: add drm.7 overview page
+    
+    The drm.xml file compiles to drm.7 and is meant as a global overview page
+    for libdrm. It is targeted to new users of libdrm and redirects to all
+    other main man-pages.
+    
+    Signed-off-by: David Herrmann <dh.herrmann@googlemail.com>
+    Reviewed-by: Jesse Barnes <jbarnes@virtuousgeek.org>
+
+commit 6b7e45c7516b7fdfe85e7792f82624458dcb2ac6
+Author: David Herrmann <dh.herrmann@googlemail.com>
+Date:   Fri Sep 28 23:44:19 2012 +0200
+
+    man: convert manpages to XML instead of plain troff
+    
+    If we want to use the manpages in external documentation other than normal
+    manpages, we should rather use XML. Furthermore, almost no-one knows troff
+    today, anyway, and XML allows others to easily add more pages without
+    having to learn troff.
+    
+    Signed-off-by: David Herrmann <dh.herrmann@googlemail.com>
+
+commit 891517f5111cd82909906d5e8ee0299db0d46762
+Author: Ben Skeggs <bskeggs@redhat.com>
+Date:   Mon Jan 7 13:07:13 2013 +1000
+
+    nouveau: disallow pushbuf BOs in multiple memory types
+    
+    Under certain circumstances it's possible for libdrm to decide to move
+    a GART|VRAM pushbuf to be VRAM-only.  This causes the kernel to reject
+    the command submission on GF8 and up, due to a stricter policy where
+    buffers are only allowed to move to memory types that were specified
+    at creation time.
+    
+    The simplest fix for this is to force the creation-time memory type for
+    the lifetime of the push buffer.
+    
+    Signed-off-by: Ben Skeggs <bskeggs@redhat.com>
+
+commit baf0a7daafc7636106e1b19267ed22e22b1a2283
+Author: Maxime Villard <rustyBSD@gmx.fr>
+Date:   Wed Jan 2 10:57:07 2013 -0500
+
+    libkms: return -EINVAL on fstat error
+    
+    On error fstat return -1, instead return -EINVAL to caller
+    
+    Signed-off-by: Maxime Villard <rustyBSD@gmx.fr>
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 1f4b5e11e638fc87bd0ac8e3530b407211b76d45
+Author: Maxime Villard <rustyBSD@gmx.fr>
+Date:   Wed Jan 2 10:55:50 2013 -0500
+
+    libkms: fix memory leak in error path
+    
+    Signed-off-by: Maxime Villard <rustyBSD@gmx.fr>
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 0980633afd9c7eecc0c75ef3bea4d3c6b7aa1898
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Tue Nov 27 13:59:11 2012 -0500
+
+    drm/radeon: track global bo name and always return the same
+    
+    To avoid kernel rejecting cs if we return different global name
+    for same bo keep track of global name and always return the same.
+    Seems to fix issue with suspend/resume failing and repeatly printing
+    following message :
+    [drm:radeon_cs_ioctl] *ERROR* Failed to parse relocation -35!
+    
+    There might still be way for a rogue program to trigger this issue.
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 171666e4b8127c17c68ea0d44cf4e81ec342f2d0
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Nov 21 18:45:14 2012 -0500
+
+    radeon: add new SI pci id
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 7d42b49c0cf19dbb4531cd84efae51f95db2eea1
+Author: David Shao <davshao@gmail.com>
+Date:   Sat Nov 10 00:24:56 2012 -0500
+
+    intel: Fix missing ETIME on BSD operating systems
+    
+    Originally posted to Free Desktop bug #52549 by David Shao.
+    Resolves Gentoo Bug #433403.
+    Commit message by Richard Yao.
+    
+    Reviewed-by: Richard Yao <ryao@gentoo.org>
+    Reviewed-by: Kenneth Graunke <kenneth@whitecape.org>
+    References: https://bugs.freedesktop.org/show_bug.cgi?id=52549
+    
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+
 commit e01d68f9f3acfc35fe164283904b5d058c2ab378
 Author: Marek Olšák <maraeo@gmail.com>
 Date:   Tue Nov 6 01:23:53 2012 +0100
