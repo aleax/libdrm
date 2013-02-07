@@ -11,7 +11,7 @@ Build-Depends:
  libpthread-stubs0-dev,
  libudev-dev [linux-any],
  libpciaccess-dev,
-Standards-Version: 3.9.2
+Standards-Version: 3.9.4
 Section: libs
 Vcs-Git: git://git.debian.org/git/pkg-xorg/lib/libdrm
 Vcs-Browser: http://git.debian.org/?p=pkg-xorg/lib/libdrm.git
