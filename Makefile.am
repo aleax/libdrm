@@ -20,8 +20,6 @@
 
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
-DISTCHECK_CONFIGURE_FLAGS = --enable-nouveau-experimental-api --enable-radeon-experimental-api
-
 pkgconfigdir = @pkgconfigdir@
 pkgconfig_DATA = libdrm.pc
 
@@ -49,7 +47,7 @@ if HAVE_EXYNOS
 EXYNOS_SUBDIR = exynos
 endif
 
-SUBDIRS = . $(LIBKMS_SUBDIR) $(INTEL_SUBDIR) $(NOUVEAU_SUBDIR) $(RADEON_SUBDIR) $(OMAP_SUBDIR) $(EXYNOS_SUBDIR) tests include 
+SUBDIRS = . $(LIBKMS_SUBDIR) $(INTEL_SUBDIR) $(NOUVEAU_SUBDIR) $(RADEON_SUBDIR) $(OMAP_SUBDIR) $(EXYNOS_SUBDIR) tests include man
 
 libdrm_la_LTLIBRARIES = libdrm.la
 libdrm_ladir = $(libdir)

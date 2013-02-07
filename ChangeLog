@@ -1,3 +1,99 @@
+commit 183b5f20b59c83f57967b41d1e3a90c073e8df76
+Author: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+Date:   Tue Feb 5 14:08:41 2013 +0100
+
+    configure.ac: bump version to 2.4.42 for release
+    
+    Signed-off-by: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+
+commit f9a9311c5e96606de9726ae4021209897b9bb2d7
+Author: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+Date:   Tue Feb 5 14:12:06 2013 +0100
+
+    libdrm: remove DISTCHECK_CONFIGURE_FLAGS
+    
+    I'm fairly sure the extra flags it specifies no longer exist, so
+    there is no point in keeping it. It only adds a warning when
+    running make distcheck.
+    
+    Signed-off-by: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+
+commit 353f073bc134a94d13fe82e4f3d983efe3cf70ad
+Author: Alex Deucher <alexander.deucher@amd.com>
+Date:   Thu Jan 24 17:53:37 2013 -0500
+
+    radeon: add OLAND pci ids
+    
+    Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit 76ae1f4837ceb2c15ccf847e4abe2b5c4f66df85
+Author: Alex Deucher <alexander.deucher@amd.com>
+Date:   Thu Jan 24 17:37:10 2013 -0500
+
+    radeon: add OLAND family
+    
+    Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit ef866c7293e699b119ae61738e221857a36a5362
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Sat Feb 2 11:10:24 2013 +0100
+
+    intel: add more VLV PCI IDs
+
+commit 9dc0072e8d5a47fb0b2ada50fb897cb2c740bb40
+Author: Thierry Reding <thierry.reding@avionic-design.de>
+Date:   Fri Jan 18 13:22:01 2013 +0100
+
+    man: Fix typo and use $() for make expressions
+    
+    Due to the typo, none of the .xml files would end up in the release
+    tarball and cause make distcheck as well as builds from the tarball to
+    fail.
+    
+    Using $() isn't strictly necessary but other variables and expressions
+    use that variant already so it makes the usage consistent.
+    
+    Reviewed-by: David Herrmann <dh.herrmann@googlemail.com>
+    Signed-off-by: Thierry Reding <thierry.reding@avionic-design.de>
+
+commit 303ca37e722e68900cb7eb43ddbef8069b0c711b
+Author: Michel Dänzer <michel.daenzer@amd.com>
+Date:   Thu Jan 17 19:03:42 2013 +0100
+
+    radeon: Fix 1D tiling layout on SI.
+    
+    Very similar to Evergreen, but slightly different rules for tile / slice
+    alignment. Fortunately, these map quite naturally onto the previous fixes for
+    linear aligned layout on SI.
+    
+    2D tiling still needs more work here and possibly in the kernel.
+    
+    Signed-off-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 08cb5c1d0245f6bfc1dd4d041eb418bc160c7b05
+Author: David Herrmann <dh.herrmann@googlemail.com>
+Date:   Wed Jan 16 19:35:25 2013 +0100
+
+    man: fix manpage build instructions
+    
+    This fixes all the out-of-tree build-failures with manpages and uses a
+    .man_fixup file to avoid overriding man-pages on every build.
+    
+    Manpages are only built if xsltproc is found and the stylesheets are
+    available locally. You can disable building manpages with
+    --disable-manpages so the quite expensive xsltproc procedure can be
+    skipped.
+    
+    Signed-off-by: David Herrmann <dh.herrmann@googlemail.com>
+
+commit 481763c2c7f5224a9f053ab3a2b2356eb89a96f0
+Author: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+Date:   Wed Jan 16 14:29:14 2013 +0100
+
+    nouveau: use @PACKAGE_VERSION@ in libdrm_nouveau.pc
+    
+    Signed-off-by: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+
 commit 007bff7a034741dcf9d1716583f91fc4453d4112
 Author: Maarten Lankhorst <maarten.lankhorst@canonical.com>
 Date:   Wed Jan 16 13:06:52 2013 +0100
