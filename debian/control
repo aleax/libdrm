@@ -7,6 +7,7 @@ Build-Depends:
  dh-autoreconf,
  quilt,
  xsltproc,
+ docbook-xsl,
  libx11-dev,
  pkg-config,
  libpthread-stubs0-dev,
