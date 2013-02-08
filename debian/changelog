@@ -5,6 +5,7 @@ libdrm (2.4.42-1) UNRELEASED; urgency=low
 
   [ Maarten Lankhorst ]
   * New upstream release.
+  * Re-enable building of manpages, and build-depend on xsltproc
 
   [ Timo Aaltonen ]
   * control: Bump policy to 3.9.4, no changes.
