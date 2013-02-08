@@ -1,3 +1,9 @@
+libdrm (2.4.42-0ubuntu2) UNRELEASED; urgency=low
+
+  * Re-enable building of manpages, and build-depend on xsltproc
+
+ -- Maarten Lankhorst <maarten.lankhorst@ubuntu.com>  Fri, 08 Feb 2013 13:22:03 +0100
+
 libdrm (2.4.42-0ubuntu1) raring; urgency=low
 
   * Sync from unreleased debian git.
