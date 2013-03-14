@@ -1,8 +1,9 @@
-libdrm (2.4.42-0ubuntu2) UNRELEASED; urgency=low
+libdrm (2.4.42-0ubuntu2) raring; urgency=low
 
   * Re-enable building of manpages, and build-depend on xsltproc
+  * Add valgrind to build-depends
 
- -- Maarten Lankhorst <maarten.lankhorst@ubuntu.com>  Fri, 08 Feb 2013 13:22:03 +0100
+ -- Maarten Lankhorst <maarten.lankhorst@ubuntu.com>  Thu, 14 Mar 2013 12:44:09 +0100
 
 libdrm (2.4.42-0ubuntu1) raring; urgency=low
 
