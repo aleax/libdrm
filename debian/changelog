@@ -6,6 +6,7 @@ libdrm (2.4.42-1) UNRELEASED; urgency=low
   [ Maarten Lankhorst ]
   * New upstream release.
   * Build-depend on xsltproc and docbook-xsl.
+  * Add valgrind to build-depends.
 
   [ Timo Aaltonen ]
   * control: Bump policy to 3.9.4, no changes.
