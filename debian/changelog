@@ -1,4 +1,4 @@
-libdrm (2.4.42-1) UNRELEASED; urgency=low
+libdrm (2.4.43-1) UNRELEASED; urgency=low
 
   [ Julien Cristau ]
   * Bump libdrm2 shlibs to 2.4.38.
