@@ -347,8 +347,10 @@ pushbuf_submit(struct nouveau_pushbuf *push, struct nouveau_object *chan)
 					  &req, sizeof(req));
 		nvpb->suffix0 = req.suffix0;
 		nvpb->suffix1 = req.suffix1;
-		dev->vram_limit = (req.vram_available * 80) / 100;
-		dev->gart_limit = (req.gart_available * 80) / 100;
+		dev->vram_limit = (req.vram_available *
+				nouveau_device(dev)->vram_limit_percent) / 100;
+		dev->gart_limit = (req.gart_available *
+				nouveau_device(dev)->gart_limit_percent) / 100;
 #else
 		if (dbg_on(31))
 			ret = -EINVAL;
@@ -524,7 +526,7 @@ pushbuf_validate(struct nouveau_pushbuf *push, bool retry)
 		}
 	}
 
-	return 0;
+	return ret;
 }
 
 int

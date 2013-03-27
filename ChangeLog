@@ -1,3 +1,212 @@
+commit c005f043dcb4df5ed8a36b9f4b70fcf9e92d52a5
+Author: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+Date:   Wed Mar 27 10:42:20 2013 +0100
+
+    configure.ac: bump version to 2.4.43 for release
+    
+    Signed-off-by: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+
+commit 93d12593e5f1b251a09b112d7beaf5cfca026896
+Author: Ville Syrjälä <ville.syrjala@linux.intel.com>
+Date:   Mon Feb 18 20:50:01 2013 +0200
+
+    intel_chipset: Fix up VLV confusion
+    
+    Signed-off-by: Ville Syrjälä <ville.syrjala@linux.intel.com>
+
+commit 6e55fd7dee48dabcd46939df1aa8729eba426298
+Author: Ville Syrjälä <ville.syrjala@linux.intel.com>
+Date:   Mon Feb 18 20:22:21 2013 +0200
+
+    intel_chipset: Use parens around macro arguments
+    
+    Protect the macro argument evaluations with parens.
+    
+    This is already touching most lines, so while at it, fix up all white
+    space to uniform style throughout the file.
+    
+    Signed-off-by: Ville Syrjälä <ville.syrjala@linux.intel.com>
+
+commit f92d7969bf6ba636d193423cf2388956badde3ff
+Author: Marcin Slusarz <marcin.slusarz@gmail.com>
+Date:   Sun Mar 3 22:34:38 2013 +0100
+
+    nouveau: add a way to override single pushbuffer memory limits
+    
+    Currently single pushbuffer can take up to 80% of VRAM and 80% of GART.
+    As this value seems to be arbitrary (and user may need to set it differently)
+    this patch adds support for 2 environment variables:
+    NOUVEAU_LIBDRM_VRAM_LIMIT_PERCENT (default 80)
+    NOUVEAU_LIBDRM_GART_LIMIT_PERCENT (default 80)
+    which will let users override pushbuffer VRAM/GART limits.
+    
+    Signed-off-by: Marcin Slusarz <marcin.slusarz@gmail.com>
+
+commit 284421a56921337aaabcec7ad2790034249c7b31
+Author: Marcin Slusarz <marcin.slusarz@gmail.com>
+Date:   Sun Mar 3 22:13:38 2013 +0100
+
+    nouveau: return error from pushbuf_validate
+    
+    Signed-off-by: Marcin Slusarz <marcin.slusarz@gmail.com>
+
+commit 9b0c7f23a261d9bfa857a7e0efd2c5f97d404485
+Author: Benjamin Gaignard <benjamin.gaignard@st.com>
+Date:   Tue Mar 26 11:11:41 2013 +0100
+
+    tests: allow tests programs to be installed (cumulative patch)
+    
+    fix error in previous patch
+    
+    Signed-off-by: Benjamin Gaignard <benjamin.gaignard@linaro.com>
+    Signed-off-by: Andreas Boll <andreas.boll.dev@gmail.com>
+
+commit 62d8866021f04bc8afc8e63d366c71d11c817bc9
+Author: Benjamin Gaignard <benjamin.gaignard@stericsson.com>
+Date:   Wed Jan 30 14:34:00 2013 +0100
+
+    tests: allow tests programs to be installed
+    
+    Install test programs is useful in cross compilation case.  By default
+    the behavior is the same and test programs aren't installed in $bindir.
+    If --enable-install-test-programs is set then test programs are
+    installed in $bindir.
+    
+    Signed-off-by: Benjamin Gaignard <benjamin.gaignard@linaro.org>
+    Signed-off-by: Rob Clark <robdclark@gmail.com>
+
+commit 36a2daad2416ad55a859c483b0d7ed93a5eff6e0
+Author: Alex Deucher <alexander.deucher@amd.com>
+Date:   Fri Mar 8 14:12:32 2013 -0500
+
+    radeon: add pci ids for Richland APUs
+    
+    Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+
+commit bbf6e3dea3c79ea8e0c3e1dd8f80014201e003fc
+Author: Inki Dae <inki.dae@samsung.com>
+Date:   Mon Feb 18 21:51:00 2013 +0900
+
+    libdrm/exynos: add test application for 2d gpu.
+    
+    This patch adds library and test application for g2d gpu(fimg2d).
+    
+    The fimg2d hardware is a 2D graphics accelerator(G2D) that
+    supports Bit Block Transfer(BitBLT).
+    
+    The library includes the following primitive drawing operations:
+    .solid fill - This operation fills the given buffer with
+    	the given color data.
+    .copy - This operation copies contents in source buffer to
+    	destination buffer.
+    .copy_with_scale - This operation copies contents in source buffer
+    	to destination buffer scaling up or down properly.
+    .blend - This operation blends contents in source buffer with
+    	the ones in destination buffer.
+    
+    And the above operations uses gem handle or user space address
+    allocated by malloc() as source or destination buffer.
+    
+    And the test application includes just simple primitive drawing
+    tests with the above library.
+    And the guide to test is as the following,
+    	"#exynos_fimg2d_test -s connector_id@crtc_id:mode"
+    
+    With this above simple command, four primitive drawing operations
+    would be called step by step and also rendered on the output device
+    to the given connector and crtc id.
+    
+    Signed-off-by: Inki Dae <inki.dae@samsung.com>
+    Signed-off-by: Kyungmin Park <kyungmin.park@samsung.com>
+    Signed-off-by: Rob Clark <robdclark@gmail.com>
+
+commit ade2ad2d66ac341a12eca37bcb30d40199eb4e02
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Thu Mar 7 09:49:53 2013 -0500
+
+    radeonsi: make sure tile_split field are not garbage
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 41fc2cc8a98a8d02ea7d3635d3103f7dd371de10
+Author: Rob Clark <robclark@freedesktop.org>
+Date:   Sun Oct 7 18:57:31 2012 -0500
+
+    freedreno: add freedreno DRM
+    
+    The libdrm_freedreno helper layer for use by xf86-video-freedreno,
+    fdre (freedreno r/e library and tests for driving gpu), and eventual
+    gallium driver for the Adreno GPU.  This uses the msm gpu driver
+    from QCOM's android kernel tree.
+    
+    Note that current msm kernel driver is a bit strange.  It provides a
+    DRM interface for GEM, which is basically sufficient to have DRI2
+    working.  But it does not provide KMS.  And interface to 2d and 3d
+    cores is via different other devices (/dev/kgsl-*).  This is not
+    quite how I'd write a DRM driver, but at this stage it is useful for
+    xf86-video-freedreno and fdre (and eventual gallium driver) to be
+    able to work on existing kernel driver from QCOM, to allow to
+    capture cmdstream dumps from the binary blob drivers without having
+    to reboot.  So libdrm_freedreno attempts to hide most of the crazy.
+    The intention is that when there is a proper kernel driver, it will
+    be mostly just changes in libdrm_freedreno to adapt the gallium
+    driver and xf86-video-freedreno (ignoring the fbdev->KMS changes).
+    
+    So don't look at freedreno as an example of how to write a libdrm
+    module or a DRM driver.. it is just an attempt to paper over a non-
+    standard kernel driver architecture.
+    
+    v1: original
+    v2: hold ref's to pending bo's (because qcom's kernel driver doesn't),
+        various bug fixes, add ringbuffer markers so we can emit IB's to
+        portion of ringbuffer (so that gallium driver can use a single
+        ringbuffer for both tile cmds and draw cmds.
+    
+    Signed-off-by: Rob Clark <robclark@freedesktop.org>
+
+commit 36d18211b196cad4761ac70c4fd08aba323f5b0d
+Author: Ben Widawsky <ben@bwidawsk.net>
+Date:   Mon Dec 3 17:43:29 2012 -0800
+
+    intel_chipset: Merge intel-gpu-tools chipsets
+    
+    Intel GPU Tools is newer and arguably better. This change doesn't
+    completely merge the files because it's a bit simpler if we move the
+    I9XX macro over to Intel GPU Tools, and don't move over a few macros
+    from IGT that libdrm doesn't care about.
+    
+    It has been discussed, and would seem even easier if Intel GPU Tools
+    simply used the libdrm header files. Whether or not we move to that,
+    this should help that effort.
+    
+    Signed-off-by: Ben Widawsky <ben@bwidawsk.net>
+    Acked-by: Jesse Barnes <jbarnes@virtuousgeek.org>
+
+commit 20c5607b57da113ca1a29caaa5a52eaf83808dff
+Author: Chris Forbes <chrisf@ijw.co.nz>
+Date:   Mon Jan 28 08:01:18 2013 +0000
+
+    intel: fix length mask for Gen5/Gen6 3DSTATE_CLEAR_PARAMS
+    
+    On Gen6, bit 15 is now `Depth Clear Value Valid`. This was being treated
+    as part of the length, and failing the rest of the batchbuffer decode.
+    
+    Reviewed-by: Kenneth Graunke <kenneth@whitecape.org>
+    Signed-off-by: Chris Forbes <chrisf@ijw.co.nz>
+
+commit 3b5cc135424f3b8d6b79fb409fe9b4ffc4855333
+Author: Kenneth Graunke <kenneth@whitecape.org>
+Date:   Sat Jan 12 16:54:59 2013 -0800
+
+    intel/aub: Actually run BLT batches on the blit ring.
+    
+    We didn't set the ring flag for BLT batches, so they got run on the
+    render ring.  Shenanigans ensued, especially when we sent commands that
+    were only valid on the BLT ring.
+    
+    Signed-off-by: Kenneth Graunke <kenneth@whitecape.org>
+    Reviewed-by: Eric Anholt <eric@anholt.net>
+
 commit 183b5f20b59c83f57967b41d1e3a90c073e8df76
 Author: Maarten Lankhorst <maarten.lankhorst@canonical.com>
 Date:   Tue Feb 5 14:08:41 2013 +0100
