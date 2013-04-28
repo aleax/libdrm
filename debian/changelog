@@ -1,3 +1,10 @@
+libdrm (2.4.43-0ubuntu1~bpo70+1) wheezy-backports; urgency=low
+
+  * Rebuild for wheezy-backports.
+  * Upload to wheezy-graphics-next
+
+ -- Alexey Bondarchuk <alexey.bondarchuk@aleax.me>  Sun, 28 Apr 2013 18:03:37 +0300
+
 libdrm (2.4.43-0ubuntu1) raring; urgency=low
 
   * Sync from unreleased debian git.
