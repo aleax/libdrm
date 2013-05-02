@@ -1,3 +1,197 @@
+commit 9768af201e9aba2093c80a8da3632fe9e4c044fe
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Thu Apr 18 15:01:19 2013 -0400
+
+    libdrm 2.4.44
+
+commit 83e77461249d535a77c3ed055d198e26f0c1b390
+Author: Ville Syrjälä <ville.syrjala@linux.intel.com>
+Date:   Thu Apr 18 15:26:59 2013 +0000
+
+    modetest: Add YUV420 support and fix YVU420 Cb/Cr ordering
+    
+    YUV420 support is trivial to add since the code already supports
+    YVU420.
+    
+    But it looks like the YVU420 support is a bit broken. The chroma
+    planes are passed in the wrong order to the fill functions, so
+    fix that while were at it.
+    
+    Signed-off-by: Ville Syrjälä <ville.syrjala@linux.intel.com>
+
+commit 3f024f85d816a648473373bccc8ccc915951886a
+Author: Ville Syrjälä <ville.syrjala@linux.intel.com>
+Date:   Thu Apr 18 15:26:57 2013 +0000
+
+    modetest: Pass format_info to fill_tiles functions
+    
+    The fourcc is inside the format_info structure, so if we want to use
+    it inside the various fill_tiles functions, we need to pass down the
+    whole format_info, not just the rgb/yuv infos.
+    
+    Signed-off-by: Ville Syrjälä <ville.syrjala@linux.intel.com>
+    Acked-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+
+commit 2c26a106fcfb692badef4c42faaed46508a3d1d3
+Author: Ville Syrjälä <ville.syrjala@linux.intel.com>
+Date:   Wed Apr 17 19:18:05 2013 +0000
+
+    modetest: Reduce the length of the connector type string
+    
+    Spelling out eDP or DP make for a ridicilously long string which plays
+    havoc with formatting. Just say eDP or DP.
+    
+    Signed-off-by: Ville Syrjälä <ville.syrjala@linux.intel.com>
+    Acked-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+
+commit 8e56579b203a11c718c5e3da6fdb03b4f9b9fe56
+Author: Ville Syrjälä <ville.syrjala@linux.intel.com>
+Date:   Wed Apr 17 19:18:04 2013 +0000
+
+    modetest: Print possible_crtcs for planes
+    
+    Signed-off-by: Ville Syrjälä <ville.syrjala@linux.intel.com>
+    Acked-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+
+commit fa2925aa342158037ef972f3ef095442fb1fe430
+Author: Ville Syrjälä <ville.syrjala@linux.intel.com>
+Date:   Wed Apr 17 19:18:03 2013 +0000
+
+    modetest: Add support for all 16/32 bpp RGB formats
+    
+    Signed-off-by: Ville Syrjälä <ville.syrjala@linux.intel.com>
+    Acked-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+
+commit c2988eb211ecad2db60081f1000cf19b350703db
+Author: Ville Syrjälä <ville.syrjala@linux.intel.com>
+Date:   Wed Apr 17 19:18:02 2013 +0000
+
+    modetest: Fix pitches, somewhat
+    
+    libkms only has the xrgb8888 format, so we're overallocating the bo by
+    quite a lot in some cases. But we still need to get the pitch from the
+    libkms since it's the driver that decides how to align it.
+    
+    Signed-off-by: Ville Syrjälä <ville.syrjala@linux.intel.com>
+    Acked-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+
+commit aa4afdf0b3be20aa6037b64f90983ea0146b2893
+Author: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date:   Thu Nov 1 09:38:42 2012 +0000
+
+    kms: Return a negative error code in kms_bo_create()
+    
+    The function returns returns 0 on success or a negative value in case of an
+    error, except when given invalid attributes in which case it returns the
+    positive EINVAL value. Replace that with -EINVAL to allow the caller to detect
+    errors with a < 0 check.
+    
+    Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+    Reviewed-by: Jakob Bornecrantz <wallbraker@gmail.com>
+
+commit 9fa4a4b1a894fa8fffe2075bc3376b7fa5e18104
+Author: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Date:   Thu Nov 1 09:40:30 2012 +0000
+
+    kms: Make libkms.h usable in C++
+    
+    Wrap the header in extern "C" { ... };.
+    
+    Signed-off-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+    Reviewed-by: Jakob Bornecrantz <wallbraker@gmail.com>
+
+commit e5d8a9c1d6375feb74feb52f419a025f1abf94d1
+Author: Rob Clark <robdclark@gmail.com>
+Date:   Fri Apr 12 11:28:13 2013 -0400
+
+    freedreno: add shifted reloc
+    
+    Needed for RB_COPY_DEST_BASE register on a3xx.
+    
+    Signed-off-by: Rob Clark <robdclark@gmail.com>
+
+commit a36cdb858e21f287d7b51ded2f211f1c84bda90b
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Mon Apr 8 13:35:37 2013 -0400
+
+    radeon: add si tiling support v5
+    
+    v2: Only writte tile index if flags for it is set
+    v3: Remove useless allow2d scanout flags
+    v4: Split radeon_drm.h update to its own patch
+    v5: update against lastest next tree for radeon
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+    Reviewed-by: Michel Dänzer <michel.daenzer@amd.com>
+
+commit 309cb649a380d25a0eced4f3a0edb55d6b577099
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Mon Apr 8 13:34:54 2013 -0400
+
+    radeon: update radeon_drm.h to kernel last API additions v2
+    
+    v2: sync with radeon-next tree for 3.10
+    
+    http://cgit.freedesktop.org/~agd5f/linux/log/?h=drm-next-3.10-wip
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+    Reviewed-by: Christian König <christian.koenig@amd.com>
+
+commit b7bb9e929786eb8bae86cf50f54dcb94bfa7ad46
+Author: Daniel Vetter <daniel.vetter@ffwll.ch>
+Date:   Wed Apr 3 18:25:12 2013 +0200
+
+    intel-decode: Fix gen6 HIER_DEPTH_BUFFER decoding
+    
+    It accidentally used the cmd id for the gen7 command and had an
+    outdated lenght field. Spotted while trying to make sense of an ivb
+    error_state from mesa 7.11 ...
+    
+    Reviewed-by: Eric Anholt <eric@anholt.net>
+    Signed-off-by: Daniel Vetter <daniel.vetter@ffwll.ch>
+
+commit ca678bc073462623cfc89dea80271bc361f1655f
+Author: Kenneth Graunke <kenneth@whitecape.org>
+Date:   Fri Mar 1 15:37:01 2013 -0800
+
+    intel: Fix Haswell CRW PCI IDs.
+    
+    The second digit was off by one, which meant we accidentally treated
+    GT(n) as GT(n-1).  This also meant no support for GT1 at all.
+    
+    Signed-off-by: Kenneth Graunke <kenneth@whitecape.org>
+
+commit 1eb2860b4bd0306dddc5b2f2dc7403aa65c5e476
+Author: Daniel Kurtz <djkurtz@chromium.org>
+Date:   Thu Mar 28 14:05:40 2013 +0800
+
+    drm: Fix error message in drmWaitVBlank
+    
+    If clock_gettime did fail, it would return -1 and set errno.
+    What we really want to strerror() is the errno.
+    
+    Signed-off-by: Daniel Kurtz <djkurtz@chromium.org>
+
+commit 99105e765c31b598746b849e66e7a9106dcefa24
+Author: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+Date:   Wed Mar 27 14:06:43 2013 +0100
+
+    makefiles: Add missing headers.
+    
+    I even compile time tested this on a panda with make dist!
+    
+    Signed-off-by: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+
+commit 6113c3daa8826a11546693af07dee3313e09a167
+Author: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+Date:   Wed Mar 27 13:55:54 2013 +0100
+
+    Remove unused header xf86mm.h.
+    
+    it's not even shipped in the tarball.
+    
+    Signed-off-by: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+
 commit c005f043dcb4df5ed8a36b9f4b70fcf9e92d52a5
 Author: Maarten Lankhorst <maarten.lankhorst@canonical.com>
 Date:   Wed Mar 27 10:42:20 2013 +0100
