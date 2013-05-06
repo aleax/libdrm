@@ -2,6 +2,8 @@ libdrm (2.4.44-1~bpo70+1) wheezy-backports; urgency=low
 
   * Rebuild for wheezy-backports.
   * Upload to wheezy-graphics-next
+    
+ -- Alexey Bondarchuk <alexey.bondarchuk@aleax.me>  Mon, 06 May 2013 18:15:19 +0300
 
 libdrm (2.4.44-1) UNRELEASED; urgency=low
 
