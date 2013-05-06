@@ -1,17 +1,9 @@
-libdrm (2.4.43-0ubuntu1~bpo70+1) wheezy-backports; urgency=low
+libdrm (2.4.44-1~bpo70+1) wheezy-backports; urgency=low
 
   * Rebuild for wheezy-backports.
   * Upload to wheezy-graphics-next
 
- -- Alexey Bondarchuk <alexey.bondarchuk@aleax.me>  Sun, 28 Apr 2013 18:03:37 +0300
-
-libdrm (2.4.43-0ubuntu1) raring; urgency=low
-
-  * Sync from unreleased debian git.
-
- -- Maarten Lankhorst <maarten.lankhorst@ubuntu.com>  Wed, 27 Mar 2013 11:16:57 +0100
-
-libdrm (2.4.43-1) UNRELEASED; urgency=low
+libdrm (2.4.44-1) UNRELEASED; urgency=low
 
   [ Julien Cristau ]
   * Bump libdrm2 shlibs to 2.4.38.
